@@ -1,0 +1,75 @@
+{
+  "name": "class_basic",
+  "source": "\nclass Dog {\n    fn bark() { print(\"woof\") }\n}\nd = Dog()\nd.bark()\n",
+  "bytecode": {
+    "code": [
+      1,
+      0,
+      11,
+      0,
+      10,
+      0,
+      63,
+      0,
+      11,
+      1,
+      10,
+      1,
+      172,
+      1,
+      63,
+      0,
+      5,
+      255
+    ],
+    "codeDisasm": [
+      "   0 CONST 0",
+      "   2 SET_GLOBAL 0",
+      "   4 GET_GLOBAL 0",
+      "   6 CALL 0 11",
+      "   9 CONST 10",
+      "  11 CONST 172",
+      "  13 CONST 63",
+      "  15 NOP",
+      "  16 POP",
+      "  17 HALT"
+    ],
+    "consts": [
+      {
+        "_type": "class",
+        "name": "Dog",
+        "superClass": null,
+        "methods": {
+          "bark": {
+            "params": [],
+            "isStatic": false,
+            "localCount": 1,
+            "code": [
+              10,
+              0,
+              1,
+              0,
+              63,
+              1,
+              5,
+              64
+            ],
+            "consts": [
+              "woof"
+            ],
+            "vars": [
+              "print"
+            ]
+          }
+        }
+      },
+      "bark"
+    ],
+    "vars": [
+      "Dog",
+      "d"
+    ],
+    "funcNames": {}
+  },
+  "version": 1
+}

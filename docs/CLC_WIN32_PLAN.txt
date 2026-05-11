@@ -1,0 +1,61 @@
+CLC → Win32 原生窗口（路线说明，替代 Node/JS 宿主）
+================================================
+
+> Note: This is an internal implementation roadmap. Current status is tracked inline.
+
+目标
+  由 Seed 经 compileToC 生成（或与固定 sl_win32_rt.c 链接）的 **纯 C 程序** 自建
+  Win32 窗口、消息循环与 GDI/Direct2D 呈现，**不依赖** Node、koffi、JS 胶水层。
+
+为何与当前 CLC 不同
+  现有 CLC 产物主要是带 Seed 运行时的控制台式 main，未链接 user32/gdi32，也未生成
+  WndProc / PeekMessage 循环。要在「语言底层」完成桌面，需要扩展的是 **编译与链接
+  契约**，不是再包一层脚本。
+
+建议实现阶段（可并行拆分 PR）
+
+1) 链接与入口
+  - MinGW 示例链接：-mwindows -municode -luser32 -lgdi32 -lcomdlg32（按需）
+  - 入口 wWinMain：CreateWindowExW、RegisterClassExW、ShowWindow、消息泵 GetMessage /
+    TranslateMessage / DispatchMessageW。
+  - CLI：例如 --compile-c --subsystem windows 或单独 seedlang --compile-c-win <file.seed>
+    在写 .c 时附带 #pragma comment(lib,...)（MSVC）或生成 README 片段说明 gcc 命令行。
+
+2) 固定 C 运行库（小文件，与 CLC 输出合并）
+  - 仓库路径：tools/clc/sl_win32_rt.c（wWinMain、WM_CLOSE、640×480 DIB、StretchDIBits、poll/present 路径）。
+  - `seedlang --compile-c --subsystem windows`：compileToC 生成 sl_user_main；CLI 链接时自动并入
+    sl_win32_rt.c 与 -mwindows/-municode 及 user32/gdi32/comdlg32。
+  - 已实现：640×480 32bpp DIB、棋盘格底图、WM_PAINT StretchDIBits、消息循环；C API：sl_win32_present、
+    sl_win32_pixel_buffer（BGRA）；compileToC(GUI) 在 #ifdef _WIN32 下注入声明；CLI 对 MinGW/cl 加 -I tools/clc。
+  - 环境变量 SEED_WIN32_AUTOCLOSE=1：约 300ms 后 WM_TIMER 退出进程（供无头/自动化）。
+  - 规划：WM_* 环形队列、用户帧回调、每帧写缓冲后 present。
+
+3) Seed 侧 API 形态（二选一或兼容）
+  A) **CLC 白名单（--subsystem windows）**：win32.present()、win32.pollEvents()（PeekMessage 泵，1=继续）、
+     win32.perfMillis()（高精度毫秒，QueryPerformanceCounter）、
+     win32.width()、win32.height()、win32.setPixel(x, y, color)。示例：examples/clc/win32_smoke.seed。
+  B) 规划中：每帧模板 seed_frame、win32.init 改分辨率、输入队列。
+
+4) 输入与生命周期
+  - WM_CLOSE / WM_KEYDOWN / WM_MOUSE* 写入 C 侧队列；Seed 每帧只读队列（需 CLC 支持
+    读外部 struct / 或生成 getter 内联）。
+  - 与现有 getClcUnsupportedBoundary 对齐：Import/Await 等仍禁止；Win32 专用 stmt
+    可单独标为「win32 模式 only」。
+
+5) 验收（已实现）
+  - tests/unit/test-compile-to-c.js：sl_user_main、win32.* lowering、Windows+gcc 时链接 sl_win32_rt.c 并运行
+    （带 SEED_WIN32_AUTOCLOSE）。
+  - npm run verify:clc-win32：一键编译 examples/clc/win32_smoke.seed 并短时运行（需先 npm run build）。
+  - 完整示例局：examples/games/clc_reliability_dungeon_win32.seed（迷宫模拟 + 棋盘绘制 + poll）；
+    npm run compile:game:dungeon-win32 生成 dist/dungeon_win32.c（再按 --subsystem windows 方式链接运行）。
+  - 可选后续：golden 像素 / 无显示 CI 只编译不运行。
+
+6) 收尾说明
+  - C 编译器解析顺序与 tools/resolve-gcc.js 一致；CLI 使用 resolvePreferredMingwGcc（SEED_GCC / CC / GCC →
+    默认 MinGW 路径 → gcc）。
+  - 与 VM/终端 graphics 分流：本路线不依赖 Node 宿主；见上文「已移除的临时方案」。
+
+已移除的临时方案（避免与上述目标混淆）
+  - tools/native/seed_win32_graphics_host.js（koffi）
+  - --native-window、npm run vm:native-win*
+  - examples/desktop 下依赖该宿主的 .seed 示例

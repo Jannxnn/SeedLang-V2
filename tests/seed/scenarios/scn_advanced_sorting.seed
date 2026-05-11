@@ -1,0 +1,98 @@
+// 场景测试 - advanced sorting：堆排序/归并排序等高级排序算法
+// EXPECT: "OK:4"
+fn heapify(arr n i) {
+    largest = i
+    left = 2 * i + 1
+    right = 2 * i + 2
+    
+    if left < n && arr[left] > arr[largest] {
+        largest = left
+    }
+    
+    if right < n && arr[right] > arr[largest] {
+        largest = right
+    }
+    
+    if largest != i {
+        temp = arr[i]
+        arr[i] = arr[largest]
+        arr[largest] = temp
+        heapify(arr n largest)
+    }
+}
+
+fn heapSort(arr) {
+    result = []
+    for x in arr { push(result x) }
+    n = len(result)
+    
+    i = floor(n / 2) - 1
+    while i >= 0 {
+        heapify(result n i)
+        i = i - 1
+    }
+    
+    i = n - 1
+    while i > 0 {
+        temp = result[0]
+        result[0] = result[i]
+        result[i] = temp
+        heapify(result i 0)
+        i = i - 1
+    }
+    
+    return result
+}
+
+fn merge(left right) {
+    result = []
+    i = 0
+    j = 0
+    
+    while i < len(left) && j < len(right) {
+        if left[i] <= right[j] {
+            push(result left[i])
+            i = i + 1
+        } else {
+            push(result right[j])
+            j = j + 1
+        }
+    }
+    
+    while i < len(left) {
+        push(result left[i])
+        i = i + 1
+    }
+    
+    while j < len(right) {
+        push(result right[j])
+        j = j + 1
+    }
+    
+    return result
+}
+
+fn mergeSort(arr) {
+    if len(arr) <= 1 { return arr }
+    
+    mid = floor(len(arr) / 2)
+    left = slice(arr 0 mid)
+    right = slice(arr mid len(arr))
+    
+    return merge(mergeSort(left) mergeSort(right))
+}
+
+input = [12 11 13 5 6 7]
+
+passed = 0
+
+heapSorted = heapSort(input)
+if heapSorted[0] == 5 && heapSorted[5] == 13 { passed = passed + 1 }
+
+mergeSorted = mergeSort(input)
+if mergeSorted[0] == 5 && mergeSorted[5] == 13 { passed = passed + 1 }
+
+if len(heapSorted) == 6 { passed = passed + 1 }
+if len(mergeSorted) == 6 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

@@ -1,0 +1,27 @@
+// 场景测试 - deep merge：嵌套对象的深度合并算法
+// EXPECT: "OK:3"
+fn deepMerge(a b) {
+    result = {}
+    for k in keys(a) {
+        result[k] = a[k]
+    }
+    for k in keys(b) {
+        if type(b[k]) == "object" && result[k] != null && type(result[k]) == "object" {
+            result[k] = deepMerge(result[k] b[k])
+        } else {
+            result[k] = b[k]
+        }
+    }
+    return result
+}
+
+obj1 = { a: 1 b: { x: 10 y: 20 } }
+obj2 = { b: { y: 99 z: 30 } c: 3 }
+merged = deepMerge(obj1 obj2)
+
+passed = 0
+if merged.a == 1 { passed = passed + 1 }
+if merged.b.x == 10 { passed = passed + 1 }
+if merged.b.y == 99 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

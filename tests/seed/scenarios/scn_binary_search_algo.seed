@@ -1,0 +1,32 @@
+// 场景测试 - binary search algo：二分查找算法的完整实现与边界处理
+// EXPECT: "FOUND:3"
+arr = [10 20 30 40 50 60 70 80 90 100]
+
+fn binarySearch(target) {
+    low = 0
+    high = len(arr) - 1
+    
+    while low <= high {
+        mid = floor((low + high) / 2)
+        if arr[mid] == target {
+            return mid
+        }
+        if arr[mid] < target {
+            low = mid + 1
+        } else {
+            high = mid - 1
+        }
+    }
+    return -1
+}
+
+idx30 = binarySearch(30)
+idx55 = binarySearch(55)
+idx100 = binarySearch(100)
+
+found = 0
+if idx30 >= 0 { found = found + 1 }
+if idx55 < 0 { found = found + 1 }
+if idx100 >= 0 { found = found + 1 }
+
+result = "FOUND:" + toString(found)

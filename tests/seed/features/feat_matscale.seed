@@ -1,0 +1,5 @@
+// 矩阵缩放内置函数测试：matScale 标量乘法
+// EXPECT: 4
+a = [[1 2] [3 4]]
+c = matScale(a 2)
+result = c[0][1]

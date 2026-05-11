@@ -1,0 +1,79 @@
+// Win32 视觉演示：干涉纹理背景 + 多层 fillCircle 光斑 + 底色彩条（展示 fillRect / fillCircle / clear）
+//
+// 与 win32_stress_sustained.seed（高压+FPS）互补：本示例偏重「好看、中等负载」，适合宣传片镜头。
+//
+// 构建：
+//   npm run build
+//   node dist/cli.js examples/clc/win32_demo_showcase.seed --compile-c --subsystem windows -o build/win32_demo_showcase.c
+//
+
+W = 640
+H = 480
+
+frame = 0
+
+fn clamp255(v) {
+    if v < 0 {
+        return 0
+    }
+    if v > 255 {
+        return 255
+    }
+    return v
+}
+
+fn irgb(r g b) {
+    rr = clamp255(r)
+    gg = clamp255(g)
+    bb = clamp255(b)
+    return 4278190080 + bb + gg * 256 + rr * 65536
+}
+
+fn wave2(ax ay fx fy) {
+    dx = ax - fx
+    dy = ay - fy
+    return (dx * dx + dy * dy) / 900
+}
+
+while win32.pollEvents() {
+    fx1 = 120 + ((frame * 3) % 400)
+    fy1 = 70 + ((frame * 5) % 340)
+    fx2 = 400 + ((frame * -2 + 8000) % 380)
+    fy2 = 200 + ((frame * 4) % 260)
+    fx3 = 300 + floor(((frame * 7) % 500) / 2)
+    fy3 = 350 + floor(((frame * 6) % 200))
+
+    yy = 0
+    while yy < H {
+        xx = 0
+        while xx < W {
+            wv = wave2(xx yy fx1 fy1) + wave2(xx yy fx2 fy2) / 2 + wave2(xx yy fx3 fy3) / 3
+            rr = (wv + frame * 2) % 240
+            gg = (wv / 2 + frame * 3) % 240
+            bb = (wv / 4 + frame) % 240
+            win32.setPixel(xx yy irgb(rr gg bb))
+            xx = xx + 3
+        }
+        yy = yy + 3
+    }
+
+    i = 0
+    while i < 7 {
+        cx = 55 + i * 88 + ((frame * (i + 2)) % 70)
+        cy = 45 + i * 62 + ((frame * (i + 1)) % 55)
+        pr = 10 + ((frame + i * 31) % 22)
+        cr = 60 + ((frame * 5 + i * 47) % 195)
+        cg = 80 + ((frame * 3 + i * 29) % 175)
+        cb = 100 + ((frame * 7 + i * 19) % 155)
+        win32.fillCircle(cx cy pr irgb(cr cg cb))
+        i = i + 1
+    }
+
+    barR = (frame * 11) % 256
+    barG = (frame * 7) % 256
+    barB = (frame * 13) % 256
+    win32.fillRect(0 H - 12 W 12 irgb(barR barG barB))
+
+    win32.present()
+    frame = frame + 1
+}

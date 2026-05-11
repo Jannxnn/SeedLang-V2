@@ -1,0 +1,105 @@
+// 场景测试 - subarray problems：子数组最大和（含环形数组）
+// EXPECT: "OK:4"
+fn maxSubarraySumCircular(nums) {
+    total = 0
+    maxSum = -999999
+    minSum = 999999
+    currentMax = 0
+    currentMin = 0
+    
+    for n in nums {
+        total = total + n
+        
+        if currentMax > 0 {
+            currentMax = currentMax + n
+        } else {
+            currentMax = n
+        }
+        
+        if currentMax > maxSum { maxSum = currentMax }
+        
+        if currentMin < 0 {
+            currentMin = currentMin + n
+        } else {
+            currentMin = n
+        }
+        
+        if currentMin < minSum { minSum = currentMin }
+    }
+    
+    if maxSum < 0 { return maxSum }
+    
+    return max(maxSum total - minSum)
+}
+
+fn maxTurbulenceSize(arr) {
+    if len(arr) == 1 { return 1 }
+    
+    maxLen = 1
+    currentLen = 1
+    prevSign = 0
+    
+    i = 1
+    while i < len(arr) {
+        if arr[i] > arr[i - 1] {
+            if prevSign == -1 {
+                currentLen = currentLen + 1
+            } else {
+                currentLen = 2
+            }
+            prevSign = 1
+        } else {
+            if arr[i] < arr[i - 1] {
+                if prevSign == 1 {
+                    currentLen = currentLen + 1
+                } else {
+                    currentLen = 2
+                }
+                prevSign = -1
+            } else {
+                currentLen = 1
+                prevSign = 0
+            }
+        }
+        
+        if currentLen > maxLen { maxLen = currentLen }
+        i = i + 1
+    }
+    
+    return maxLen
+}
+
+fn maxProductSubarray(nums) {
+    if len(nums) == 0 { return 0 }
+    
+    maxProd = nums[0]
+    minProd = nums[0]
+    result = nums[0]
+    
+    i = 1
+    while i < len(nums) {
+        if nums[i] < 0 {
+            temp = maxProd
+            maxProd = minProd
+            minProd = temp
+        }
+        
+        maxProd = max(nums[i] maxProd * nums[i])
+        minProd = min(nums[i] minProd * nums[i])
+        
+        if maxProd > result { result = maxProd }
+        
+        i = i + 1
+    }
+    
+    return result
+}
+
+passed = 0
+
+if maxSubarraySumCircular([1 -2 3 -2]) == 3 { passed = passed + 1 }
+if maxTurbulenceSize([9 4 2 10 7 8 8 1 9]) == 5 { passed = passed + 1 }
+if maxProductSubarray([2 3 -2 4]) == 6 { passed = passed + 1 }
+if maxSubarraySumCircular([5 -3 5]) == 10 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

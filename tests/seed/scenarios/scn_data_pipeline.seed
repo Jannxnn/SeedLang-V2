@@ -1,0 +1,15 @@
+// 场景测试 - data pipeline：数据管道（过滤/映射/归约）的组合
+// EXPECT: "SUM:170|CNT:3"
+data = [1 2 3 4 5 6 7 8 9]
+
+step1 = filter(data (x) => x % 2 == 1)
+step2 = map(step1 (x) => x * x)
+step3 = filter(step2 (x) => x > 10)
+step4 = map(step3 (x) => x + 5)
+
+sum = 0
+for v in step4 {
+    sum = sum + v
+}
+
+result = "SUM:" + toString(sum) + "|CNT:" + toString(len(step4))

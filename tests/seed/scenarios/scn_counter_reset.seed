@@ -1,0 +1,12 @@
+// 场景测试 - counter reset：计数器重置后的状态一致性
+// EXPECT: 0
+class C {
+    init() { this.v = 0 }
+    inc() { this.v = this.v + 1 }
+    reset() { this.v = 0 }
+}
+c = C()
+c.inc()
+c.inc()
+c.reset()
+result = c.v

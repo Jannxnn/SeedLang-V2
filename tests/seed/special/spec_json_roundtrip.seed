@@ -1,0 +1,5 @@
+// JSON 往返测试：对象→JSON 字符串→对象的无损转换
+// EXPECT: 5
+s = jsonStringify({ a: 5 })
+o = jsonParse(s)
+result = o.a

@@ -1,0 +1,6 @@
+// CLC regression: nested SlMap* as a map value must be refcount-retained on sl_map_set (sl_map_store_value for SL_MAP).
+fn nest() {
+    return { wrap: { k: 100 } }
+}
+n = nest()
+print(n.wrap.k)

@@ -1,0 +1,8 @@
+// 无异常 finally 测试：正常路径下 finally 的执行
+// EXPECT: "work-finally"
+result = "work"
+try {
+    result = result
+} finally {
+    result = result + "-finally"
+}

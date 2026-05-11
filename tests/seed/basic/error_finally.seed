@@ -1,0 +1,10 @@
+// 错误与 finally 测试：异常抛出后 finally 块的执行保证
+// EXPECT: "catch-finally"
+result = ""
+try {
+    throw "error"
+} catch(e) {
+    result = "catch"
+} finally {
+    result = result + "-finally"
+}

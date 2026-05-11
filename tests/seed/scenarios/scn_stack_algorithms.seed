@@ -1,0 +1,60 @@
+// EXPECT: "OK:4"
+fn isBalanced(str) {
+    stack = []
+    pairs = { "(": ")" "[": "]" "{": "}" }
+    opens = keys(pairs)
+    chars = split(str "")
+    
+    for char in chars {
+        isOpen = false
+        for o in opens {
+            if o == char { isOpen = true }
+        }
+        if isOpen {
+            push(stack char)
+        } else {
+            isClose = false
+            for v in values(pairs) {
+                if v == char { isClose = true }
+            }
+            if isClose {
+                if len(stack) == 0 { return false }
+                last = stack[len(stack) - 1]
+                stack = slice(stack 0 len(stack) - 1)
+                if pairs[last] != char { return false }
+            }
+        }
+    }
+    return len(stack) == 0
+}
+
+fn evaluatePostfix(expr) {
+    tokens = split(expr " ")
+    stack = []
+    
+    for token in tokens {
+        if token == "+" || token == "-" || token == "*" || token == "/" {
+            b = stack[len(stack) - 1]
+            stack = slice(stack 0 len(stack) - 1)
+            a = stack[len(stack) - 1]
+            stack = slice(stack 0 len(stack) - 1)
+            
+            if token == "+" { push(stack a + b) }
+            if token == "-" { push(stack a - b) }
+            if token == "*" { push(stack a * b) }
+            if token == "/" { push(stack a / b) }
+        } else {
+            push(stack toInt(token))
+        }
+    }
+    return stack[0]
+}
+
+passed = 0
+
+if isBalanced("()[]{}") { passed = passed + 1 }
+if isBalanced("([)]") == false { passed = passed + 1 }
+if evaluatePostfix("3 4 + 2 *") == 14 { passed = passed + 1 }
+if evaluatePostfix("5 1 2 + 4 * + 3 -") == 14 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

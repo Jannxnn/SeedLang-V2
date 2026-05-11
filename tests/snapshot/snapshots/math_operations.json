@@ -1,0 +1,11 @@
+{
+  "name": "math_operations",
+  "code": "\nresult = 0\ni = 1\nwhile i < 11 {\n    result = result + i\n    i = i + 1\n}\nprint(\"Sum: \" + result)\n",
+  "output": [
+    "Sum: 55"
+  ],
+  "globals": {
+    "result": 55
+  },
+  "timestamp": "2026-04-09T19:41:49.637Z"
+}

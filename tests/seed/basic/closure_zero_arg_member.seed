@@ -1,0 +1,14 @@
+// EXPECT: 4142
+fn makeCounterObj() {
+    count = 40
+    fn next() {
+        count = count + 1
+        return count
+    }
+    return {next: next}
+}
+
+obj = makeCounterObj()
+v1 = obj.next()
+v2 = obj.next()
+result = v1 * 100 + v2

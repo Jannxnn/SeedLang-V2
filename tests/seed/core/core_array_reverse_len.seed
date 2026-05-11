@@ -1,0 +1,5 @@
+// 核心数组 reverse+len 测试：反转后长度不变性验证
+// EXPECT: 5
+arr = [1 2 3 4]
+r = reverse(arr)
+result = r[0] + r[3]

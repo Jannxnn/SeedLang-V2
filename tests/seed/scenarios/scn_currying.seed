@@ -1,0 +1,44 @@
+// 场景测试 - currying：柯里化函数的偏应用与参数延迟绑定
+// EXPECT: "OK:4"
+fn curry2(f) {
+    return (a) => {
+        return (b) => f(a b)
+    }
+}
+
+fn curry3(f) {
+    return (a) => {
+        return (b) => {
+            return (c) => f(a b c)
+        }
+    }
+}
+
+fn add3(a b c) {
+    return a + b + c
+}
+
+fn multiply(a b) {
+    return a * b
+}
+
+curriedAdd = curry3(add3)
+add10 = curriedAdd(10)
+add10_20 = add10(20)
+finalAdd = add10_20(5)
+
+curriedMul = curry2(multiply)
+double = curriedMul(2)
+finalMul = double(21)
+
+passed = 0
+if finalAdd == 35 { passed = passed + 1 }
+if finalMul == 42 { passed = passed + 1 }
+
+addPartial = curriedAdd(1)(2)
+if addPartial(3) == 6 { passed = passed + 1 }
+
+mulPartial = curriedMul(3)
+if mulPartial(4) == 12 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

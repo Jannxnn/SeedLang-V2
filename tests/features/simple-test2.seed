@@ -1,0 +1,11 @@
+// 基础变量与输出测试（变体）：验证多行语句顺序执行与 print 输出一致性
+
+print("Test 1")
+x = 10
+print("x = " + x)
+fn add(a b) {
+    return a + b
+}
+result = add(3 4)
+print("3 + 4 = " + result)
+print("Done!")

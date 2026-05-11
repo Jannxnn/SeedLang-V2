@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SeedLang Lumen Lite Preview</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      background: #070b16;
+      color: #dbe5ff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 14px;
+    }
+    h1 { margin: 0; font-size: 18px; }
+    p { margin: 0; font-size: 13px; color: #9fb1df; }
+    .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
+    .timing {
+      margin: 0;
+      font-size: 13px;
+      color: #94a3d1;
+    }
+    .kv {
+      font-size: 12px;
+      padding: 4px 8px;
+      border: 1px solid rgba(146, 170, 255, 0.35);
+      border-radius: 999px;
+      color: #cdd8ff;
+    }
+    button {
+      border: 1px solid #3750a1;
+      border-radius: 8px;
+      background: #1a2550;
+      color: #e3ebff;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    input[type="range"] {
+      width: min(42vw, 220px);
+      vertical-align: middle;
+    }
+    canvas {
+      width: min(96vw, 1100px);
+      aspect-ratio: 16 / 9;
+      border-radius: 10px;
+      border: 1px solid #2d3f80;
+      image-rendering: pixelated;
+      background: #050913;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <h1>Lumen Lite（SeedLang 核心逻辑）</h1>
+  <p>移动鼠标控制光源，观察遮挡阴影与间接光扩散。</p>
+  <div class="row">
+    <button id="startBtn">启动/重启</button>
+    <label style="font-size:13px;color:#9fb1df;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      压力倍数
+      <input id="stressFactor" type="range" min="1" max="40" step="1" value="1" />
+      <span class="kv" style="min-width:2.5em;text-align:center"><b id="stressVal">1</b></span>
+    </label>
+    <span class="kv">FPS: <b id="fps">0</b></span>
+    <span class="kv" id="status">状态：待启动</span>
+  </div>
+  <p class="timing">compute: <span id="computeMs">0.00</span>ms | present: <span id="presentMs">0.00</span>ms</p>
+  <canvas id="view" width="960" height="540"></canvas>
+
+  <script src="./lumen_lite_logic.js"></script>
+  <script>
+    const canvas = document.getElementById("view");
+    const ctx = canvas.getContext("2d");
+    const fpsEl = document.getElementById("fps");
+    const computeMsEl = document.getElementById("computeMs");
+    const presentMsEl = document.getElementById("presentMs");
+    const statusEl = document.getElementById("status");
+    const startBtn = document.getElementById("startBtn");
+    const stressFactorEl = document.getElementById("stressFactor");
+    const stressValEl = document.getElementById("stressVal");
+
+    function syncStressLabel() {
+      stressValEl.textContent = String(Math.max(1, Math.floor(Number(stressFactorEl.value) || 1)));
+    }
+    stressFactorEl.addEventListener("input", syncStressLabel);
+    syncStressLabel();
+
+    let animId = null;
+    let frame = 0;
+    let last = performance.now();
+    let ready = false;
+    let bufCan = null;
+    let bufCtx = null;
+
+    function clamp01(v) {
+      return Math.max(0, Math.min(1, Number(v) || 0));
+    }
+
+    function rgbFromGiLikeLite(giVal) {
+      const vv = clamp01(giVal);
+      const t = vv / (1 + vv);
+      return [
+        Math.floor(18 + 235 * t),
+        Math.floor(24 + 225 * t),
+        Math.floor(40 + 255 * t),
+      ];
+    }
+
+    function boot() {
+      if (typeof lumenInit !== "function" || typeof lumenStep !== "function" || typeof lumenSetLight !== "function") {
+        statusEl.textContent = "状态：逻辑加载失败";
+        return false;
+      }
+      lumenInit(128, 72);
+      bufCan = document.createElement("canvas");
+      bufCan.width = lumen.w;
+      bufCan.height = lumen.h;
+      bufCtx = bufCan.getContext("2d");
+      ready = true;
+      statusEl.textContent = "状态：运行中（SeedLang）";
+      return true;
+    }
+
+    function drawFrame() {
+      const gi = lumen.gi1;
+      const occ = lumen.occ1;
+      const img = bufCtx.createImageData(lumen.w, lumen.h);
+      const d = img.data;
+
+      for (let y = 0; y < lumen.h; y++) {
+        const yBase = y * lumen.w;
+        for (let x = 0; x < lumen.w; x++) {
+          const si = yBase + x;
+          const i = si * 4;
+          if (occ[si] === 1) {
+            d[i] = 38; d[i + 1] = 46; d[i + 2] = 72;
+          } else {
+            const rgb = rgbFromGiLikeLite(gi[si]);
+            d[i] = rgb[0];
+            d[i + 1] = rgb[1];
+            d[i + 2] = rgb[2];
+          }
+          d[i + 3] = 255;
+        }
+      }
+
+      bufCtx.putImageData(img, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(bufCan, 0, 0, canvas.width, canvas.height);
+
+      const ringR = Math.max(10, Math.min(22, canvas.width * 0.018));
+      const pad = ringR + 2;
+      let sx = (lumen.lightX / lumen.w) * canvas.width;
+      let sy = (lumen.lightY / lumen.h) * canvas.height;
+      sx = Math.min(canvas.width - pad, Math.max(pad, sx));
+      sy = Math.min(canvas.height - pad, Math.max(pad, sy));
+      ctx.strokeStyle = "rgba(255,245,170,0.95)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(sx, sy, ringR, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    function loop(ts) {
+      if (!ready) return;
+      const stress = Math.max(1, Math.floor(Number(stressFactorEl.value) || 1));
+      const t0 = performance.now();
+      for (let i = 0; i < stress; i++) {
+        lumenStep();
+      }
+      const t1 = performance.now();
+      drawFrame();
+      const t2 = performance.now();
+      computeMsEl.textContent = (t1 - t0).toFixed(2);
+      presentMsEl.textContent = (t2 - t1).toFixed(2);
+      frame++;
+      if (ts - last >= 1000) {
+        fpsEl.textContent = String(frame);
+        frame = 0;
+        last = ts;
+      }
+      animId = requestAnimationFrame(loop);
+    }
+
+    canvas.addEventListener("mousemove", (e) => {
+      if (!ready) return;
+      const rect = canvas.getBoundingClientRect();
+      const sx = lumen.w / rect.width;
+      const sy = lumen.h / rect.height;
+      lumenSetLight((e.clientX - rect.left) * sx, (e.clientY - rect.top) * sy);
+    });
+
+    startBtn.onclick = () => {
+      if (!ready && !boot()) return;
+      if (animId) cancelAnimationFrame(animId);
+      frame = 0;
+      last = performance.now();
+      animId = requestAnimationFrame(loop);
+    };
+
+    if (boot()) {
+      const t0 = performance.now();
+      lumenStep();
+      const t1 = performance.now();
+      drawFrame();
+      const t2 = performance.now();
+      computeMsEl.textContent = (t1 - t0).toFixed(2);
+      presentMsEl.textContent = (t2 - t1).toFixed(2);
+    }
+  </script>
+</body>
+</html>

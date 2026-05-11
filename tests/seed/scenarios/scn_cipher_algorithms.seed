@@ -1,0 +1,57 @@
+// 场景测试 - cipher algorithms：凯撒密码等经典加密算法实现
+// EXPECT: "OK:4"
+fn caesarCipher(text shift) {
+    result = ""
+    chars = split(text "")
+    for char in chars {
+        code = charAt(char 0)
+        if code >= "a" && code <= "z" {
+            shifted = (indexOf(split("abcdefghijklmnopqrstuvwxyz" "") code) + shift) % 26
+            result = result + charAt("abcdefghijklmnopqrstuvwxyz" shifted)
+        } else {
+            if code >= "A" && code <= "Z" {
+                shifted = (indexOf(split("ABCDEFGHIJKLMNOPQRSTUVWXYZ" "") code) + shift) % 26
+                result = result + charAt("ABCDEFGHIJKLMNOPQRSTUVWXYZ" shifted)
+            } else {
+                result = result + char
+            }
+        }
+    }
+    return result
+}
+
+fn rot13(text) {
+    return caesarCipher(text 13)
+}
+
+fn reverseWords(text) {
+    words = split(text " ")
+    result = []
+    for word in words {
+        chars = split(word "")
+        reversed = reverse(chars)
+        push(result join(reversed ""))
+    }
+    return join(result " ")
+}
+
+fn countWords(text) {
+    words = split(text " ")
+    return len(words)
+}
+
+passed = 0
+
+rotated = rot13("hello")
+if len(rotated) == 5 { passed = passed + 1 }
+
+reversed = reverseWords("hello world")
+if reversed == "olleh dlrow" { passed = passed + 1 }
+
+count = countWords("one two three four")
+if count == 4 { passed = passed + 1 }
+
+doubleRot = rot13(rot13("test"))
+if doubleRot == "test" { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

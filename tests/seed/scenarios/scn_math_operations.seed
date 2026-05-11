@@ -1,0 +1,31 @@
+// 场景测试 - math operations：数学运算工具函数（clamp/lerp/范围限制）
+// EXPECT: 124
+fn clamp(val minVal maxVal) {
+    if val < minVal { return minVal }
+    if val > maxVal { return maxVal }
+    return val
+}
+
+fn lerp(a b t) {
+    return a + (b - a) * t
+}
+
+fn sign(x) {
+    if x > 0 { return 1 }
+    if x < 0 { return -1 }
+    return 0
+}
+
+a = abs(-15)
+b = floor(3.7)
+c = ceil(3.2)
+d = round(3.5)
+e = min(10 20)
+f = max(10 20)
+g = sqrt(16)
+h = pow(2 3)
+i = clamp(150 0 100)
+j = lerp(0 100 0.5)
+k = sign(-42)
+
+result = a + b + c + d + e + f + g + h + i - j + k + 7

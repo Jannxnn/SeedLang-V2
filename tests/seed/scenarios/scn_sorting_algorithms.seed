@@ -1,0 +1,78 @@
+// EXPECT: "OK:4"
+fn bubbleSort(arr) {
+    result = []
+    for x in arr { push(result x) }
+    
+    n = len(result)
+    i = 0
+    while i < n {
+        j = 0
+        while j < n - i - 1 {
+            if result[j] > result[j + 1] {
+                temp = result[j]
+                result[j] = result[j + 1]
+                result[j + 1] = temp
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    return result
+}
+
+fn insertionSort(arr) {
+    result = []
+    for x in arr { push(result x) }
+    
+    i = 1
+    while i < len(result) {
+        key = result[i]
+        j = i - 1
+        while j >= 0 && result[j] > key {
+            result[j + 1] = result[j]
+            j = j - 1
+        }
+        result[j + 1] = key
+        i = i + 1
+    }
+    return result
+}
+
+fn selectionSort(arr) {
+    result = []
+    for x in arr { push(result x) }
+    
+    i = 0
+    while i < len(result) - 1 {
+        minIdx = i
+        j = i + 1
+        while j < len(result) {
+            if result[j] < result[minIdx] {
+                minIdx = j
+            }
+            j = j + 1
+        }
+        temp = result[i]
+        result[i] = result[minIdx]
+        result[minIdx] = temp
+        i = i + 1
+    }
+    return result
+}
+
+input = [64 34 25 12 22 11 90]
+
+passed = 0
+
+b = bubbleSort(input)
+if b[0] == 11 && b[6] == 90 { passed = passed + 1 }
+
+i = insertionSort(input)
+if i[0] == 11 && i[6] == 90 { passed = passed + 1 }
+
+s = selectionSort(input)
+if s[0] == 11 && s[6] == 90 { passed = passed + 1 }
+
+if len(b) == 7 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

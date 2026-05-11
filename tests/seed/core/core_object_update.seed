@@ -1,0 +1,5 @@
+﻿// 对象更新测试：对象属性的批量修改与合并
+// EXPECT: 33
+obj = { x: 10 y: 20 }
+obj.z = 3
+result = obj.x + obj.y + obj.z

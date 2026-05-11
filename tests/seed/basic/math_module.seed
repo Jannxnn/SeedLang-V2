@@ -1,0 +1,4 @@
+// 数学取模测试：% 取模运算符的正负数行为
+// EXPECT: 1024
+import math
+result = math.pow(2 10)

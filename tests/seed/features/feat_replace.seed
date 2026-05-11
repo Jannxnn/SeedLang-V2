@@ -1,0 +1,3 @@
+// 字符串 replace 测试：子串搜索与替换功能
+// EXPECT: "hexxo"
+result = replace("hello" "ll" "xx")

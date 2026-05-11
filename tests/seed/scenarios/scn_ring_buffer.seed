@@ -1,0 +1,74 @@
+// 场景测试 - ring buffer：环形缓冲区数据结构
+// EXPECT: "OK:4"
+class RingBuffer {
+    init(capacity) {
+        this.capacity = capacity
+        this.buffer = []
+        this.head = 0
+        this.tail = 0
+        this.full = false
+        
+        i = 0
+        while i < capacity {
+            push(this.buffer null)
+            i = i + 1
+        }
+    }
+    
+    write(item) {
+        this.buffer[this.tail] = item
+        this.tail = (this.tail + 1) % this.capacity
+        
+        if this.full {
+            this.head = (this.head + 1) % this.capacity
+        }
+        
+        if this.tail == this.head {
+            this.full = true
+        }
+    }
+    
+    read() {
+        if this.isEmpty() { return null }
+        
+        item = this.buffer[this.head]
+        this.buffer[this.head] = null
+        this.full = false
+        this.head = (this.head + 1) % this.capacity
+        return item
+    }
+    
+    isEmpty() {
+        return this.head == this.tail && this.full == false
+    }
+    
+    isFull() {
+        return this.full
+    }
+    
+    size() {
+        if this.full { return this.capacity }
+        if this.tail >= this.head {
+            return this.tail - this.head
+        }
+        return this.capacity - this.head + this.tail
+    }
+}
+
+buffer = RingBuffer(3)
+
+passed = 0
+if buffer.isEmpty() { passed = passed + 1 }
+
+buffer.write(1)
+buffer.write(2)
+buffer.write(3)
+
+if buffer.isFull() { passed = passed + 1 }
+
+buffer.write(4)
+
+if buffer.read() == 2 { passed = passed + 1 }
+if buffer.size() == 2 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

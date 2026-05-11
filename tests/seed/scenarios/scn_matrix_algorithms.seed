@@ -1,0 +1,103 @@
+// 场景测试 - matrix algorithms：矩阵螺旋遍历等矩阵算法
+// EXPECT: "OK:4"
+fn spiralMatrix(n) {
+    matrix = []
+    i = 0
+    while i < n {
+        row = []
+        j = 0
+        while j < n {
+            push(row 0)
+            j = j + 1
+        }
+        push(matrix row)
+        i = i + 1
+    }
+    
+    top = 0
+    bottom = n - 1
+    left = 0
+    right = n - 1
+    num = 1
+    
+    while top <= bottom && left <= right {
+        i = left
+        while i <= right {
+            matrix[top][i] = num
+            num = num + 1
+            i = i + 1
+        }
+        top = top + 1
+        
+        i = top
+        while i <= bottom {
+            matrix[i][right] = num
+            num = num + 1
+            i = i + 1
+        }
+        right = right - 1
+        
+        if top <= bottom {
+            i = right
+            while i >= left {
+                matrix[bottom][i] = num
+                num = num + 1
+                i = i - 1
+            }
+            bottom = bottom - 1
+        }
+        
+        if left <= right {
+            i = bottom
+            while i >= top {
+                matrix[i][left] = num
+                num = num + 1
+                i = i - 1
+            }
+            left = left + 1
+        }
+    }
+    
+    return matrix
+}
+
+fn rotateMatrix(matrix) {
+    n = len(matrix)
+    result = []
+    i = 0
+    while i < n {
+        row = []
+        j = 0
+        while j < n {
+            push(row 0)
+            j = j + 1
+        }
+        push(result row)
+        i = i + 1
+    }
+    
+    i = 0
+    while i < n {
+        j = 0
+        while j < n {
+            result[j][n - 1 - i] = matrix[i][j]
+            j = j + 1
+        }
+        i = i + 1
+    }
+    
+    return result
+}
+
+spiral = spiralMatrix(3)
+
+passed = 0
+if spiral[0][0] == 1 { passed = passed + 1 }
+if spiral[0][2] == 3 { passed = passed + 1 }
+if spiral[1][1] == 9 { passed = passed + 1 }
+
+original = [[1 2] [3 4]]
+rotated = rotateMatrix(original)
+if rotated[0][0] == 3 && rotated[0][1] == 1 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

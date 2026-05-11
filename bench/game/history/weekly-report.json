@@ -1,0 +1,48 @@
+{
+  "generatedAt": "2026-04-22T09:57:56.243Z",
+  "windowDays": 7,
+  "minRunsRequired": 7,
+  "totals": {
+    "gateRuns": 3,
+    "gatePassCount": 2,
+    "gatePassRatePct": 66.66666666666666
+  },
+  "cases": [
+    {
+      "case": "G01",
+      "runs": 3,
+      "passRatePct": 100,
+      "avgP95Ms": 0.299,
+      "avgP99Ms": 1.7783333333333333,
+      "avgOverBudgetPct": 0
+    },
+    {
+      "case": "G03",
+      "runs": 3,
+      "passRatePct": 100,
+      "avgP95Ms": 0.08566666666666667,
+      "avgP99Ms": 1.7043333333333333,
+      "avgOverBudgetPct": 0
+    },
+    {
+      "case": "G08",
+      "runs": 3,
+      "passRatePct": 100,
+      "avgP95Ms": 0.04666666666666666,
+      "avgP99Ms": 0.061,
+      "avgOverBudgetPct": 0
+    },
+    {
+      "case": "G10",
+      "runs": 3,
+      "passRatePct": 66.66666666666666,
+      "avgP95Ms": 2.5853333333333333,
+      "avgP99Ms": 3.116,
+      "avgOverBudgetPct": 0
+    }
+  ],
+  "recommendation": {
+    "scaleUp": false,
+    "reason": "insufficient-runs(<7)"
+  }
+}

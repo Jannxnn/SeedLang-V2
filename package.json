@@ -1,0 +1,83 @@
+{
+  "name": "seedlang",
+  "version": "2.0.0",
+  "description": "AI-specific efficient symbolic language - A high-efficiency programming language designed for AI, supporting Web/Agent/Game/Software development",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "seedlang": "dist/cli.js",
+    "seedlang-init": "scripts/seedlang-init.js"
+  },
+  "scripts": {
+    "prepublishOnly": "npm run build",
+    "build": "tsc",
+    "start": "node dist/cli.js",
+    "repl": "node repl.js",
+    "run:clc-seed": "node dist/cli.js selfhost/clc/clc.seed",
+    "test": "node tests/test-suite.js",
+    "verify:deliverable": "node examples/deliverables/stability-check/verify.js",
+    "verify:clc-win32": "node tools/verify-clc-win32.js",
+    "verify:particle-bench-consistency": "node tools/verify-particle-bench-consistency.js",
+    "compile:particle-bench-win32": "node tools/build-particle-bench-win32.js",
+    "compile:game:dungeon-win32": "node dist/cli.js examples/games/clc_reliability_dungeon_win32.seed --compile-c --subsystem windows -o dist/dungeon_win32.c",
+    "dev:game:dungeon-win32": "node tools/watch-dungeon-win32.js",
+    "compile:bench-clc": "node tools/compile-bench-clc.js",
+    "bench:clc:ci": "node bench/clc-ci-gate.js",
+    "bench:parallel": "node bench/run.js --parallel-bench",
+    "bench:multi": "node bench/run.js multi",
+    "bench:compile": "node bench/run.js compile",
+    "bench:compile:quick": "node bench/compile_bench.js --reps 3",
+    "test:bootstrap": "node tests/bootstrap/test-bootstrap-smoke.js",
+    "test:bootstrap:compare": "node tests/bootstrap/test-bootstrap-compare.js",
+    "test:interp-jit": "node tests/interp_jit/gate.js",
+    "test:jest": "jest",
+    "dev": "ts-node src/index.ts",
+    "build:website": "node examples/website/build_website.js",
+    "bench:game": "node bench/game/run.js",
+    "bench:game:ci": "node bench/game/ci-gate.js",
+    "bench:game:trend": "node bench/game/trend-report.js",
+    "bench:game:trend:strict": "node bench/game/trend-report.js --strict-exit true",
+    "bench:game:hotspots": "node bench/game/hotspots.js",
+    "compile:webapp": "node tools/seed-web-compile.js examples/website/website.seed dist/webapp",
+    "lint:seed": "node tools/seed-lint.js .",
+    "lint:seed:strict": "node tools/seed-lint.js . --strict",
+    "lint:seed:json": "node tools/seed-lint.js . --json",
+    "bench:industry": "node bench/industry/run.js",
+    "bench:industry:smoke": "node bench/industry/run.js smoke",
+    "bench:industry:vm": "node bench/industry/run.js vm",
+    "bench:industry:multi": "node bench/industry/run.js multi",
+    "bench:industry:interp": "node bench/industry/run.js interp",
+    "bench:runtime-compare": "node bench/runtime_ast_vs_vm.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/seedlang-team/seedlang.git"
+  },
+  "homepage": "https://github.com/seedlang-team/seedlang#readme",
+  "bugs": {
+    "url": "https://github.com/seedlang-team/seedlang/issues"
+  },
+  "files": [
+    "dist",
+    "scripts/seedlang-init.js",
+    "LICENSE",
+    "README.md"
+  ],
+  "keywords": [
+    "ai-language",
+    "symbolic-language",
+    "dsl",
+    "agent",
+    "web",
+    "game"
+  ],
+  "author": "SeedLang Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.0.0",
+    "jest": "^29.7.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.3.0"
+  }
+}

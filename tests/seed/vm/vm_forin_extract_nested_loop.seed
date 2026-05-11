@@ -1,0 +1,15 @@
+// 编译器优化：for-in 循环体含嵌套 for 循环时提取为独立函数
+// 验证嵌套 for 循环在 for-in 提取后仍正确执行
+// EXPECT: 5
+total = 0
+inputs = [1 2]
+for n in inputs {
+  s = 0
+  for (i = 0; i < n; i = i + 1) {
+    for (j = 0; j < n; j = j + 1) {
+      s = s + 1
+    }
+  }
+  total = total + s
+}
+result = total

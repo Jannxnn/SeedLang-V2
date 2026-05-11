@@ -1,0 +1,7 @@
+// 场景测试 - safe divide：安全除法（零值返回 null）
+// EXPECT: null
+fn safeDivide(a b) {
+    if b == 0 { return null }
+    return a / b
+}
+result = safeDivide(10 0)

@@ -1,0 +1,14 @@
+// 场景测试 - exception nested：嵌套异常的捕获与消息拼接
+// EXPECT: "inner:outer"
+msg = ""
+try {
+    try {
+        throw "inner"
+    } catch(e) {
+        msg = e
+        throw "outer"
+    }
+} catch(e2) {
+    msg = msg + ":" + e2
+}
+result = msg

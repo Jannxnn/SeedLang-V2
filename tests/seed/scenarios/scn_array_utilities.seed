@@ -1,0 +1,48 @@
+// 场景测试 - array utilities：数组工具函数（findFirst/findLast/takeWhile）
+// EXPECT: "OK:4"
+fn findFirst(arr pred) {
+    i = 0
+    while i < len(arr) {
+        if pred(arr[i]) { return i }
+        i = i + 1
+    }
+    return -1
+}
+
+fn findLast(arr pred) {
+    i = len(arr) - 1
+    while i >= 0 {
+        if pred(arr[i]) { return i }
+        i = i - 1
+    }
+    return -1
+}
+
+fn every(arr pred) {
+    for x in arr {
+        if pred(x) == false { return false }
+    }
+    return true
+}
+
+fn some(arr pred) {
+    for x in arr {
+        if pred(x) { return true }
+    }
+    return false
+}
+
+arr = [1 2 3 4 5 6 7 8]
+
+firstEven = findFirst(arr (x) => x % 2 == 0)
+lastOdd = findLast(arr (x) => x % 2 == 1)
+allPositive = every(arr (x) => x > 0)
+hasLarge = some(arr (x) => x > 10)
+
+passed = 0
+if firstEven == 1 { passed = passed + 1 }
+if lastOdd == 6 { passed = passed + 1 }
+if allPositive { passed = passed + 1 }
+if hasLarge == false { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

@@ -1,0 +1,12 @@
+// 场景测试 - complex return finally semantics：return 与 finally 的交互语义
+// EXPECT: "R|F"
+g = ""
+fn flow() {
+    try {
+        return "R"
+    } finally {
+        g = g + "F"
+    }
+}
+v = flow()
+result = v + "|" + g

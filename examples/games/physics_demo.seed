@@ -1,0 +1,319 @@
+W = 64
+H = 36
+GRAVITY = 0.15
+BOUNCE = 0.76
+FRICTION = 0.998
+FRAMES = 300
+
+seed.graphics.init(W H)
+
+balls = []
+platforms = []
+particles = []
+bounceCount = 0
+
+fn makeBall(x y vx vy radius cr cg cb) {
+    return { x: x y: y vx: vx vy: vy radius: radius cr: cr cg: cg cb: cb }
+}
+
+fn initBalls() {
+    push(balls makeBall(15 8 2 0 4 255 70 70))
+    push(balls makeBall(40 5 -1.5 0.5 5 70 255 70))
+    push(balls makeBall(65 10 1 -1 4 70 130 255))
+    push(balls makeBall(25 4 -0.8 1.5 3 255 210 50))
+    push(balls makeBall(55 8 1.5 -0.5 5 210 70 255))
+    push(balls makeBall(70 6 -2 0.3 4 50 210 210))
+}
+
+fn initPlatforms() {
+    push(platforms { x: 5 y: 34 w: 22 h: 2 })
+    push(platforms { x: 45 y: 28 w: 20 h: 2 })
+    push(platforms { x: 22 y: 22 w: 18 h: 2 })
+    push(platforms { x: 55 y: 40 w: 20 h: 2 })
+    push(platforms { x: 2 y: 16 w: 14 h: 2 })
+}
+
+fn spawnParticles(px py cr cg cb count) {
+    i = 0
+    while i < count {
+        angle = random() * 6.2832
+        speed = 0.3 + random() * 2
+        vx = cos(angle) * speed
+        vy = sin(angle) * speed
+        life = 6 + floor(random() * 14)
+        push(particles { x: px y: py vx: vx vy: vy life: life cr: cr cg: cg cb: cb })
+        i = i + 1
+    }
+}
+
+fn updateParticles() {
+    alive = []
+    i = 0
+    while i < len(particles) {
+        p = particles[i]
+        p.x = p.x + p.vx
+        p.y = p.y + p.vy
+        p.vy = p.vy + 0.05
+        p.vx = p.vx * 0.98
+        p.life = p.life - 1
+        if p.life > 0 {
+            push(alive p)
+        }
+        i = i + 1
+    }
+    return alive
+}
+
+fn updateBalls(frame) {
+    progress = frame / FRAMES
+    windX = sin(frame * 0.018) * (0.02 + progress * 0.05)
+    grav = GRAVITY + progress * 0.03
+    i = 0
+    while i < len(balls) {
+        b = balls[i]
+        b.vy = b.vy + grav
+        b.vx = b.vx + windX
+        b.vx = b.vx * FRICTION
+        b.vy = b.vy * FRICTION
+        b.x = b.x + b.vx
+        b.y = b.y + b.vy
+        r = b.radius
+        if b.x - r < 1 {
+            b.x = 1 + r
+            b.vx = abs(b.vx) * BOUNCE
+            spawnParticles(b.x b.y b.cr b.cg b.cb 3)
+            bounceCount = bounceCount + 1
+        }
+        if b.x + r > W - 2 {
+            b.x = W - 2 - r
+            b.vx = -abs(b.vx) * BOUNCE
+            spawnParticles(b.x b.y b.cr b.cg b.cb 3)
+            bounceCount = bounceCount + 1
+        }
+        if b.y - r < 1 {
+            b.y = 1 + r
+            b.vy = abs(b.vy) * BOUNCE
+            spawnParticles(b.x b.y b.cr b.cg b.cb 2)
+            bounceCount = bounceCount + 1
+        }
+        if b.y + r > H - 2 {
+            b.y = H - 2 - r
+            b.vy = -abs(b.vy) * BOUNCE
+            b.vx = b.vx * 0.96
+            spawnParticles(b.x b.y b.cr b.cg b.cb 5)
+            bounceCount = bounceCount + 1
+        }
+        j = 0
+        while j < len(platforms) {
+            p = platforms[j]
+            if (b.x + r > p.x) and (b.x - r < p.x + p.w) and (b.vy > 0) {
+                if (b.y + r > p.y - 1) and (b.y + r < p.y + p.h + 5) {
+                    b.y = p.y - r
+                    b.vy = -abs(b.vy) * BOUNCE
+                    b.vx = b.vx * 0.95
+                    spawnParticles(b.x p.y b.cr b.cg b.cb 4)
+                    bounceCount = bounceCount + 1
+                }
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+}
+
+fn ballCollisions() {
+    i = 0
+    while i < len(balls) {
+        j = i + 1
+        while j < len(balls) {
+            a = balls[i]
+            b = balls[j]
+            dx = b.x - a.x
+            dy = b.y - a.y
+            distSq = dx * dx + dy * dy
+            minDist = a.radius + b.radius
+            if (distSq < minDist * minDist) and (distSq > 0.01) {
+                dist = sqrt(distSq)
+                nx = dx / dist
+                ny = dy / dist
+                dvx = a.vx - b.vx
+                dvy = a.vy - b.vy
+                dvn = dvx * nx + dvy * ny
+                if dvn > 0 {
+                    a.vx = a.vx - dvn * nx * 0.9
+                    a.vy = a.vy - dvn * ny * 0.9
+                    b.vx = b.vx + dvn * nx * 0.9
+                    b.vy = b.vy + dvn * ny * 0.9
+                    overlap = minDist - dist
+                    a.x = a.x - nx * overlap * 0.5
+                    a.y = a.y - ny * overlap * 0.5
+                    b.x = b.x + nx * overlap * 0.5
+                    b.y = b.y + ny * overlap * 0.5
+                    mx = (a.x + b.x) * 0.5
+                    my = (a.y + b.y) * 0.5
+                    spawnParticles(mx my 255 255 200 8)
+                    bounceCount = bounceCount + 1
+                }
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+}
+
+fn maybeSpawnBall(frame) {
+    progress = frame / FRAMES
+    interval = floor(80 - progress * 45)
+    if interval < 25 { interval = 25 }
+    if (frame > 0) and (frame % interval == 0) and (len(balls) < 14) {
+        cr = floor(random() * 180 + 75)
+        cg = floor(random() * 180 + 75)
+        cb = floor(random() * 180 + 75)
+        sz = floor(random() * 3) + 2
+        vx = (random() - 0.5) * 3
+        vy = random() * 1.5
+        nx = floor(random() * (W - 16)) + 8
+        push(balls makeBall(nx 5 vx vy sz cr cg cb))
+        spawnParticles(nx 5 cr cg cb 8)
+    }
+    if (frame > 0) and (frame % 150 == 0) and (len(balls) < 14) {
+        cy = floor(random() * (H - 16)) + 8
+        if random() > 0.5 {
+            push(balls makeBall(4 cy 4 0 4 255 150 30))
+            spawnParticles(4 cy 255 150 30 10)
+        } else {
+            push(balls makeBall(W - 5 cy -4 0 4 30 150 255))
+            spawnParticles(W - 5 cy 30 150 255 10)
+        }
+    }
+}
+
+fn drawCircleShaded(cx cy radius cr cg cb) {
+    y = -radius
+    while y <= radius {
+        x = -radius
+        while x <= radius {
+            dSq = x * x + y * y
+            if dSq <= radius * radius {
+                px = floor(cx + x)
+                py = floor(cy + y)
+                inBounds = 0
+                if px > -1 { inBounds = 1 }
+                if W - px > 0 { inBounds = inBounds + 1 }
+                if py > -1 { inBounds = inBounds + 1 }
+                if H - py > 0 { inBounds = inBounds + 1 }
+                if inBounds == 4 {
+                    shade = 1.0
+                    if dSq > (radius - 1) * (radius - 1) {
+                        shade = 0.6
+                    }
+                    dx = x / radius
+                    dy = y / radius
+                    hl = 0
+                    if (dx < -0.3) and (dy < -0.3) {
+                        hl = 0.4
+                    }
+                    pr = floor(cr * shade + 255 * hl)
+                    pg = floor(cg * shade + 255 * hl)
+                    pb = floor(cb * shade + 255 * hl)
+                    if pr > 255 { pr = 255 }
+                    if pg > 255 { pg = 255 }
+                    if pb > 255 { pb = 255 }
+                    seed.graphics.drawPixel(px py pr pg pb 255)
+                }
+            }
+            x = x + 1
+        }
+        y = y + 1
+    }
+}
+
+fn drawWalls() {
+    seed.graphics.drawRect(0 0 W 1 25 35 65 255)
+    seed.graphics.drawRect(0 H - 1 W 1 25 35 65 255)
+    seed.graphics.drawRect(0 0 1 H 25 35 65 255)
+    seed.graphics.drawRect(W - 1 0 1 H 25 35 65 255)
+}
+
+fn drawPlatforms() {
+    i = 0
+    while i < len(platforms) {
+        p = platforms[i]
+        seed.graphics.drawRect(p.x p.y + 1 p.w p.h 55 65 95 255)
+        seed.graphics.drawRect(p.x p.y p.w 1 95 110 145 255)
+        j = 0
+        while j < p.w {
+            if j % 4 == 0 {
+                seed.graphics.drawPixel(p.x + j p.y 130 145 180 255)
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+}
+
+fn drawBalls() {
+    i = 0
+    while i < len(balls) {
+        b = balls[i]
+        drawCircleShaded(b.x b.y b.radius b.cr b.cg b.cb)
+        i = i + 1
+    }
+}
+
+fn drawParticles() {
+    i = 0
+    while i < len(particles) {
+        p = particles[i]
+        px = floor(p.x)
+        py = floor(p.y)
+        inBounds = 0
+        if px > -1 { inBounds = 1 }
+        if W - px > 0 { inBounds = inBounds + 1 }
+        if py > -1 { inBounds = inBounds + 1 }
+        if H - py > 0 { inBounds = inBounds + 1 }
+        if inBounds == 4 {
+            a = floor(p.life * 18)
+            if a > 255 { a = 255 }
+            seed.graphics.drawPixel(px py p.cr p.cg p.cb a)
+        }
+        i = i + 1
+    }
+}
+
+fn drawHUD(frame) {
+    barLen = floor((bounceCount / 250) * (W - 4))
+    if barLen > W - 4 { barLen = W - 4 }
+    if barLen > 0 {
+        seed.graphics.drawRect(2 1 barLen 1 255 200 50 160)
+    }
+    progress = frame / FRAMES
+    pw = floor(progress * (W - 4))
+    if pw > 0 {
+        seed.graphics.drawRect(2 H - 2 pw 1 50 170 255 130)
+    }
+}
+
+initBalls()
+initPlatforms()
+
+f = 0
+while f < FRAMES {
+    if f == 0 {
+        seed.graphics.clear(6 8 22 255)
+    } else {
+        seed.graphics.drawRect(0 0 W H 6 8 22 30)
+    }
+    maybeSpawnBall(f)
+    updateBalls(f)
+    ballCollisions()
+    particles = updateParticles()
+    drawWalls()
+    drawPlatforms()
+    drawParticles()
+    drawBalls()
+    drawHUD(f)
+    seed.graphics.present()
+    sleep(33)
+    f = f + 1
+}

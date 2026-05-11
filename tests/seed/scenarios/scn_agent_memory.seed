@@ -1,0 +1,12 @@
+// 场景测试 - agent memory：AI Agent 记忆系统的存储与检索机制
+// EXPECT: 3
+class Agent {
+    init() { this.mem = [] }
+    remember(x) { push(this.mem x) }
+    count() { return len(this.mem) }
+}
+a = Agent()
+a.remember("q1")
+a.remember("q2")
+a.remember("q3")
+result = a.count()

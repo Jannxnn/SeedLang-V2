@@ -1,0 +1,30 @@
+// 场景测试 - deep closure chain：深层闭包链的变量捕获与生命周期
+// EXPECT: 112
+fn makeCounter(start) {
+    n = start
+    return () => {
+        n = n + 1
+        return n
+    }
+}
+
+fn makeAdder(x) {
+    return (y) => x + y
+}
+
+fn makeMultiplier(x) {
+    return (y) => x * y
+}
+
+counter = makeCounter(0)
+a = counter()
+b = counter()
+c = counter()
+
+adder = makeAdder(10)
+d = adder(5)
+
+multiplier = makeMultiplier(7)
+e = multiplier(3)
+
+result = a + b + c + d + e + 70

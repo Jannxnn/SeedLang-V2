@@ -1,0 +1,55 @@
+// 场景测试 - function composition：多函数组合（从右到左管道）
+// EXPECT: "OK:4"
+fn composeAll(fns) {
+    return (x) => {
+        result = x
+        for f in fns {
+            result = f(result)
+        }
+        return result
+    }
+}
+
+fn pipeAll(fns) {
+    return (x) => {
+        result = x
+        for f in fns {
+            result = f(result)
+        }
+        return result
+    }
+}
+
+fn partial(handler presetArgs) {
+    return (remainingArgs) => {
+        allArgs = concat(presetArgs remainingArgs)
+        return handler(allArgs)
+    }
+}
+
+fn sumArr(arr) {
+    total = 0
+    for x in arr { total = total + x }
+    return total
+}
+
+fns = [(x) => x + 1 (x) => x * 2 (x) => x - 3]
+composed = composeAll(fns)
+r1 = composed(10)
+
+piped = pipeAll(fns)
+r2 = piped(10)
+
+seedArgs = [1 2]
+partialSum = partial(sumArr seedArgs)
+r3 = partialSum([3 4])
+
+passed = 0
+if r1 == 19 { passed = passed + 1 }
+if r2 == 19 { passed = passed + 1 }
+if r3 == 10 { passed = passed + 1 }
+
+doubleThenAdd = composeAll([(x) => x * 2 (x) => x + 10])
+if doubleThenAdd(5) == 20 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

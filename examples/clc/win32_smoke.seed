@@ -1,0 +1,12 @@
+// Win32 GUI smoke: seedlang this.seed --compile-c --subsystem windows
+// color: uint32 BGRA. pollEvents pumps the message queue (1=continue, 0=quit).
+n = 0
+while win32.pollEvents() {
+  win32.setPixel(32 32 255)
+  win32.present()
+  n = n + 1
+  if n > 120 {
+    break
+  }
+}
+

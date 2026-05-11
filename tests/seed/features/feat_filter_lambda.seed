@@ -1,0 +1,5 @@
+﻿// filter 高阶函数测试：lambda 表达式的过滤功能
+// EXPECT: 2
+arr = [1 2 3 4]
+ev = filter(arr (x) => x > 2)
+result = len(ev)

@@ -1,0 +1,4 @@
+// substring 测试：子串提取与边界索引
+// EXPECT: "bcd"
+s = "abcdef"
+result = substring(s 1 4)

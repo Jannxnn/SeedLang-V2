@@ -1,0 +1,7 @@
+// 递归基础测试：函数直接调用自身的栈深度与终止
+// EXPECT: 55
+fn fib(n) {
+    if n <= 1 { return n }
+    return fib(n - 1) + fib(n - 2)
+}
+result = fib(10)

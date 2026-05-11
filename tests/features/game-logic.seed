@@ -1,0 +1,956 @@
+// ============================================
+// SeedLang 游戏逻辑测试 - 使用 SeedLang 语法编写
+// 测试贪吃蛇、塔防、鱼缸、烟花等游戏逻辑
+// ============================================
+
+passed = 0
+failed = 0
+
+fn test(name result expected) {
+    if result == expected {
+        passed = passed + 1
+        print("  [OK] " + name)
+    } else {
+        failed = failed + 1
+        print("  [FAIL] " + name + " - Expected: " + toString(expected) + " Got: " + toString(result))
+    }
+}
+
+fn assertTrue(name condition) {
+    if condition {
+        passed = passed + 1
+        print("  [OK] " + name)
+    } else {
+        failed = failed + 1
+        print("  [FAIL] " + name + " - Condition should be true")
+    }
+}
+
+print("============================================================")
+print("       SeedLang Game Logic Tests (Pure SeedLang)")
+print("============================================================")
+
+// ============================================
+// 1. 贪吃蛇游戏逻辑
+// ============================================
+print("\n[1. Snake Game Logic]\n")
+
+snake = {
+    running: false
+    size: 16
+    body: [{x: 7 y: 8} {x: 6 y: 8} {x: 5 y: 8}]
+    dir: {x: 1 y: 0}
+    food: {x: 14 y: 9 type: "normal"}
+    score: 0
+    lives: 3
+    level: 1
+    multiplier: 1
+    power: null
+    powerTimer: 0
+    obstacles: []
+    aiSnake: {body: [] dir: {x: -1 y: 0} alive: true}
+    timeLimit: 60
+    timeLeft: 60
+    combo: 0
+    comboTimer: 0
+    cols: 32
+    rows: 20
+}
+test("Snake init running" snake.running false)
+test("Snake init score" snake.score 0)
+test("Snake body length" len(snake.body) 3)
+test("Snake head position x" snake.body[0].x 7)
+test("Snake direction x" snake.dir.x 1)
+
+fn snakeReset() {
+    snake.body = [{x: 7 y: 8} {x: 6 y: 8} {x: 5 y: 8}]
+    snake.dir = {x: 1 y: 0}
+    snake.food = {x: 14 y: 9 type: "normal"}
+    snake.score = 0
+    snake.lives = 3
+    snake.level = 1
+    snake.multiplier = 1
+    snake.power = null
+    snake.powerTimer = 0
+    snake.obstacles = []
+    snake.timeLeft = snake.timeLimit
+    snake.combo = 0
+    snake.comboTimer = 0
+    snake.aiSnake = {body: [{x: 25 y: 8} {x: 26 y: 8} {x: 27 y: 8}] dir: {x: -1 y: 0} alive: true}
+    snake.running = true
+}
+
+snakeReset()
+test("After reset - running" snake.running true)
+test("After reset - score" snake.score 0)
+test("After reset - lives" snake.lives 3)
+
+fn snakeMove() {
+    head = {x: snake.body[0].x + snake.dir.x y: snake.body[0].y + snake.dir.y}
+    
+    cols = floor(512 / snake.size)
+    rows = floor(320 / snake.size)
+    
+    if snake.power != "blue" {
+        if head.x < 0 || head.y < 0 || head.x >= cols || head.y >= rows {
+            snake.running = false
+            return false
+        }
+    } else {
+        if head.x < 0 { head.x = cols - 1 }
+        if head.x >= cols { head.x = 0 }
+        if head.y < 0 { head.y = rows - 1 }
+        if head.y >= rows { head.y = 0 }
+    }
+    
+    push(snake.body head)
+    
+    ateFood = (head.x == snake.food.x && head.y == snake.food.y)
+    if !ateFood {
+        // Remove tail (simplified - just reduce length conceptually)
+    }
+    
+    if ateFood {
+        points = 10 * snake.multiplier
+        snake.score = snake.score + points
+        snake.combo = snake.combo + 1
+        snake.comboTimer = 30
+        
+        if snake.combo >= 5 {
+            snake.multiplier = snake.multiplier + 1
+            snake.combo = 0
+        }
+        
+        if snake.food.type == "speed" {
+            snake.power = "speed"
+            snake.powerTimer = 300
+        }
+        
+        if snake.food.type == "shield" {
+            snake.power = "shield"
+            snake.powerTimer = 500
+        }
+        
+        if snake.food.type == "double" {
+            snake.power = "blue"
+            snake.powerTimer = 400
+        }
+    }
+    
+    return true
+}
+
+snakeReset()
+moveResult = snakeMove()
+test("Snake move success" moveResult true)
+test("Snake new head x" snake.body[3].x 8)
+
+snake.dir = {x: 0 y: -1}
+moveResult2 = snakeMove()
+test("Snake move up" moveResult2 true)
+test("Snake head after up" snake.body[4].y 7)
+
+// Test collision with wall
+snakeReset()
+snake.body[0].x = 31
+snake.dir = {x: 1 y: 0}
+collisionResult = snakeMove()
+test("Wall collision stops game" snake.running false)
+
+// ============================================
+// 2. 塔防游戏逻辑
+// ============================================
+print("\n[2. Tower Defense Game Logic]\n")
+
+tower = {
+    running: false
+    wave: 1
+    gold: 100
+    lives: 20
+    kills: 0
+    towers: []
+    enemies: []
+    bullets: []
+    path: [{x: 0 y: 5} {x: 4 y: 5} {x: 4 y: 2} {x: 8 y: 2} {x: 8 y: 7} {x: 12 y: 7} {x: 12 y: 3} {x: 17 y: 3}]
+    gridSize: 40
+    cols: 18
+    rows: 10
+    spawnTimer: 0
+    enemiesSpawned: 0
+    enemiesPerWave: 5
+}
+
+test("Tower init gold" tower.gold 100)
+test("Tower init lives" tower.lives 20)
+test("Tower path length" len(tower.path) 8)
+
+fn towerInit() {
+    tower.path = [{x: 0 y: 5} {x: 4 y: 5} {x: 4 y: 2} {x: 8 y: 2} {x: 8 y: 7} {x: 12 y: 7} {x: 12 y: 3} {x: 17 y: 3}]
+    tower.towers = []
+    tower.enemies = []
+    tower.bullets = []
+    tower.wave = 1
+    tower.gold = 100
+    tower.lives = 20
+    tower.kills = 0
+    tower.spawnTimer = 0
+    tower.enemiesSpawned = 0
+    tower.enemiesPerWave = 5
+    tower.running = false
+}
+
+towerInit()
+
+fn towerAddTower(gx gy) {
+    if tower.gold < 30 {
+        return false
+    }
+    
+    for (i = 0; i < len(tower.towers); i = i + 1) {
+        t = tower.towers[i]
+        if t.gx == gx && t.gy == gy {
+            return false
+        }
+    }
+    
+    for (i = 0; i < len(tower.path); i = i + 1) {
+        p = tower.path[i]
+        if p.x == gx && p.y == gy {
+            return false
+        }
+    }
+    
+    tower.gold = tower.gold - 30
+    push(tower.towers {
+        gx: gx
+        gy: gy
+        x: gx * tower.gridSize + tower.gridSize / 2
+        y: gy * tower.gridSize + tower.gridSize / 2
+        range: 120
+        damage: 10
+        fireRate: 30
+        fireCooldown: 0
+        level: 1
+        kills: 0
+    })
+    return true
+}
+
+addResult1 = towerAddTower(2 3)
+test("Add tower at (2,3)" addResult1 true)
+test("Gold after tower" tower.gold 70)
+test("Towers count" len(tower.towers) 1)
+
+addResult2 = towerAddTower(2 3)
+test("Duplicate tower rejected" addResult2 false)
+
+addResult3 = towerAddTower(0 5)
+test("Path tile rejected" addResult3 false)
+
+addResult4 = towerAddTower(10 1)
+test("Second tower added" addResult4 true)
+test("Two towers total" len(tower.towers) 2)
+
+fn towerSpawnEnemy() {
+    types = ["normal" "fast" "tank" "boss"]
+    typeIndex = floor(random() * 4)
+    enemyType = types[typeIndex]
+    
+    hp = 30 + tower.wave * 10
+    speed = 1
+    reward = 10
+    
+    if enemyType == "fast" {
+        hp = 20 + tower.wave * 5
+        speed = 2
+        reward = 15
+    }
+    
+    if enemyType == "tank" {
+        hp = 80 + tower.wave * 20
+        speed = 0.5
+        reward = 25
+    }
+    
+    if enemyType == "boss" {
+        hp = 200 + tower.wave * 50
+        speed = 0.3
+        reward = 50
+    }
+    
+    startNode = tower.path[0]
+    push(tower.enemies {
+        x: startNode.x * tower.gridSize
+        y: startNode.y * tower.gridSize
+        hp: hp
+        maxHp: hp
+        speed: speed
+        reward: reward
+        type: enemyType
+        pathIndex: 0
+        slowTimer: 0
+    })
+}
+
+towerSpawnEnemy()
+towerSpawnEnemy()
+towerSpawnEnemy()
+test("Enemies spawned" len(tower.enemies) 3)
+test("Enemy has hp" tower.enemies[0].hp > 0 true)
+
+fn towerStep() {
+    if !tower.running {
+        return {wave: tower.wave gold: tower.gold lives: tower.lives kills: tower.kills gameOver: false victory: false}
+    }
+    
+    tower.spawnTimer = tower.spawnTimer + 1
+    
+    if tower.spawnTimer >= 30 && tower.enemiesSpawned < tower.enemiesPerWave {
+        towerSpawnEnemy()
+        tower.enemiesSpawned = tower.enemiesSpawned + 1
+        tower.spawnTimer = 0
+    }
+    
+    for (ei = 0; ei < len(tower.enemies); ei = ei + 1) {
+        enemy = tower.enemies[ei]
+        
+        currentSpeed = enemy.speed
+        if enemy.slowTimer > 0 {
+            currentSpeed = currentSpeed * 0.5
+            enemy.slowTimer = enemy.slowTimer - 1
+        }
+        
+        if enemy.pathIndex < len(tower.path) - 1 {
+            target = tower.path[enemy.pathIndex + 1]
+            tx = target.x * tower.gridSize
+            ty = target.y * tower.gridSize
+            
+            dx = tx - enemy.x
+            dy = ty - enemy.y
+            dist = sqrt(dx * dx + dy * dy)
+            
+            if dist <= currentSpeed * 2 {
+                enemy.pathIndex = enemy.pathIndex + 1
+            } else {
+                enemy.x = enemy.x + (dx / dist) * currentSpeed
+                enemy.y = enemy.y + (dy / dist) * currentSpeed
+            }
+        } else {
+            tower.lives = tower.lives - 1
+            tower.enemies[ei] = null
+            
+            if tower.lives <= 0 {
+                tower.running = false
+            }
+        }
+    }
+    
+    cleanEnemies = []
+    for (ei = 0; ei < len(tower.enemies); ei = ei + 1) {
+        if tower.enemies[ei] != null {
+            push(cleanEnemies tower.enemies[ei])
+        }
+    }
+    tower.enemies = cleanEnemies
+    
+    for (ti = 0; ti < len(tower.towers); ti = ti + 1) {
+        t = tower.towers[ti]
+        
+        if t.fireCooldown > 0 {
+            t.fireCooldown = t.fireCooldown - 1
+        }
+        
+        if t.fireCooldown <= 0 {
+            for (ei = 0; ei < len(tower.enemies); ei = ei + 1) {
+                enemy = tower.enemies[ei]
+                dx = enemy.x - t.x
+                dy = enemy.y - t.y
+                dist = sqrt(dx * dx + dy * dy)
+                
+                if dist <= t.range {
+                    t.fireCooldown = t.fireRate
+                    
+                    damage = t.damage
+                    if t.level >= 2 {
+                        damage = damage + 5
+                    }
+                    
+                    push(tower.bullets {
+                        x: t.x
+                        y: t.y
+                        targetX: enemy.x
+                        targetY: enemy.y
+                        damage: damage
+                        speed: 8
+                        slow: t.level >= 3
+                    })
+                    break
+                }
+            }
+        }
+    }
+    
+    for (bi = len(tower.bullets) - 1; bi >= 0; bi = bi - 1) {
+        bullet = tower.bullets[bi]
+        dx = bullet.targetX - bullet.x
+        dy = bullet.targetY - bullet.y
+        dist = sqrt(dx * dx + dy * dy)
+        
+        if dist <= bullet.speed {
+            hit = false
+            for (ei = 0; ei < len(tower.enemies); ei = ei + 1) {
+                enemy = tower.enemies[ei]
+                edx = enemy.x - bullet.x
+                edy = enemy.y - bullet.y
+                eDist = sqrt(edx * edx + edy * edy)
+                
+                if eDist < 20 {
+                    enemy.hp = enemy.hp - bullet.damage
+                    
+                    if bullet.slow {
+                        enemy.slowTimer = 120
+                    }
+                    
+                    if enemy.hp <= 0 {
+                        tower.gold = tower.gold + enemy.reward
+                        tower.kills = tower.kills + 1
+                        t = tower.towers[0]
+                        if t {
+                            t.kills = t.kills + 1
+                            if t.kills >= 10 && t.level < 3 {
+                                t.level = t.level + 1
+                                t.range = t.range + 20
+                                t.damage = t.damage + 5
+                                t.kills = 0
+                            }
+                        }
+                    }
+                    
+                    hit = true
+                    break
+                }
+            }
+            
+            if hit {
+                tower.bullets[bi] = null
+            }
+        } else {
+            bullet.x = bullet.x + (dx / dist) * bullet.speed
+            bullet.y = bullet.y + (dy / dist) * bullet.speed
+        }
+    }
+    
+    cleanBullets = []
+    for (bi = 0; bi < len(tower.bullets); bi = bi + 1) {
+        if tower.bullets[bi] != null {
+            push(cleanBullets tower.bullets[bi])
+        }
+    }
+    tower.bullets = cleanBullets
+    
+    if tower.enemiesSpawned >= tower.enemiesPerWave && len(tower.enemies) == 0 {
+        tower.wave = tower.wave + 1
+        tower.enemiesSpawned = 0
+        tower.enemiesPerWave = tower.enemiesPerWave + 2
+        tower.gold = tower.gold + 20 + tower.wave * 5
+        
+        if tower.wave > 10 {
+            tower.running = false
+            return {wave: tower.wave gold: tower.gold lives: tower.lives kills: tower.kills gameOver: false victory: true}
+        }
+    }
+    
+    return {wave: tower.wave gold: tower.gold lives: tower.lives kills: tower.kills gameOver: false victory: false}
+}
+
+towerInit()
+tower.running = true
+stepResult = towerStep()
+test("Tower step wave" stepResult.wave 1)
+test("Tower step gold" stepResult.gold 100)
+
+for (step = 0; step < 35; step = step + 1) {
+    towerStep()
+}
+test("After 35 steps - enemies spawned" len(tower.enemies) > 0 true)
+
+// ============================================
+// 3. 鱼缸模拟系统
+// ============================================
+print("\n[3. Fish Tank Simulation]\n")
+
+fishTank = {
+    running: false
+    fishes: []
+    bubbles: []
+    plants: []
+    foods: []
+    time: 0
+    width: 520
+    height: 320
+}
+
+fishColors = ["#ff6b8a" "#4f7cff" "#22d3a4" "#ffbf59"]
+
+fn initFishTank() {
+    fishTank.fishes = []
+    fishTank.bubbles = []
+    fishTank.plants = []
+    fishTank.foods = []
+    fishTank.time = 0
+    fishTank.running = true
+    
+    for (i = 0; i < 8; i = i + 1) {
+        colorIdx = floor(random() * 4)
+        fishColor = fishColors[colorIdx]
+        push(fishTank.fishes {
+            x: random() * 480 + 20
+            y: random() * 280 + 20
+            vx: random() * 2 - 1
+            vy: random() * 2 - 1
+            size: random() * 15 + 10
+            color: fishColor
+            angle: random() * 360
+            tailPhase: random() * 360
+            speed: random() * 1.5 + 0.5
+        })
+    }
+    
+    for (i = 0; i < 5; i = i + 1) {
+        push(fishTank.plants {
+            x: 50 + i * 100
+            height: random() * 80 + 60
+            color: ["#22d3a4" "#1ab080" "#159870"][floor(random() * 3)]
+            phase: random() * 360
+        })
+    }
+}
+
+initFishTank()
+test("Fish tank initialized" fishTank.running true)
+test("Fishes count" len(fishTank.fishes) 8)
+test("Plants count" len(fishTank.plants) 5)
+
+fn updateFishTank() {
+    if !fishTank.running { return }
+    fishTank.time = fishTank.time + 1
+    
+    for (i = 0; i < len(fishTank.fishes); i = i + 1) {
+        fish = fishTank.fishes[i]
+        
+        fish.vx = fish.vx + random() * 0.4 - 0.2
+        fish.vy = fish.vy + random() * 0.4 - 0.2
+        
+        maxSpeed = 2
+        if fish.vx > maxSpeed { fish.vx = maxSpeed }
+        if fish.vx < -maxSpeed { fish.vx = -maxSpeed }
+        if fish.vy > maxSpeed { fish.vy = maxSpeed }
+        if fish.vy < -maxSpeed { fish.vy = -maxSpeed }
+        
+        fish.x = fish.x + fish.vx
+        fish.y = fish.y + fish.vy
+        
+        margin = 20
+        if fish.x < margin {
+            fish.x = margin
+            fish.vx = abs(fish.vx)
+        }
+        if fish.x > fishTank.width - margin {
+            fish.x = fishTank.width - margin
+            fish.vx = -abs(fish.vx)
+        }
+        if fish.y < margin {
+            fish.y = margin
+            fish.vy = abs(fish.vy)
+        }
+        if fish.y > fishTank.height - margin {
+            fish.y = fishTank.height - margin
+            fish.vy = -abs(fish.vy)
+        }
+        
+        targetAngle = atan2(fish.vy fish.vx) * 180 / 3.14159
+        diff = targetAngle - fish.angle
+        while diff > 180 { diff = diff - 360 }
+        while diff < -180 { diff = diff + 360 }
+        fish.angle = fish.angle + diff * 0.1
+        
+        fish.tailPhase = fish.tailPhase + 10
+    }
+    
+    for (i = 0; i < len(fishTank.plants); i = i + 1) {
+        plant = fishTank.plants[i]
+        plant.phase = plant.phase + 2
+    }
+    
+    if random() < 0.03 {
+        bx = random() * fishTank.width
+        by = fishTank.height
+        push(fishTank.bubbles {
+            x: bx
+            y: by
+            size: random() * 6 + 2
+            speed: random() * 1.5 + 0.5
+            wobble: random() * 6.28
+        })
+    }
+    
+    cleanBubbles = []
+    for (i = 0; i < len(fishTank.bubbles); i = i + 1) {
+        bubble = fishTank.bubbles[i]
+        bubble.y = bubble.y - bubble.speed
+        bubble.wobble = bubble.wobble + 0.1
+        bubble.x = bubble.x + sin(bubble.wobble) * 0.5
+        
+        if bubble.y > 10 {
+            push(cleanBubbles bubble)
+        }
+    }
+    fishTank.bubbles = cleanBubbles
+    
+    for (fi = len(fishTank.foods) - 1; fi >= 0; fi = fi - 1) {
+        food = fishTank.foods[fi]
+        food.y = food.y + 0.5
+        food.life = food.life - 1
+        
+        if food.life <= 0 {
+            fishTank.foods[fi] = null
+            continue
+        }
+        
+        for (i = 0; i < len(fishTank.fishes); i = i + 1) {
+            fish = fishTank.fishes[i]
+            dx = food.x - fish.x
+            dy = food.y - fish.y
+            dist = sqrt(dx * dx + dy * dy)
+            
+            if dist < fish.size + 5 {
+                attractX = dx / dist * 0.3
+                attractY = dy / dist * 0.3
+                fish.vx = fish.vx + attractX
+                fish.vy = fish.vy + attractY
+                
+                if dist < 8 {
+                    fishTank.foods[fi] = null
+                    break
+                }
+            }
+        }
+    }
+    
+    cleanFoods = []
+    for (i = 0; i < len(fishTank.foods); i = i + 1) {
+        if fishTank.foods[i] != null {
+            push(cleanFoods fishTank.foods[i])
+        }
+    }
+    fishTank.foods = cleanFoods
+}
+
+updateFishTank()
+test("Time advanced" fishTank.time 1)
+
+firstFish = fishTank.fishes[0]
+assertTrue("Fish has valid x" firstFish.x >= 20 && firstFish.x <= 500)
+assertTrue("Fish has valid y" firstFish.y >= 20 && firstFish.y <= 300)
+
+for (frame = 0; frame < 100; frame = frame + 1) {
+    updateFishTank()
+}
+
+test("Time after 100 frames" fishTank.time 101)
+assertTrue("Fish moved" fishTank.fishes[0].x != firstFish.x || fishTank.fishes[0].y != firstFish.y)
+
+fn addFood(x y) {
+    if !fishTank.running { return }
+    push(fishTank.foods {
+        x: x
+        y: y
+        life: 600
+        size: 4
+    })
+}
+
+addFood(260 160)
+test("Food added" len(fishTank.foods) 1)
+
+// ============================================
+// 4. 烟花粒子系统
+// ============================================
+print("\n[4. Fireworks Particle System]\n")
+
+fireworks = {
+    running: false
+    particles: []
+    rockets: []
+    time: 0
+    autoLaunch: true
+    width: 520
+    height: 320
+}
+
+fwColors = ["#ff6b8a" "#4f7cff" "#22d3a4" "#ffbf59" "#a86bff"]
+
+fn initFireworks() {
+    fireworks.particles = []
+    fireworks.rockets = []
+    fireworks.time = 0
+    fireworks.running = true
+}
+
+initFireworks()
+test("Fireworks initialized" fireworks.running true)
+
+fn launchRocket(x targetY) {
+    colorIdx = floor(random() * len(fwColors))
+    fwColor = fwColors[colorIdx]
+    push(fireworks.rockets {
+        x: x
+        y: fireworks.height
+        vx: random() * 2 - 1
+        vy: -(random() * 3 + 8)
+        targetY: targetY
+        color: fwColor
+        trail: []
+        exploded: false
+    })
+}
+
+launchRocket(260 100)
+launchRocket(130 120)
+launchRocket(390 80)
+test("Rockets launched" len(fireworks.rockets) 3)
+
+fn explodeFirework(rocket) {
+    particleCount = floor(random() * 40) + 60
+    
+    for (i = 0; i < particleCount; i = i + 1) {
+        angle = random() * 6.28
+        speed = random() * 4 + 2
+        particleType = "normal"
+        if random() > 0.7 { particleType = "sparkle" }
+        if random() > 0.9 { particleType = "trail" }
+        
+        push(fireworks.particles {
+            x: rocket.x
+            y: rocket.y
+            vx: cos(angle) * speed
+            vy: sin(angle) * speed
+            life: random() * 60 + 40
+            maxLife: random() * 60 + 40
+            color: rocket.color
+            size: random() * 3 + 1
+            type: particleType
+            gravity: 0.05
+            alpha: 1
+        })
+    }
+}
+
+rocket = fireworks.rockets[0]
+explodeFirework(rocket)
+test("Particles created" len(fireworks.particles) > 50 true)
+
+fn updateFireworks() {
+    if !fireworks.running { return }
+    fireworks.time = fireworks.time + 1
+    
+    for (ri = len(fireworks.rockets) - 1; ri >= 0; ri = ri - 1) {
+        rocket = fireworks.rockets[ri]
+        
+        if rocket.exploded {
+            fireworks.rockets[ri] = null
+            continue
+        }
+        
+        push(rocket.trail {x: rocket.x y: rocket.y alpha: 1})
+        if len(rocket.trail) > 10 {
+            rocket.trail = slice(rocket.trail 1 len(rocket.trail))
+        }
+        
+        rocket.x = rocket.x + rocket.vx
+        rocket.y = rocket.y + rocket.vy
+        rocket.vy = rocket.vy + 0.15
+        
+        if rocket.y <= rocket.targetY || rocket.vy >= 0 {
+            explodeFirework(rocket)
+            rocket.exploded = true
+        }
+    }
+    
+    cleanRockets = []
+    for (ri = 0; ri < len(fireworks.rockets); ri = ri + 1) {
+        if fireworks.rockets[ri] != null {
+            push(cleanRockets fireworks.rockets[ri])
+        }
+    }
+    fireworks.rockets = cleanRockets
+    
+    for (pi = len(fireworks.particles) - 1; pi >= 0; pi = pi - 1) {
+        particle = fireworks.particles[pi]
+        
+        particle.vy = particle.vy + particle.gravity
+        particle.x = particle.x + particle.vx
+        particle.y = particle.y + particle.vy
+        particle.vx = particle.vx * 0.98
+        particle.vy = particle.vy * 0.98
+        particle.life = particle.life - 1
+        particle.alpha = particle.life / particle.maxLife
+        
+        if particle.type == "sparkle" {
+            particle.size = particle.size * 0.95
+        }
+        
+        if particle.life <= 0 || particle.alpha <= 0 {
+            fireworks.particles[pi] = null
+        }
+    }
+    
+    cleanParticles = []
+    for (pi = 0; pi < len(fireworks.particles); pi = pi + 1) {
+        if fireworks.particles[pi] != null {
+            push(cleanParticles fireworks.particles[pi])
+        }
+    }
+    fireworks.particles = cleanParticles
+    
+    if fireworks.autoLaunch && fireworks.time % 45 == 0 {
+        rx = random() * (fireworks.width - 100) + 50
+        rty = random() * 100 + 50
+        launchRocket(rx rty)
+    }
+}
+
+updateFireworks()
+test("Fireworks updated" fireworks.time 1)
+
+for (frame = 0; frame < 60; frame = frame + 1) {
+    updateFireworks()
+}
+
+test("Auto-launch works" len(fireworks.rockets) > 0 true || len(fireworks.particles) > 0 true)
+
+// ============================================
+// 5. 状态机模式
+// ============================================
+print("\n[5. Game State Machine]\n")
+
+gameState = "menu"
+score = 0
+level = 1
+
+fn startGame() {
+    gameState = "playing"
+    score = 0
+    level = 1
+}
+
+fn pauseGame() {
+    if gameState == "playing" {
+        gameState = "paused"
+    }
+}
+
+fn resumeGame() {
+    if gameState == "paused" {
+        gameState = "playing"
+    }
+}
+
+fn endGame(finalScore) {
+    gameState = "gameover"
+    score = finalScore
+}
+
+startGame()
+test("Game started" gameState "playing")
+test("Initial score" score 0)
+
+pauseGame()
+test("Game paused" gameState "paused")
+
+resumeGame()
+test("Game resumed" gameState "playing")
+
+endGame(1500)
+test("Game ended" gameState "gameover")
+test("Final score" score 1500)
+
+states = {
+    menu: {canPause: false canResume: false}
+    playing: {canPause: true canResume: false}
+    paused: {canPause: false canResume: true}
+    gameover: {canPause: false canResume: false}
+}
+
+currentState = "menu"
+
+fn transition(newState) {
+    if states[currentState] && states[newState] {
+        currentState = newState
+    }
+}
+
+transition("playing")
+test("Transition to playing" currentState "playing")
+assertTrue("Can pause in playing" states[currentState].canPause)
+
+transition("paused")
+test("Transition to paused" currentState "paused")
+assertTrue("Can resume in paused" states[currentState].canResume)
+
+transition("menu")
+test("Transition to menu" currentState "menu")
+
+// ============================================
+// 6. 性能测试模式
+// ============================================
+print("\n[6. Performance Patterns]\n")
+
+bigSum = 0
+for (i = 0; i < 1000; i = i + 1) {
+    bigSum = bigSum + i
+}
+test("Loop 0-999 sum" bigSum 499500)
+
+resultsArr = []
+for (i = 0; i < 100; i = i + 1) {
+    push(resultsArr i * i)
+}
+test("Array accumulation" len(resultsArr) 100)
+test("Last squared value" resultsArr[99] 9801)
+
+matrix = []
+for (row = 0; row < 10; row = row + 1) {
+    rowData = []
+    for (col = 0; col < 10; col = col + 1) {
+        push(rowData row * 10 + col)
+    }
+    push(matrix rowData)
+}
+test("Matrix created" len(matrix) 10)
+test("Matrix element [5][3]" matrix[5][3] 53)
+
+filteredLarge = filter([1 2 3 4 5 6 7 8 9 10] (x) => x > 3 && x < 8)
+test("Filter large array" len(filteredLarge) 4)
+
+mappedLarge = map([1 2 3 4 5] (x) => x * x * x)
+test("Map large array" mappedLarge[2] 27)
+
+reducedLarge = reduce([1 2 3 4 5 6 7 8 9 10] (a b) => a * b 1)
+test("Reduce multiplication" reducedLarge 3628800)
+
+// ============================================
+// 结果汇总 // ============================================
+print("\n============================================================")
+print("  Game Logic Test Results")
+print("============================================================")
+total = passed + failed
+print("  Total: " + total)
+print("  Passed: " + passed)
+print("  Failed: " + failed)
+
+if failed > 0 {
+    print("[FAIL] Some tests failed!")
+} else {
+    print("[OK] All game logic tests passed!")
+}

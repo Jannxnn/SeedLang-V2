@@ -1,0 +1,8 @@
+// 对象 for-in 迭代：空对象不执行循环体
+// EXPECT: 0
+obj = {}
+count = 0
+for v in obj {
+  count = count + 1
+}
+result = count

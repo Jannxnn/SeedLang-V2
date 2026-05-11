@@ -1,0 +1,13 @@
+// try-catch 错误捕获测试：异常抛出与 catch 分支匹配
+// EXPECT: "inner-outer"
+result = ""
+try {
+    try {
+        throw "inner"
+    } catch(e1) {
+        result = e1
+        throw "outer"
+    }
+} catch(e2) {
+    result = result + "-" + e2
+}

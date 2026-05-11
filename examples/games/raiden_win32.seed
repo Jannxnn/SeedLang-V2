@@ -1,0 +1,824 @@
+// Raiden (雷电) — CLC WIN32 pixel shooter v2
+// Compile: node dist/cli.js examples/games/raiden_win32.seed --compile-c --subsystem windows -o build/raiden_win32.c
+// Empty arrays start as U8; CLC runtime upgrades on assign — older sl_arr_set_int truncated X/Y to 0–255 (enemies stuck left/top).
+
+SW = 640
+SH = 480
+SX_LAST = SW - 1
+SY_LAST = SH - 1
+FPS = 60
+FRAME_MS = 1000 / FPS
+MAX_PARTICLES = 1400
+STAR_COUNT = 72
+
+BG_COLOR = 0xFF080820
+PLAYER_COLOR = 0xFF00CCFF
+PLAYER_CORE = 0xFFFFFFFF
+BULLET_NORMAL = 0xFFFFFF00
+BULLET_SPREAD = 0xFF00FF88
+BULLET_LASER = 0xFF4488FF
+ENEMY_BASIC = 0xFFFF4444
+ENEMY_TANK = 0xFFFFAA00
+ENEMY_FAST = 0xFFFF44FF
+ENEMY_BULLET = 0xFFFF6600
+HP_BG = 0xFF222233
+HP_BORDER = 0xFF556688
+HP_GREEN = 0xFF00DD55
+HP_YELLOW = 0xFFDDDD00
+HP_RED = 0xFFFF2222
+UI_TEXT_BG = 0xCC111122
+WHITE = 0xFFFFFFFF
+GRAY = 0xFF888899
+
+fn clamp(v lo hi) {
+    if v < lo { return lo }
+    if v > hi { return hi }
+    return v
+}
+
+fn abs(x) {
+    if x < 0 { return 0 - x }
+    return x
+}
+
+class Player {
+    init() {
+        this.x = 320
+        this.y = 400
+        this.hp = 100
+        this.maxHp = 100
+        this.ammo = 1
+        this.cooldown = 0
+        this.invincible = 0
+        this.score = 0
+        this.combo = 0
+        this.comboTimer = 0
+    }
+}
+
+player = Player()
+spawnTimer = 0
+spawnInterval = 90
+difficultyTimer = 0
+frameCount = 0
+wave = 1
+shakeX = 0
+shakeY = 0
+shakeDur = 0
+flashAlpha = 0
+lastTime = 0
+
+enemyX = []
+enemyY = []
+enemyHp = []
+enemyMaxHp = []
+enemyType = []
+enemyAlive = []
+enemySize = []
+enemyFireTimer = []
+enemyCount = 0
+
+bulletX = []
+bulletY = []
+bulletVx = []
+bulletVy = []
+bulletType = []
+bulletDmg = []
+bulletAlive = []
+bulletCount = 0
+
+eBulletX = []
+eBulletY = []
+eBulletVx = []
+eBulletVy = []
+eBulletAlive = []
+eBulletCount = 0
+
+particleX = []
+particleY = []
+particleVx = []
+particleVy = []
+particleColor = []
+particleLife = []
+particleMaxLife = []
+particleSize = []
+particleCount = 0
+
+fn addEnemy(x y hp type) {
+    idx = enemyCount
+    enemyX[idx] = x
+    enemyY[idx] = y
+    enemyHp[idx] = hp
+    enemyMaxHp[idx] = hp
+    enemyType[idx] = type
+    enemyAlive[idx] = 1
+    enemySize[idx] = 10 + type * 4
+    enemyFireTimer[idx] = random(30 90)
+    enemyCount = enemyCount + 1
+}
+
+fn addBullet(x y vx vy type dmg) {
+    idx = bulletCount
+    bulletX[idx] = x
+    bulletY[idx] = y
+    bulletVx[idx] = vx
+    bulletVy[idx] = vy
+    bulletType[idx] = type
+    bulletDmg[idx] = dmg
+    bulletAlive[idx] = 1
+    bulletCount = bulletCount + 1
+}
+
+fn addEBullet(x y vx vy) {
+    idx = eBulletCount
+    eBulletX[idx] = x
+    eBulletY[idx] = y
+    eBulletVx[idx] = vx
+    eBulletVy[idx] = vy
+    eBulletAlive[idx] = 1
+    eBulletCount = eBulletCount + 1
+}
+
+fn addParticle(x y vx vy color life size) {
+    if particleCount >= MAX_PARTICLES { return }
+    idx = particleCount
+    particleX[idx] = x
+    particleY[idx] = y
+    particleVx[idx] = vx
+    particleVy[idx] = vy
+    particleColor[idx] = color
+    particleLife[idx] = life
+    particleMaxLife[idx] = life
+    particleSize[idx] = size
+    particleCount = particleCount + 1
+}
+
+fn spawnEnemy() {
+    ex = random(50 590)
+    r = random(1 100)
+    if r <= 55 {
+        addEnemy(ex 0 20 1)
+    } else if r <= 80 {
+        addEnemy(ex 0 50 2)
+    } else {
+        addEnemy(ex 0 15 3)
+    }
+}
+
+fn spawnExplosion(x y n color1 color2) {
+    neg5 = 0 - 5
+    i = 0
+    while i < n {
+        vx = random(neg5 5)
+        vy = random(neg5 5)
+        col = 0
+        if i % 2 == 0 { col = color1 } else { col = color2 }
+        life = random(20 45)
+        sz = random(2 5)
+        addParticle(x y vx vy col life sz)
+        i = i + 1
+    }
+}
+
+fn spawnTrail(x y color) {
+    neg1 = 0 - 1
+    vx = random(neg1 1)
+    vy = random(1 3)
+    addParticle(x y vx vy color 12 2)
+}
+
+fn spawnSpark(x y n color) {
+    neg3 = 0 - 3
+    i = 0
+    while i < n {
+        vx = random(neg3 3)
+        vy = random(neg3 3)
+        addParticle(x y vx vy color 8 1)
+        i = i + 1
+    }
+}
+
+fn fireBullets() {
+    if player.cooldown > 0 {
+        player.cooldown = player.cooldown - 1
+        return
+    }
+    if win32.isKeyDown(win32.VK_SPACE) == 0 {
+        return
+    }
+    vy = 0 - 8
+    if player.ammo == 1 {
+        addBullet(player.x player.y - 14 0 vy 1 10)
+        player.cooldown = 8
+    } else if player.ammo == 2 {
+        neg1 = 0 - 1
+        addBullet(player.x - 7 player.y - 12 neg1 vy 2 7)
+        addBullet(player.x player.y - 14 0 vy 2 8)
+        addBullet(player.x + 7 player.y - 12 1 vy 2 7)
+        player.cooldown = 12
+    } else {
+        neg1 = 0 - 1
+        addBullet(player.x - 12 player.y - 10 neg1 vy 3 12)
+        addBullet(player.x - 5 player.y - 14 0 vy 3 14)
+        addBullet(player.x player.y - 14 0 vy 3 14)
+        addBullet(player.x + 5 player.y - 14 0 vy 3 14)
+        addBullet(player.x + 12 player.y - 10 1 vy 3 12)
+        player.cooldown = 15
+    }
+}
+
+fn updatePlayer() {
+    speed = 4
+    if win32.isKeyDown(win32.VK_LEFT) { player.x = player.x - speed }
+    if win32.isKeyDown(win32.VK_RIGHT) { player.x = player.x + speed }
+    if win32.isKeyDown(win32.VK_UP) { player.y = player.y - speed }
+    if win32.isKeyDown(win32.VK_DOWN) { player.y = player.y + speed }
+    player.x = clamp(player.x 16 624)
+    player.y = clamp(player.y 30 472)
+    if win32.isKeyDown(win32.VK_1) { player.ammo = 1 }
+    if win32.isKeyDown(win32.VK_2) { player.ammo = 2 }
+    if win32.isKeyDown(win32.VK_3) { player.ammo = 3 }
+    if player.invincible > 0 { player.invincible = player.invincible - 1 }
+    if player.comboTimer > 0 {
+        player.comboTimer = player.comboTimer - 1
+        if player.comboTimer == 0 { player.combo = 0 }
+    }
+}
+
+fn updateEnemies() {
+    spawnTimer = spawnTimer + 1
+    if spawnTimer >= spawnInterval {
+        spawnTimer = 0
+        spawnEnemy()
+    }
+    difficultyTimer = difficultyTimer + 1
+    if difficultyTimer > 1800 {
+        difficultyTimer = 0
+        wave = wave + 1
+        if spawnInterval > 30 { spawnInterval = spawnInterval - 5 }
+    }
+    i = 0
+    while i < enemyCount {
+        if enemyAlive[i] == 1 {
+            t = enemyType[i]
+            if t == 1 {
+                enemyY[i] = enemyY[i] + 1
+            } else if t == 2 {
+                enemyY[i] = enemyY[i] + 1
+                if frameCount % 2 == 0 {
+                    dr = 0 - 1
+                    enemyX[i] = enemyX[i] + random(dr 1)
+                }
+            } else {
+                enemyY[i] = enemyY[i] + 2
+            }
+            if enemyY[i] > SH + 30 { enemyAlive[i] = 0 }
+        }
+        i = i + 1
+    }
+}
+
+fn enemyFire() {
+    i = 0
+    while i < enemyCount {
+        if enemyAlive[i] == 0 {
+            i = i + 1
+            continue
+        }
+        enemyFireTimer[i] = enemyFireTimer[i] - 1
+        if enemyFireTimer[i] <= 0 {
+            ex = enemyX[i]
+            ey = enemyY[i]
+            t = enemyType[i]
+            if t == 1 {
+                addEBullet(ex ey 0 3)
+                enemyFireTimer[i] = random(60 120)
+            } else if t == 2 {
+                neg2 = 0 - 2
+                addEBullet(ex ey neg2 2)
+                addEBullet(ex ey 0 3)
+                addEBullet(ex ey 2 2)
+                enemyFireTimer[i] = random(80 150)
+            } else {
+                dx = player.x - ex
+                dy = player.y - ey
+                dist = 1
+                adx = abs(dx)
+                ady = abs(dy)
+                if adx + ady > 0 { dist = adx + ady }
+                bvx = dx * 3 / dist
+                bvy = dy * 3 / dist
+                addEBullet(ex ey bvx bvy)
+                enemyFireTimer[i] = random(40 80)
+            }
+        }
+        i = i + 1
+    }
+}
+
+fn updateBullets() {
+    i = 0
+    while i < bulletCount {
+        if bulletAlive[i] == 1 {
+            bulletX[i] = bulletX[i] + bulletVx[i]
+            bulletY[i] = bulletY[i] + bulletVy[i]
+            if bulletType[i] == 1 {
+                if frameCount % 2 == 0 {
+                    spawnTrail(bulletX[i] bulletY[i] + 3 0xFF886600)
+                }
+            }
+            neg10 = 0 - 10
+            if bulletY[i] < neg10 || bulletY[i] > SH + 10 || bulletX[i] < neg10 || bulletX[i] > SW + 10 {
+                bulletAlive[i] = 0
+            }
+        }
+        i = i + 1
+    }
+    bi = 0
+    while bi < bulletCount {
+        if bulletAlive[bi] == 0 { bi = bi + 1
+            continue
+        }
+        ei = 0
+        while ei < enemyCount {
+            if enemyAlive[ei] == 0 { ei = ei + 1
+                continue
+            }
+            dx = bulletX[bi] - enemyX[ei]
+            dy = bulletY[bi] - enemyY[ei]
+            sz = enemySize[ei]
+            hitR = sz + 12
+            if dx * dx + dy * dy < hitR * hitR {
+                enemyHp[ei] = enemyHp[ei] - bulletDmg[bi]
+                bulletAlive[bi] = 0
+                spawnSpark(bulletX[bi] bulletY[bi] 4 0xFFFFAA00)
+                if enemyHp[ei] <= 0 {
+                    enemyAlive[ei] = 0
+                    player.combo = player.combo + 1
+                    player.comboTimer = 120
+                    bonus = enemyMaxHp[ei] * 10 * player.combo
+                    player.score = player.score + bonus
+                    spawnExplosion(enemyX[ei] enemyY[ei] 26 0xFFFF4400 0xFFFF8800)
+                    shakeDur = 6
+                }
+                break
+            }
+            ei = ei + 1
+        }
+        bi = bi + 1
+    }
+}
+
+fn updateEBullets() {
+    i = 0
+    while i < eBulletCount {
+        if eBulletAlive[i] == 1 {
+            eBulletX[i] = eBulletX[i] + eBulletVx[i]
+            eBulletY[i] = eBulletY[i] + eBulletVy[i]
+            neg10 = 0 - 10
+            if eBulletY[i] < neg10 || eBulletY[i] > SH + 10 || eBulletX[i] < neg10 || eBulletX[i] > SW + 10 {
+                eBulletAlive[i] = 0
+            }
+        }
+        i = i + 1
+    }
+}
+
+fn updateParticles() {
+    i = 0
+    while i < particleCount {
+        if particleLife[i] <= 0 { i = i + 1
+            continue
+        }
+        particleX[i] = particleX[i] + particleVx[i]
+        particleY[i] = particleY[i] + particleVy[i]
+        particleVy[i] = particleVy[i] + 1
+        particleVx[i] = particleVx[i] * 9 / 10
+        particleLife[i] = particleLife[i] - 1
+        i = i + 1
+    }
+}
+
+fn checkPlayerHit() {
+    if player.invincible > 0 { return }
+    i = 0
+    while i < enemyCount {
+        if enemyAlive[i] == 1 {
+            dx = player.x - enemyX[i]
+            dy = player.y - enemyY[i]
+            sz = enemySize[i]
+            pr = sz + 14
+            if dx * dx + dy * dy < pr * pr {
+                player.hp = player.hp - 20
+                player.invincible = 60
+                player.combo = 0
+                spawnExplosion(player.x player.y 25 0xFF00CCFF 0xFFFFFFFF)
+                shakeDur = 10
+                flashAlpha = 200
+                enemyAlive[i] = 0
+                break
+            }
+        }
+        i = i + 1
+    }
+    i = 0
+    while i < eBulletCount {
+        if eBulletAlive[i] == 1 {
+            dx = player.x - eBulletX[i]
+            dy = player.y - eBulletY[i]
+            if dx * dx + dy * dy < 144 {
+                player.hp = player.hp - 10
+                player.invincible = 40
+                player.combo = 0
+                spawnSpark(eBulletX[i] eBulletY[i] 8 0xFFFF6600)
+                shakeDur = 4
+                flashAlpha = 120
+                eBulletAlive[i] = 0
+            }
+        }
+        i = i + 1
+    }
+}
+
+fn compactEnemies() {
+    write = 0
+    i = 0
+    while i < enemyCount {
+        if enemyAlive[i] == 1 {
+            enemyX[write] = enemyX[i]
+            enemyY[write] = enemyY[i]
+            enemyHp[write] = enemyHp[i]
+            enemyMaxHp[write] = enemyMaxHp[i]
+            enemyType[write] = enemyType[i]
+            enemyAlive[write] = 1
+            enemySize[write] = enemySize[i]
+            enemyFireTimer[write] = enemyFireTimer[i]
+            write = write + 1
+        }
+        i = i + 1
+    }
+    enemyCount = write
+}
+
+fn compactBullets() {
+    write = 0
+    i = 0
+    while i < bulletCount {
+        if bulletAlive[i] == 1 {
+            bulletX[write] = bulletX[i]
+            bulletY[write] = bulletY[i]
+            bulletVx[write] = bulletVx[i]
+            bulletVy[write] = bulletVy[i]
+            bulletType[write] = bulletType[i]
+            bulletDmg[write] = bulletDmg[i]
+            bulletAlive[write] = 1
+            write = write + 1
+        }
+        i = i + 1
+    }
+    bulletCount = write
+}
+
+fn compactEBullets() {
+    write = 0
+    i = 0
+    while i < eBulletCount {
+        if eBulletAlive[i] == 1 {
+            eBulletX[write] = eBulletX[i]
+            eBulletY[write] = eBulletY[i]
+            eBulletVx[write] = eBulletVx[i]
+            eBulletVy[write] = eBulletVy[i]
+            eBulletAlive[write] = 1
+            write = write + 1
+        }
+        i = i + 1
+    }
+    eBulletCount = write
+}
+
+fn compactParticles() {
+    write = 0
+    i = 0
+    while i < particleCount {
+        if particleLife[i] > 0 {
+            particleX[write] = particleX[i]
+            particleY[write] = particleY[i]
+            particleVx[write] = particleVx[i]
+            particleVy[write] = particleVy[i]
+            particleColor[write] = particleColor[i]
+            particleLife[write] = particleLife[i]
+            particleMaxLife[write] = particleMaxLife[i]
+            particleSize[write] = particleSize[i]
+            write = write + 1
+        }
+        i = i + 1
+    }
+    particleCount = write
+}
+
+fn drawPlayer() {
+    blink = player.invincible % 8 < 4
+    if player.invincible > 0 && blink { return }
+    px = player.x
+    py = player.y
+    win32.fillRect(px - 3 py - 14 6 28 PLAYER_COLOR)
+    win32.fillRect(px - 14 py - 2 28 6 PLAYER_COLOR)
+    win32.fillRect(px - 8 py + 2 4 8 PLAYER_COLOR)
+    win32.fillRect(px + 4 py + 2 4 8 PLAYER_COLOR)
+    win32.fillRect(px - 2 py - 16 4 6 PLAYER_CORE)
+    if player.ammo == 2 {
+        win32.fillRect(px - 8 py - 10 3 8 BULLET_SPREAD)
+        win32.fillRect(px + 5 py - 10 3 8 BULLET_SPREAD)
+    } else if player.ammo == 3 {
+        win32.fillRect(px - 10 py - 8 2 6 BULLET_LASER)
+        win32.fillRect(px + 8 py - 8 2 6 BULLET_LASER)
+    }
+}
+
+fn drawEnemies() {
+    i = 0
+    while i < enemyCount {
+        if enemyAlive[i] == 0 { i = i + 1
+            continue
+        }
+        ex = enemyX[i]
+        ey = enemyY[i]
+        t = enemyType[i]
+        s = enemySize[i]
+        if t == 1 {
+            win32.fillCircle(ex ey s ENEMY_BASIC)
+            win32.fillCircle(ex ey s - 3 0xFFCC2222)
+            win32.fillRect(ex - 2 ey - 2 4 4 0xFFFF8888)
+        } else if t == 2 {
+            win32.fillRect(ex - s ey - s s * 2 s * 2 ENEMY_TANK)
+            win32.fillRect(ex - s + 2 ey - s + 2 s * 2 - 4 s * 2 - 4 0xFF886600)
+            win32.fillRect(ex - 3 ey - 3 6 6 0xFFDDCC00)
+            hpRatio = enemyHp[i] * 100 / enemyMaxHp[i]
+            barW = s * 2
+            fillW = barW * hpRatio / 100
+            negS = 0 - s
+            win32.fillRect(ex + negS ey - s - 6 barW 3 HP_BG)
+            if fillW > 0 {
+                win32.fillRect(ex + negS ey - s - 6 fillW 3 HP_RED)
+            }
+        } else {
+            win32.fillRect(ex - s ey - 3 s * 2 6 ENEMY_FAST)
+            win32.fillRect(ex - 3 ey - s 6 s * 2 ENEMY_FAST)
+            win32.fillCircle(ex ey 3 0xFFFFAAFF)
+        }
+        i = i + 1
+    }
+}
+
+fn drawBullets() {
+    i = 0
+    while i < bulletCount {
+        if bulletAlive[i] == 0 { i = i + 1
+            continue
+        }
+        bx = bulletX[i]
+        by = bulletY[i]
+        t = bulletType[i]
+        if t == 1 {
+            win32.fillCircle(bx by 3 BULLET_NORMAL)
+            win32.fillCircle(bx by 1 0xFFFFFFFF)
+        } else if t == 2 {
+            win32.fillCircle(bx by 2 BULLET_SPREAD)
+        } else {
+            win32.fillRect(bx - 1 by - 6 2 12 BULLET_LASER)
+            win32.fillRect(bx - 2 by - 4 4 8 0xFF2244AA)
+        }
+        i = i + 1
+    }
+}
+
+fn drawEBullets() {
+    i = 0
+    while i < eBulletCount {
+        if eBulletAlive[i] == 0 { i = i + 1
+            continue
+        }
+        win32.fillCircle(eBulletX[i] eBulletY[i] 4 ENEMY_BULLET)
+        i = i + 1
+    }
+}
+
+fn drawParticles() {
+    i = 0
+    while i < particleCount {
+        life = particleLife[i]
+        maxLife = particleMaxLife[i]
+        if life <= 0 || maxLife == 0 { i = i + 1
+            continue
+        }
+        ratio = life * 255 / maxLife
+        if ratio > 255 { ratio = 255 }
+        if ratio < 0 { ratio = 0 }
+        c = particleColor[i] & 0x00FFFFFF | (ratio * 0x01000000)
+        sz = particleSize[i]
+        if sz <= 1 {
+            win32.setPixel(particleX[i] particleY[i] c)
+        } else if sz == 2 {
+            win32.fillRect(particleX[i] - 1 particleY[i] - 1 2 2 c)
+        } else {
+            win32.fillCircle(particleX[i] particleY[i] sz c)
+        }
+        i = i + 1
+    }
+}
+
+fn drawHpBar() {
+    bx = 20
+    by = 14
+    bw = 220
+    bh = 16
+    win32.fillRect(bx - 2 by - 2 bw + 4 bh + 4 HP_BORDER)
+    win32.fillRect(bx by bw bh HP_BG)
+    ratio = player.hp * 100 / player.maxHp
+    if ratio < 0 { ratio = 0 }
+    fillW = bw * ratio / 100
+    if ratio > 60 {
+        win32.fillRect(bx by fillW bh HP_GREEN)
+    } else if ratio > 30 {
+        win32.fillRect(bx by fillW bh HP_YELLOW)
+    } else {
+        win32.fillRect(bx by fillW bh HP_RED)
+    }
+    win32.fillRect(bx by fillW 2 WHITE)
+    win32.fillRect(bx + 54 by + 4 1 8 GRAY)
+    win32.fillRect(bx + 109 by + 4 1 8 GRAY)
+    win32.fillRect(bx + 164 by + 4 1 8 GRAY)
+    win32.drawText(bx + 6 by + 2 WHITE "HP")
+    win32.drawInt(bx + bw - 48 by + 2 GRAY player.hp)
+}
+
+fn drawAmmoUI() {
+    ax = SW - 150
+    ay = 10
+    aw = 36
+    ah = 36
+    colors = [BULLET_NORMAL BULLET_SPREAD BULLET_LASER]
+    i = 0
+    while i < 3 {
+        ox = ax + i * 44
+        if player.ammo == i + 1 {
+            win32.fillRect(ox - 2 ay - 2 aw + 4 ah + 4 WHITE)
+        }
+        win32.fillRect(ox ay aw ah 0xFF222233)
+        win32.fillRect(ox + 2 ay + 2 aw - 4 ah - 4 colors[i])
+        if player.ammo == i + 1 {
+            win32.fillRect(ox + 4 ay + ah - 10 aw - 8 6 WHITE)
+        }
+        win32.drawInt(ox + 14 ay + ah + 5 WHITE i + 1)
+        i = i + 1
+    }
+}
+
+fn drawScoreUI() {
+    sx = 20
+    sy = 36
+    win32.fillRect(sx sy 260 16 UI_TEXT_BG)
+    win32.fillRect(sx sy + 16 260 1 HP_BORDER)
+    win32.drawText(sx + 4 sy + 2 WHITE "SCORE")
+    win32.drawInt(sx + 56 sy + 2 WHITE player.score)
+    if player.combo > 1 {
+        win32.fillRect(sx + 168 sy 88 16 0xFF442200)
+        win32.drawText(sx + 172 sy + 2 WHITE "COMBO")
+        win32.drawInt(sx + 232 sy + 2 WHITE player.combo)
+    }
+}
+
+fn drawWaveUI() {
+    wx = SW / 2 - 52
+    wy = 10
+    win32.fillRect(wx wy 104 20 UI_TEXT_BG)
+    win32.fillRect(wx wy + 20 104 1 HP_BORDER)
+    win32.drawText(wx + 8 wy + 4 WHITE "WAVE")
+    win32.drawInt(wx + 52 wy + 4 WHITE wave)
+}
+
+fn drawStars() {
+    i = 0
+    while i < STAR_COUNT {
+        sx = random(0 SX_LAST)
+        sy = (random(0 SY_LAST) + frameCount * 2) % SH
+        bright = 32 + random(0 95)
+        c = 0xFF000000 | (bright * 0x010000) | (bright * 0x0100) | bright
+        win32.setPixel(sx sy c)
+        i = i + 1
+    }
+}
+
+fn drawFlash() {
+    if flashAlpha > 0 {
+        c = 0xFF000000 | (flashAlpha * 0x010000) | (flashAlpha * 0x0100) | flashAlpha
+        win32.fillRect(0 0 SW SH c)
+        flashAlpha = flashAlpha - 15
+        if flashAlpha < 0 { flashAlpha = 0 }
+    }
+}
+
+fn gameOverScreen() {
+    win32.clear(0xFF0A0A0A)
+    cx = SW / 2
+    cy = SH / 2
+    win32.fillRect(cx - 120 cy - 60 240 120 0xFF220000)
+    win32.fillRect(cx - 118 cy - 58 236 2 0xFFFF4444)
+    win32.fillRect(cx - 118 cy + 56 236 2 0xFFFF4444)
+    win32.fillRect(cx - 80 cy - 20 160 4 0xFFFF2222)
+    win32.fillRect(cx - 60 cy + 10 120 3 HP_RED)
+    win32.drawText(cx - 56 cy - 42 WHITE "GAME OVER")
+    win32.drawText(cx - 96 cy - 18 GRAY "PRESS ENTER TO RESTART")
+    win32.drawText(cx - 72 cy + 6 WHITE "FINAL SCORE")
+    win32.drawInt(cx + 24 cy + 6 WHITE player.score)
+    win32.present()
+}
+
+fn render() {
+    if shakeDur > 0 {
+        shakeX = random(0 - 3 3)
+        shakeY = random(0 - 3 3)
+        shakeDur = shakeDur - 1
+    } else {
+        shakeX = 0
+        shakeY = 0
+    }
+    win32.clear(BG_COLOR)
+    drawStars()
+    drawHpBar()
+    drawAmmoUI()
+    drawScoreUI()
+    drawWaveUI()
+    drawEBullets()
+    drawBullets()
+    drawEnemies()
+    drawPlayer()
+    drawParticles()
+    drawFlash()
+    win32.setWindowTitleStats(player.score frameCount player.hp player.ammo enemyCount)
+    win32.present()
+}
+
+print("=== RAIDEN CLC WIN32 v2 ===")
+print("Arrow keys: move | Space: fire")
+print("1/2/3: switch ammo | ESC: quit")
+print("")
+
+lastTime = win32.perfMillis()
+
+while win32.pollEvents() {
+    if player.hp <= 0 {
+        gameOverScreen()
+        if win32.isKeyDown(win32.VK_ESCAPE) { break }
+        if win32.isKeyDown(win32.VK_RETURN) {
+            player = Player()
+            enemyCount = 0
+            bulletCount = 0
+            eBulletCount = 0
+            particleCount = 0
+            spawnInterval = 90
+            spawnTimer = 0
+            difficultyTimer = 0
+            frameCount = 0
+            wave = 1
+            shakeDur = 0
+            flashAlpha = 0
+            lastTime = win32.perfMillis()
+        }
+        continue
+    }
+    if win32.isKeyDown(win32.VK_ESCAPE) { break }
+
+    now = win32.perfMillis()
+    dt = now - lastTime
+    if dt < FRAME_MS {
+        continue
+    }
+    lastTime = now
+
+    frameCount = frameCount + 1
+    updatePlayer()
+    fireBullets()
+    updateEnemies()
+    enemyFire()
+    updateBullets()
+    updateEBullets()
+    checkPlayerHit()
+    updateParticles()
+
+    if frameCount % 10 == 0 {
+        compactEnemies()
+        compactBullets()
+        compactEBullets()
+    }
+    if frameCount % 24 == 0 {
+        compactParticles()
+    }
+
+    render()
+}
+
+print("Score: " + player.score)
+print("Wave: " + wave)
+print("Frames: " + frameCount)
+print("Thanks for playing!")

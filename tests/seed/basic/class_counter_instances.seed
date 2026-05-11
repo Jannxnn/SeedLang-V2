@@ -1,0 +1,12 @@
+// 类实例计数器测试：多实例共享静态变量的计数模式
+// EXPECT: 211
+class Counter {
+    init(v) { this.v = v }
+    inc() { this.v = this.v + 1 return this.v }
+}
+a = Counter(0)
+b = Counter(10)
+a.inc()
+a.inc()
+b.inc()
+result = a.v * 100 + b.v

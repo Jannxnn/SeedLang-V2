@@ -1,0 +1,17 @@
+{
+  "name": "math_module",
+  "code": "\nimport math\n\nresult = {\n    pi: math.pi,\n    e: math.e,\n    sqrt16: math.sqrt(16),\n    pow23: math.pow(2, 3)\n}\nprint(\"PI: \" + result.pi)\nprint(\"E: \" + result.e)\n",
+  "output": [
+    "PI: 3.141592653589793",
+    "E: 2.718281828459045"
+  ],
+  "globals": {
+    "result": {
+      "pow23": 8,
+      "sqrt16": 4,
+      "e": 2.718281828459045,
+      "pi": 3.141592653589793
+    }
+  },
+  "timestamp": "2026-04-10T10:11:11.246Z"
+}

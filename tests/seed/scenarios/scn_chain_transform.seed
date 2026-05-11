@@ -1,0 +1,6 @@
+﻿// 场景测试 - chain transform：链式函数变换管道
+// EXPECT: "X-5"
+a = trim("  x  ")
+b = upper(a)
+c = len("12345")
+result = b + "-" + toString(c)

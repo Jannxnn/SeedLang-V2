@@ -1,0 +1,79 @@
+// 场景测试 - pipeline pattern：管道模式的数据处理链
+// EXPECT: "OK:4"
+class Pipeline {
+    init() {
+        this.steps = []
+    }
+    
+    pipe(fn) {
+        push(this.steps fn)
+        return this
+    }
+    
+    process(input) {
+        result = input
+        for step in this.steps {
+            result = step(result)
+        }
+        return result
+    }
+}
+
+class AsyncPipeline {
+    init() {
+        this.steps = []
+    }
+    
+    pipe(fn) {
+        push(this.steps fn)
+        return this
+    }
+    
+    process(input) {
+        result = input
+        i = 0
+        while i < len(this.steps) {
+            step = this.steps[i]
+            result = step(result)
+            i = i + 1
+        }
+        return result
+    }
+}
+
+pipeline = Pipeline()
+result1 = pipeline
+    .pipe((x) => x + 1)
+    .pipe((x) => x * 2)
+    .pipe((x) => x - 3)
+    .process(10)
+
+asyncPipeline = AsyncPipeline()
+result2 = asyncPipeline
+    .pipe((x) => x * 3)
+    .pipe((x) => x + 5)
+    .process(7)
+
+passed = 0
+if result1 == 19 { passed = passed + 1 }
+if result2 == 26 { passed = passed + 1 }
+
+complexPipeline = Pipeline()
+result3 = complexPipeline
+    .pipe((s) => upper(s))
+    .pipe((s) => trim(s))
+    .pipe((s) => replace(s " " "-"))
+    .process("  hello world  ")
+
+if result3 == "HELLO-WORLD" { passed = passed + 1 }
+
+numberPipeline = Pipeline()
+result4 = numberPipeline
+    .pipe((x) => x * 2)
+    .pipe((x) => x + 10)
+    .pipe((x) => x / 2)
+    .process(5)
+
+if result4 == 10 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

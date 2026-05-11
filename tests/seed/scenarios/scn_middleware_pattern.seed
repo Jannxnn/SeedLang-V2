@@ -1,0 +1,58 @@
+// 场景测试 - middleware pattern：中间件模式（洋葱模型）
+// EXPECT: "OK:4"
+class Middleware {
+    init() {
+        this.middlewares = []
+    }
+    
+    use(fn) {
+        push(this.middlewares fn)
+    }
+    
+    execute(context) {
+        index = 0
+        
+        fn next() {
+            if index >= len(this.middlewares) { return }
+            currentMiddleware = this.middlewares[index]
+            index = index + 1
+            currentMiddleware(context next)
+        }
+        
+        next()
+        return context
+    }
+}
+
+mw = Middleware()
+log = []
+
+mw.use((ctx next) => {
+    push(log "before1")
+    next()
+    push(log "after1")
+})
+
+mw.use((ctx next) => {
+    push(log "before2")
+    ctx.value = ctx.value * 2
+    next()
+    push(log "after2")
+})
+
+mw.use((ctx next) => {
+    push(log "before3")
+    ctx.value = ctx.value + 10
+    next()
+    push(log "after3")
+})
+
+result = mw.execute({ value: 5 })
+
+passed = 0
+if result.value == 20 { passed = passed + 1 }
+if len(log) == 6 { passed = passed + 1 }
+if log[0] == "before1" { passed = passed + 1 }
+if log[5] == "after1" { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

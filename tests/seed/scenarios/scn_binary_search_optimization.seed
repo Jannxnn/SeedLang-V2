@@ -1,0 +1,93 @@
+// 场景测试 - binary search optimization：分割数组最大最小化等优化问题
+// EXPECT: "OK:4"
+fn splitArray(nums k) {
+    left = 0
+    right = 0
+    
+    for n in nums {
+        if n > left { left = n }
+        right = right + n
+    }
+    
+    while left < right {
+        mid = floor((left + right) / 2)
+        
+        count = 1
+        current = 0
+        
+        for n in nums {
+            if current + n > mid {
+                count = count + 1
+                current = n
+            } else {
+                current = current + n
+            }
+        }
+        
+        if count <= k {
+            right = mid
+        } else {
+            left = mid + 1
+        }
+    }
+    
+    return left
+}
+
+fn minimizeArrayValue(nums) {
+    result = nums[0]
+    prefixSum = nums[0]
+    
+    i = 1
+    while i < len(nums) {
+        prefixSum = prefixSum + nums[i]
+        avg = floor((prefixSum + i) / (i + 1))
+        if avg > result { result = avg }
+        i = i + 1
+    }
+    
+    return result
+}
+
+fn shipWithinDays(weights days) {
+    left = 0
+    right = 0
+    
+    for w in weights {
+        if w > left { left = w }
+        right = right + w
+    }
+    
+    while left < right {
+        mid = floor((left + right) / 2)
+        
+        current = 0
+        needed = 1
+        
+        for w in weights {
+            if current + w > mid {
+                needed = needed + 1
+                current = w
+            } else {
+                current = current + w
+            }
+        }
+        
+        if needed <= days {
+            right = mid
+        } else {
+            left = mid + 1
+        }
+    }
+    
+    return left
+}
+
+passed = 0
+
+if splitArray([7 2 5 10 8] 2) == 18 { passed = passed + 1 }
+if minimizeArrayValue([3 7 1 6]) == 5 { passed = passed + 1 }
+if shipWithinDays([1 2 3 4 5 6 7 8 9 10] 5) == 15 { passed = passed + 1 }
+if splitArray([1 2 3 4 5] 3) == 6 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

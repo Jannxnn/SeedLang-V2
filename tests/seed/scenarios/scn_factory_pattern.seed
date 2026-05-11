@@ -1,0 +1,57 @@
+// 场景测试 - factory pattern：工厂模式的对象创建与类型管理
+// EXPECT: "OK:4"
+class Singleton {
+    init(value) {
+        if Singleton.instance != null {
+            return Singleton.instance
+        }
+        this.value = value
+        Singleton.instance = this
+    }
+    
+    getValue() {
+        return this.value
+    }
+    
+    setValue(v) {
+        this.value = v
+    }
+}
+
+Singleton.instance = null
+
+class Factory {
+    init() {
+        this.registry = {}
+    }
+    
+    register(type creator) {
+        this.registry[type] = creator
+    }
+    
+    create(type) {
+        if this.registry[type] == null { return null }
+        return this.registry[type]()
+    }
+}
+
+factory = Factory()
+
+factory.register("number" () => 42)
+factory.register("string" () => "hello")
+factory.register("array" () => [1 2 3])
+
+passed = 0
+n = factory.create("number")
+if n == 42 { passed = passed + 1 }
+
+s = factory.create("string")
+if s == "hello" { passed = passed + 1 }
+
+a = factory.create("array")
+if len(a) == 3 { passed = passed + 1 }
+
+unknown = factory.create("unknown")
+if unknown == null { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

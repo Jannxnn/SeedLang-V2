@@ -1,0 +1,11 @@
+{
+  "name": "function_recursion",
+  "code": "\nfn fibonacci(n) {\n    if n <= 1 { return n }\n    return fibonacci(n - 1) + fibonacci(n - 2)\n}\n\nresult = []\ni = 0\nwhile i < 10 {\n    push(result fibonacci(i))\n    i = i + 1\n}\nprint(result)\n",
+  "output": [
+    "[0, 1, 1, 2, 3, 5, 8, 13, 21, 34]"
+  ],
+  "globals": {
+    "result": [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
+  },
+  "timestamp": "2026-04-09T19:41:49.652Z"
+}

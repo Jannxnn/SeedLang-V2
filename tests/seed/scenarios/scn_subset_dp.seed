@@ -1,0 +1,88 @@
+// 场景测试 - subset dp：子集划分等集合 DP 问题
+// EXPECT: "OK:4"
+fn canPartition(nums) {
+    sum = 0
+    for n in nums { sum = sum + n }
+    
+    if sum % 2 != 0 { return false }
+    
+    target = sum / 2
+    dp = []
+    i = 0
+    while i <= target {
+        push(dp false)
+        i = i + 1
+    }
+    dp[0] = true
+    
+    for num in nums {
+        j = target
+        while j >= num {
+            dp[j] = dp[j] || dp[j - num]
+            j = j - 1
+        }
+    }
+    
+    return dp[target]
+}
+
+fn lengthOfLIS(nums) {
+    if len(nums) == 0 { return 0 }
+    
+    dp = []
+    for n in nums { push(dp 1) }
+    
+    maxLen = 1
+    
+    i = 1
+    while i < len(nums) {
+        j = 0
+        while j < i {
+            if nums[j] < nums[i] {
+                if dp[j] + 1 > dp[i] {
+                    dp[i] = dp[j] + 1
+                }
+            }
+            j = j + 1
+        }
+        if dp[i] > maxLen { maxLen = dp[i] }
+        i = i + 1
+    }
+    
+    return maxLen
+}
+
+fn findTargetSumWays(nums target) {
+    sum = 0
+    for n in nums { sum = sum + n }
+    
+    if abs(target) > sum { return 0 }
+    
+    dp = {}
+    dp[0] = 1
+    
+    for num in nums {
+        next = {}
+        for k in keys(dp) {
+            key = toInt(k)
+            if next[key + num] == null { next[key + num] = 0 }
+            next[key + num] = next[key + num] + dp[k]
+            
+            if next[key - num] == null { next[key - num] = 0 }
+            next[key - num] = next[key - num] + dp[k]
+        }
+        dp = next
+    }
+    
+    if dp[target] == null { return 0 }
+    return dp[target]
+}
+
+passed = 0
+
+if canPartition([1 5 11 5]) { passed = passed + 1 }
+if canPartition([1 2 3 5]) == false { passed = passed + 1 }
+if lengthOfLIS([10 9 2 5 3 7 101 18]) == 4 { passed = passed + 1 }
+if findTargetSumWays([1 1 1 1 1] 3) == 5 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

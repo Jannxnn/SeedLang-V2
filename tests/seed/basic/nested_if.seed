@@ -1,0 +1,12 @@
+// 嵌套 if 测试：多层条件分支的嵌套结构与匹配
+// EXPECT: "A"
+x = 8
+if x > 5 {
+    if x < 10 {
+        result = "A"
+    } else {
+        result = "B"
+    }
+} else {
+    result = "C"
+}

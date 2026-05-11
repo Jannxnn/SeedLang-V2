@@ -1,0 +1,10 @@
+// 场景测试 - ultimate branching（终极）：复杂分支逻辑与条件判断
+// EXPECT: "mid"
+x = 50
+if x < 10 {
+    result = "low"
+} else if x > 90 {
+    result = "high"
+} else {
+    result = "mid"
+}

@@ -1,0 +1,15 @@
+{
+  "name": "coroutine_execution",
+  "code": "\ncoro generator() {\n    yield 1\n    yield 2\n    yield 3\n}\n\ng = generator()\nresult = []\npush(result, coroutine.resume(g))\npush(result, coroutine.resume(g))\npush(result, coroutine.resume(g))\nprint(result)\n",
+  "output": [
+    "[1, 2, 3]"
+  ],
+  "globals": {
+    "result": [
+      1,
+      2,
+      3
+    ]
+  },
+  "timestamp": "2026-04-09T19:19:27.114Z"
+}

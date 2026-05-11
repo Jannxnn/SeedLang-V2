@@ -1,0 +1,100 @@
+// 场景测试 - builder pattern：建造者模式的链式 API 构建
+// EXPECT: "OK:4"
+class Builder {
+    init() {
+        this.result = {}
+    }
+    
+    setName(name) {
+        this.result.name = name
+        return this
+    }
+    
+    setAge(age) {
+        this.result.age = age
+        return this
+    }
+    
+    setEmail(email) {
+        this.result.email = email
+        return this
+    }
+    
+    setTags(tags) {
+        this.result.tags = tags
+        return this
+    }
+    
+    build() {
+        return this.result
+    }
+}
+
+class QueryBuilder {
+    init() {
+        this.table = ""
+        this.fields = []
+        this.conditions = []
+        this.orderField = ""
+        this.limitVal = 0
+    }
+    
+    from(table) {
+        this.table = table
+        return this
+    }
+    
+    select(fields) {
+        this.fields = fields
+        return this
+    }
+    
+    where(condition) {
+        push(this.conditions condition)
+        return this
+    }
+    
+    orderBy(field) {
+        this.orderField = field
+        return this
+    }
+    
+    limit(n) {
+        this.limitVal = n
+        return this
+    }
+    
+    build() {
+        return {
+            table: this.table
+            fields: this.fields
+            conditions: this.conditions
+            orderBy: this.orderField
+            limit: this.limitVal
+        }
+    }
+}
+
+person = Builder()
+    .setName("John")
+    .setAge(30)
+    .setEmail("john@example.com")
+    .setTags(["dev" "admin"])
+    .build()
+
+query = QueryBuilder()
+    .from("users")
+    .select(["id" "name" "email"])
+    .where("active = true")
+    .where("age > 18")
+    .orderBy("name")
+    .limit(10)
+    .build()
+
+passed = 0
+if person.name == "John" { passed = passed + 1 }
+if len(person.tags) == 2 { passed = passed + 1 }
+if query.table == "users" { passed = passed + 1 }
+if len(query.conditions) == 2 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

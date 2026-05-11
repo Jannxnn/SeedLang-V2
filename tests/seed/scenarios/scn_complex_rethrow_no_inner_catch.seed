@@ -1,0 +1,15 @@
+// 场景测试 - complex rethrow no inner catch：无内层 catch 时 rethrow 的行为
+// EXPECT: "S|F1|E|F2"
+trace = "S"
+try {
+    try {
+        throw "E"
+    } finally {
+        trace = trace + "|F1"
+    }
+} catch(e) {
+    trace = trace + "|" + e
+} finally {
+    trace = trace + "|F2"
+}
+result = trace

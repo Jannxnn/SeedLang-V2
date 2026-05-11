@@ -1,0 +1,62 @@
+// 场景测试 - lru cache：LRU 缓存淘汰策略实现
+// EXPECT: "OK:4"
+class LRUCache {
+    init(capacity) {
+        this.capacity = capacity
+        this.cache = {}
+        this.order = []
+    }
+    
+    get(key) {
+        if this.cache[key] == null { return null }
+        this._moveToEnd(key)
+        return this.cache[key]
+    }
+    
+    put(key value) {
+        if this.cache[key] != null {
+            this.cache[key] = value
+            this._moveToEnd(key)
+            return
+        }
+        
+        if len(this.order) >= this.capacity {
+            oldest = this.order[0]
+            this.cache[oldest] = null
+            this.order = slice(this.order 1 len(this.order))
+        }
+        
+        this.cache[key] = value
+        push(this.order key)
+    }
+    
+    _moveToEnd(key) {
+        newOrder = []
+        for k in this.order {
+            if k != key {
+                push(newOrder k)
+            }
+        }
+        push(newOrder key)
+        this.order = newOrder
+    }
+    
+    size() {
+        return len(this.order)
+    }
+}
+
+cache = LRUCache(3)
+cache.put("a" 1)
+cache.put("b" 2)
+cache.put("c" 3)
+
+passed = 0
+if cache.get("a") == 1 { passed = passed + 1 }
+
+cache.put("d" 4)
+if cache.get("b") == null { passed = passed + 1 }
+if cache.get("c") == 3 { passed = passed + 1 }
+if cache.size() == 3 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

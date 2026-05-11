@@ -1,0 +1,92 @@
+// 场景测试 - manacher：Manacher 算法求最长回文子串
+// EXPECT: "OK:4"
+fn manacher(s) {
+    chars = split(s "")
+    t = ["#"]
+    for c in chars {
+        push(t c)
+        push(t "#")
+    }
+    
+    n = len(t)
+    p = []
+    i = 0
+    while i < n {
+        push(p 0)
+        i = i + 1
+    }
+    
+    center = 0
+    right = 0
+    maxLen = 0
+    maxCenter = 0
+    
+    i = 0
+    while i < n {
+        if i < right {
+            mirror = 2 * center - i
+            p[i] = min(right - i p[mirror])
+        }
+        
+        leftIdx = i - p[i] - 1
+        rightIdx = i + p[i] + 1
+        while leftIdx >= 0 && rightIdx < n && t[leftIdx] == t[rightIdx] {
+            p[i] = p[i] + 1
+            leftIdx = leftIdx - 1
+            rightIdx = rightIdx + 1
+        }
+        
+        if i + p[i] > right {
+            center = i
+            right = i + p[i]
+        }
+        
+        if p[i] > maxLen {
+            maxLen = p[i]
+            maxCenter = i
+        }
+        
+        i = i + 1
+    }
+    
+    start = floor((maxCenter - maxLen) / 2)
+    return substring(s start start + maxLen)
+}
+
+fn longestPalindrome(s) {
+    if len(s) == 0 { return "" }
+    
+    longest = substring(s 0 1)
+    i = 0
+    while i < len(s) {
+        j = i + 1
+        while j <= len(s) {
+            sub = substring(s i j)
+            if isPalindrome(sub) && len(sub) > len(longest) {
+                longest = sub
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    return longest
+}
+
+fn isPalindrome(s) {
+    chars = split(s "")
+    reversed = reverse(chars)
+    return s == join(reversed "")
+}
+
+passed = 0
+
+if isPalindrome("racecar") { passed = passed + 1 }
+if isPalindrome("hello") == false { passed = passed + 1 }
+
+pal = manacher("babad")
+if len(pal) >= 3 { passed = passed + 1 }
+
+pal2 = manacher("cbbd")
+if len(pal2) >= 2 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

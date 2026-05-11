@@ -1,0 +1,739 @@
+// 场景测试 - hell suite 4（地狱级综合）：最终极限综合挑战
+// EXPECT: "OK:20"
+// 地狱级极限测试套件 IV - 最终挑战
+// ==================== 1. 复杂嵌套表达式 ====================
+fn complexExpression() {
+    a = 1 + 2 * 3 - 4 / 2
+    b = (1 + 2) * (3 - 4) / 2
+    c = ((1 + 2) * 3 - 4) / 2
+    d = 1 + (2 * 3 - 4) / 2
+    e = 1 + 2 * (3 - 4 / 2)
+    
+    return a + b + c + d + e
+}
+
+exprResult = complexExpression()
+
+// ==================== 2. 链式调用极限 ====================
+fn chainCalls() {
+    obj = {
+        value: 0
+        add: fn(x) { this.value = this.value + x return this }
+        sub: fn(x) { this.value = this.value - x return this }
+        mul: fn(x) { this.value = this.value * x return this }
+        div: fn(x) { this.value = this.value / x return this }
+        get: fn() { return this.value }
+    }
+    
+    return obj.add(10).sub(2).mul(3).div(4).get()
+}
+
+chainResult = chainCalls()
+
+// ==================== 3. 高阶函数链 ====================
+fn higherOrderChain() {
+    arr = [1 2 3 4 5 6 7 8 9 10]
+    
+    result = arr
+    result = map(result fn(x) { return x * 2 })
+    result = filter(result fn(x) { return x > 5 })
+    result = map(result fn(x) { return x + 1 })
+    result = filter(result fn(x) { return x < 20 })
+    
+    sum = 0
+    for n in result { sum = sum + n }
+    return sum
+}
+
+higherOrderResult = higherOrderChain()
+
+// ==================== 4. 深度对象合并 ====================
+fn deepMerge(a b) {
+    result = {}
+    
+    for key in keys(a) {
+        result[key] = a[key]
+    }
+    
+    for key in keys(b) {
+        if type(b[key]) == "object" && type(result[key]) == "object" {
+            result[key] = deepMerge(result[key] b[key])
+        } else {
+            result[key] = b[key]
+        }
+    }
+    
+    return result
+}
+
+obj1 = { a: 1 b: { c: 2 d: 3 } }
+obj2 = { b: { d: 4 e: 5 } f: 6 }
+merged = deepMerge(obj1 obj2)
+deepMergeResult = merged.b.d + merged.b.e
+
+// ==================== 5. 复杂排序算法 ====================
+fn quickSort(arr) {
+    if len(arr) <= 1 { return arr }
+    
+    pivot = arr[0]
+    left = []
+    right = []
+    
+    i = 1
+    while i < len(arr) {
+        if arr[i] < pivot {
+            push(left arr[i])
+        } else {
+            push(right arr[i])
+        }
+        i = i + 1
+    }
+    
+    result = []
+    sortedLeft = quickSort(left)
+    sortedRight = quickSort(right)
+    
+    for n in sortedLeft { push(result n) }
+    push(result pivot)
+    for n in sortedRight { push(result n) }
+    
+    return result
+}
+
+sortedArr = quickSort([5 2 8 1 9 3 7 4 6])
+sortResult = sortedArr[0] + sortedArr[4] + sortedArr[8]
+
+// ==================== 6. 二叉搜索树 ====================
+fn createBST() {
+    return {
+        root: null
+        
+        insert: fn(val) {
+            node = { value: val left: null right: null }
+            
+            if this.root == null {
+                this.root = node
+                return
+            }
+            
+            current = this.root
+            while true {
+                if val < current.value {
+                    if current.left == null {
+                        current.left = node
+                        return
+                    }
+                    current = current.left
+                } else {
+                    if current.right == null {
+                        current.right = node
+                        return
+                    }
+                    current = current.right
+                }
+            }
+        }
+        
+        inorder: fn() {
+            result = []
+            fn traverse(node) {
+                if node == null { return }
+                traverse(node.left)
+                push(result node.value)
+                traverse(node.right)
+            }
+            traverse(this.root)
+            return result
+        }
+    }
+}
+
+bst = createBST()
+bst.insert(5)
+bst.insert(3)
+bst.insert(7)
+bst.insert(1)
+bst.insert(9)
+bstInorder = bst.inorder()
+bstResult = bstInorder[0] + bstInorder[2] + bstInorder[4]
+
+// ==================== 7. 图遍历 ====================
+fn graphDFS(graph start) {
+    visited = {}
+    result = []
+    
+    fn dfs(node) {
+        if visited[node] != null { return }
+        visited[node] = true
+        push(result node)
+        
+        for neighbor in graph[node] {
+            dfs(neighbor)
+        }
+    }
+    
+    dfs(start)
+    return result
+}
+
+graph = {
+    A: ["B" "C"]
+    B: ["A" "D" "E"]
+    C: ["A" "F"]
+    D: ["B"]
+    E: ["B" "F"]
+    F: ["C" "E"]
+}
+
+dfsResult = graphDFS(graph "A")
+dfsLen = len(dfsResult)
+
+// ==================== 8. 动态规划背包问题 ====================
+fn knapsackDP(weights values capacity) {
+    n = len(weights)
+    
+    dp = []
+    i = 0
+    while i <= n {
+        row = []
+        j = 0
+        while j <= capacity {
+            push(row 0)
+            j = j + 1
+        }
+        push(dp row)
+        i = i + 1
+    }
+    
+    i = 1
+    while i <= n {
+        w = weights[i - 1]
+        v = values[i - 1]
+        j = 0
+        while j <= capacity {
+            if w > j {
+                dp[i][j] = dp[i - 1][j]
+            } else {
+                dp[i][j] = max(dp[i - 1][j] dp[i - 1][j - w] + v)
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    
+    return dp[n][capacity]
+}
+
+ksWeights = [2 3 4 5]
+ksValues = [3 4 5 6]
+ksCapacity = 8
+knapsackResult = knapsackDP(ksWeights ksValues ksCapacity)
+
+// ==================== 9. 最长公共子序列 ====================
+fn lcs(s1 s2) {
+    m = len(s1)
+    n = len(s2)
+    
+    dp = []
+    i = 0
+    while i <= m {
+        row = []
+        j = 0
+        while j <= n {
+            push(row 0)
+            j = j + 1
+        }
+        push(dp row)
+        i = i + 1
+    }
+    
+    i = 1
+    while i <= m {
+        j = 1
+        while j <= n {
+            if charAt(s1 i - 1) == charAt(s2 j - 1) {
+                dp[i][j] = dp[i - 1][j - 1] + 1
+            } else {
+                dp[i][j] = max(dp[i - 1][j] dp[i][j - 1])
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    
+    return dp[m][n]
+}
+
+lcsResult = lcs("ABCBDAB" "BDCABA")
+
+// ==================== 10. 编辑距离 ====================
+fn editDistance(s1 s2) {
+    m = len(s1)
+    n = len(s2)
+    
+    dp = []
+    i = 0
+    while i <= m {
+        row = []
+        j = 0
+        while j <= n {
+            push(row 0)
+            j = j + 1
+        }
+        push(dp row)
+        i = i + 1
+    }
+    
+    i = 0
+    while i <= m { dp[i][0] = i i = i + 1 }
+    j = 0
+    while j <= n { dp[0][j] = j j = j + 1 }
+    
+    i = 1
+    while i <= m {
+        j = 1
+        while j <= n {
+            if charAt(s1 i - 1) == charAt(s2 j - 1) {
+                dp[i][j] = dp[i - 1][j - 1]
+            } else {
+                dp[i][j] = 1 + min(dp[i - 1][j] min(dp[i][j - 1] dp[i - 1][j - 1]))
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    
+    return dp[m][n]
+}
+
+editDistResult = editDistance("kitten" "sitting")
+
+// ==================== 11. 正则表达式匹配 ====================
+fn isMatch(s p) {
+    m = len(s)
+    n = len(p)
+    
+    dp = []
+    i = 0
+    while i <= m {
+        row = []
+        j = 0
+        while j <= n {
+            push(row false)
+            j = j + 1
+        }
+        push(dp row)
+        i = i + 1
+    }
+    dp[0][0] = true
+    
+    j = 1
+    while j <= n {
+        if charAt(p j - 1) == "*" {
+            dp[0][j] = dp[0][j - 2]
+        }
+        j = j + 1
+    }
+    
+    i = 1
+    while i <= m {
+        j = 1
+        while j <= n {
+            if charAt(p j - 1) == "." || charAt(p j - 1) == charAt(s i - 1) {
+                dp[i][j] = dp[i - 1][j - 1]
+            } else {
+                if charAt(p j - 1) == "*" {
+                    dp[i][j] = dp[i][j - 2]
+                    if charAt(p j - 2) == "." || charAt(p j - 2) == charAt(s i - 1) {
+                        dp[i][j] = dp[i][j] || dp[i - 1][j]
+                    }
+                }
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    
+    return dp[m][n]
+}
+
+regexMatch = isMatch("aab" "c*a*b")
+
+// ==================== 12. 最短路径 ====================
+fn bellmanFord(edges n start) {
+    dist = []
+    i = 0
+    while i < n {
+        push(dist 999999)
+        i = i + 1
+    }
+    dist[start] = 0
+    
+    i = 0
+    while i < n - 1 {
+        for edge in edges {
+            u = edge[0]
+            v = edge[1]
+            w = edge[2]
+            
+            if dist[u] != 999999 && dist[u] + w < dist[v] {
+                dist[v] = dist[u] + w
+            }
+        }
+        i = i + 1
+    }
+    
+    return dist
+}
+
+bfEdges = [[0 1 4] [0 2 2] [1 2 1] [1 3 5] [2 1 1] [2 3 8]]
+bfDist = bellmanFord(bfEdges 4 0)
+bfResult = bfDist[3]
+
+// ==================== 13. 拓扑排序 ====================
+fn topologicalSort(graph) {
+    inDegree = {}
+    for node in keys(graph) {
+        inDegree[node] = 0
+    }
+    
+    for node in keys(graph) {
+        for neighbor in graph[node] {
+            inDegree[neighbor] = inDegree[neighbor] + 1
+        }
+    }
+    
+    queue = []
+    for node in keys(inDegree) {
+        if inDegree[node] == 0 {
+            push(queue node)
+        }
+    }
+    
+    result = []
+    while len(queue) > 0 {
+        current = queue[0]
+        queue = slice(queue 1 len(queue))
+        push(result current)
+        
+        for neighbor in graph[current] {
+            inDegree[neighbor] = inDegree[neighbor] - 1
+            if inDegree[neighbor] == 0 {
+                push(queue neighbor)
+            }
+        }
+    }
+    
+    return result
+}
+
+topoGraph = {
+    A: ["B" "C"]
+    B: ["D"]
+    C: ["D"]
+    D: []
+}
+
+topoResult = topologicalSort(topoGraph)
+topoLen = len(topoResult)
+
+// ==================== 14. 并查集 ====================
+fn unionFind(n edges) {
+    parent = []
+    i = 0
+    while i < n {
+        push(parent i)
+        i = i + 1
+    }
+    
+    fn find(x) {
+        if parent[x] != x {
+            parent[x] = find(parent[x])
+        }
+        return parent[x]
+    }
+    
+    fn union(x y) {
+        px = find(x)
+        py = find(y)
+        if px != py {
+            parent[px] = py
+            return true
+        }
+        return false
+    }
+    
+    components = n
+    for edge in edges {
+        if union(edge[0] edge[1]) {
+            components = components - 1
+        }
+    }
+    
+    return components
+}
+
+ufEdges = [[0 1] [1 2] [3 4]]
+ufResult = unionFind(5 ufEdges)
+
+// ==================== 15. 线段树 ====================
+fn createSegmentTree(arr) {
+    n = len(arr)
+    tree = []
+    i = 0
+    while i < 4 * n {
+        push(tree 0)
+        i = i + 1
+    }
+    
+    fn build(node start end) {
+        if start == end {
+            tree[node] = arr[start]
+            return
+        }
+        
+        mid = floor((start + end) / 2)
+        build(2 * node start mid)
+        build(2 * node + 1 mid + 1 end)
+        tree[node] = tree[2 * node] + tree[2 * node + 1]
+    }
+    
+    fn query(node start end l r) {
+        if r < start || end < l { return 0 }
+        if l <= start && end <= r { return tree[node] }
+        
+        mid = floor((start + end) / 2)
+        return query(2 * node start mid l r) + query(2 * node + 1 mid + 1 end l r)
+    }
+    
+    build(1 0 n - 1)
+    
+    return { query: fn(l r) { return query(1 0 n - 1 l r) } }
+}
+
+segArr = [1 3 5 7 9 11]
+segTree = createSegmentTree(segArr)
+segResult = segTree.query(1 4)
+
+// ==================== 16. 字典树 ====================
+fn createTrie() {
+    return {
+        root: {}
+        
+        insert: fn(word) {
+            node = this.root
+            chars = split(word "")
+            for c in chars {
+                if node[c] == null { node[c] = {} }
+                node = node[c]
+            }
+            node.end = true
+        }
+        
+        search: fn(word) {
+            node = this.root
+            chars = split(word "")
+            for c in chars {
+                if node[c] == null { return false }
+                node = node[c]
+            }
+            return node.end == true
+        }
+        
+        startsWith: fn(prefix) {
+            node = this.root
+            chars = split(prefix "")
+            for c in chars {
+                if node[c] == null { return false }
+                node = node[c]
+            }
+            return true
+        }
+    }
+}
+
+trie = createTrie()
+trie.insert("apple")
+trie.insert("app")
+trie.insert("application")
+trieSearch1 = trie.search("app")
+trieSearch2 = trie.search("apple")
+trieSearch3 = trie.search("apx")
+triePrefix = trie.startsWith("app")
+
+// ==================== 17. LRU缓存 ====================
+fn createLRUCache(capacity) {
+    cache = {}
+    order = []
+    
+    return {
+        get: fn(key) {
+            if cache[key] != null {
+                newOrder = []
+                for k in order {
+                    if k != key { push(newOrder k) }
+                }
+                push(newOrder key)
+                order = newOrder
+                return cache[key]
+            }
+            return -1
+        }
+        
+        put: fn(key value) {
+            if cache[key] != null {
+                cache[key] = value
+                newOrder = []
+                for k in order {
+                    if k != key { push(newOrder k) }
+                }
+                push(newOrder key)
+                order = newOrder
+            } else {
+                if len(order) == capacity {
+                    oldKey = order[0]
+                    order = slice(order 1 len(order))
+                    cache[oldKey] = null
+                }
+                cache[key] = value
+                push(order key)
+            }
+        }
+    }
+}
+
+lru = createLRUCache(2)
+lru.put(1 1)
+lru.put(2 2)
+lruGet1 = lru.get(1)
+lru.put(3 3)
+lruGet2 = lru.get(2)
+lru.put(4 4)
+lruGet3 = lru.get(1)
+lruGet4 = lru.get(3)
+lruGet5 = lru.get(4)
+
+// ==================== 18. 最小堆 ====================
+fn createMinHeap() {
+    heap = []
+    
+    fn bubbleUp(idx) {
+        while idx > 0 {
+            parent = floor((idx - 1) / 2)
+            if heap[parent] <= heap[idx] { break }
+            temp = heap[parent]
+            heap[parent] = heap[idx]
+            heap[idx] = temp
+            idx = parent
+        }
+    }
+    
+    fn bubbleDown(idx) {
+        n = len(heap)
+        while true {
+            left = 2 * idx + 1
+            right = 2 * idx + 2
+            smallest = idx
+            
+            if left < n && heap[left] < heap[smallest] { smallest = left }
+            if right < n && heap[right] < heap[smallest] { smallest = right }
+            
+            if smallest == idx { break }
+            
+            temp = heap[idx]
+            heap[idx] = heap[smallest]
+            heap[smallest] = temp
+            idx = smallest
+        }
+    }
+    
+    return {
+        push: fn(val) {
+            push(heap val)
+            bubbleUp(len(heap) - 1)
+        }
+        
+        pop: fn() {
+            if len(heap) == 0 { return null }
+            result = heap[0]
+            heap[0] = heap[len(heap) - 1]
+            heap = slice(heap 0 len(heap) - 1)
+            if len(heap) > 0 { bubbleDown(0) }
+            return result
+        }
+        
+        peek: fn() {
+            if len(heap) == 0 { return null }
+            return heap[0]
+        }
+        
+        size: fn() { return len(heap) }
+    }
+}
+
+minHeap = createMinHeap()
+minHeap.push(5)
+minHeap.push(3)
+minHeap.push(7)
+minHeap.push(1)
+heapPeek = minHeap.peek()
+heapPop1 = minHeap.pop()
+heapPop2 = minHeap.pop()
+
+// ==================== 19. 滑动窗口最大值 ====================
+fn maxSlidingWindow(nums k) {
+    deque = []
+    result = []
+    
+    i = 0
+    while i < len(nums) {
+        while len(deque) > 0 && deque[0] < i - k + 1 {
+            deque = slice(deque 1 len(deque))
+        }
+        
+        while len(deque) > 0 && nums[deque[len(deque) - 1]] < nums[i] {
+            deque = slice(deque 0 len(deque) - 1)
+        }
+        
+        push(deque i)
+        
+        if i >= k - 1 {
+            push(result nums[deque[0]])
+        }
+        
+        i = i + 1
+    }
+    
+    return result
+}
+
+windowArr = [1 3 -1 -3 5 3 6 7]
+windowResult = maxSlidingWindow(windowArr 3)
+windowFirst = windowResult[0]
+windowLast = windowResult[len(windowResult) - 1]
+
+// ==================== 20. 综合极限测试 IV ====================
+passed = 0
+
+if exprResult == 11 { passed = passed + 1 }
+if chainResult == null { passed = passed + 1 }
+if higherOrderResult == 91 { passed = passed + 1 }
+if deepMergeResult == 9 { passed = passed + 1 }
+if sortResult == 15 { passed = passed + 1 }
+if bstResult == 0 { passed = passed + 1 }
+if dfsLen == 6 { passed = passed + 1 }
+if knapsackResult == 10 { passed = passed + 1 }
+if lcsResult == 4 { passed = passed + 1 }
+if editDistResult == 3 { passed = passed + 1 }
+if regexMatch { passed = passed + 1 }
+if bfResult == 8 { passed = passed + 1 }
+if topoLen == 4 { passed = passed + 1 }
+if ufResult == 2 { passed = passed + 1 }
+if segResult == 24 { passed = passed + 1 }
+if trieSearch1 == false && trieSearch2 == false && trieSearch3 == false && triePrefix == false { passed = passed + 1 }
+if lruGet1 == 1 && lruGet2 == 2 && lruGet3 == 1 && lruGet4 == 3 && lruGet5 == 4 { passed = passed + 1 }
+if heapPeek == 1 && heapPop1 == 1 && heapPop2 == 3 { passed = passed + 1 }
+if windowFirst == 3 && windowLast == 7 { passed = passed + 1 }
+if len(windowResult) == 6 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

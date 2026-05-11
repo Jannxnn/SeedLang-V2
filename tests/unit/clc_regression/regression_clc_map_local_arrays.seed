@@ -1,0 +1,11 @@
+// CLC regression: sl_map_store_value — local SlArray* must survive after the callee returns.
+// If sl_map_set only stored a bare pointer and genCleanup released xs/ys, map slots would dangle.
+fn makeBundle() {
+    xs = [7 8 9]
+    ys = [1 2]
+    return { xs: xs ys: ys tag: 42 }
+}
+b = makeBundle()
+print(b.xs[1])
+print(b.ys[0])
+print(b.tag)

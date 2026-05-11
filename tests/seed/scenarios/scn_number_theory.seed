@@ -1,0 +1,64 @@
+// 场景测试 - number theory：GCD/LCM/素数筛等数论算法
+// EXPECT: "OK:4"
+fn gcd(a b) {
+    while b != 0 {
+        temp = b
+        b = a % b
+        a = temp
+    }
+    return a
+}
+
+fn lcm(a b) {
+    return abs(a * b) / gcd(a b)
+}
+
+fn isPrime(n) {
+    if n < 2 { return false }
+    if n == 2 { return true }
+    if n % 2 == 0 { return false }
+    i = 3
+    while i * i <= n {
+        if n % i == 0 { return false }
+        i = i + 2
+    }
+    return true
+}
+
+fn primeFactors(n) {
+    factors = []
+    d = 2
+    while d * d <= n {
+        while n % d == 0 {
+            push(factors d)
+            n = n / d
+        }
+        d = d + 1
+    }
+    if n > 1 { push(factors n) }
+    return factors
+}
+
+fn fibonacci(n) {
+    if n <= 0 { return 0 }
+    if n == 1 { return 1 }
+    a = 0
+    b = 1
+    i = 2
+    while i <= n {
+        temp = a + b
+        a = b
+        b = temp
+        i = i + 1
+    }
+    return b
+}
+
+passed = 0
+
+if gcd(48 18) == 6 { passed = passed + 1 }
+if lcm(4 6) == 12 { passed = passed + 1 }
+if isPrime(17) { passed = passed + 1 }
+if fibonacci(10) == 55 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

@@ -1,0 +1,8 @@
+// VM 优化：FOR_ARRAY_SUM — 单元素数组求和
+// EXPECT: 42
+arr = [42]
+sum = 0
+for i in arr {
+    sum = sum + i
+}
+result = sum

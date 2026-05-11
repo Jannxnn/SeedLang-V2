@@ -1,0 +1,7 @@
+// 场景测试 - factorial10：10 的阶乘计算（大数结果验证）
+// EXPECT: 3628800
+fn fact(n) {
+    if n <= 1 { return 1 }
+    return n * fact(n - 1)
+}
+result = fact(10)

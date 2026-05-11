@@ -1,0 +1,42 @@
+// EXPECT: "OK:4"
+class Stack {
+    init() {
+        this.items = []
+    }
+    push(val) { push(this.items val) }
+    pop() { return pop(this.items) }
+    peek() { return this.items[len(this.items) - 1] }
+    isEmpty() { return len(this.items) == 0 }
+}
+
+class Queue {
+    init() {
+        this.items = []
+    }
+    enqueue(val) { push(this.items val) }
+    dequeue() { return shift(this.items) }
+    front() { return this.items[0] }
+    isEmpty() { return len(this.items) == 0 }
+}
+
+stack = Stack()
+stack.push(1)
+stack.push(2)
+stack.push(3)
+s1 = stack.pop()
+s2 = stack.peek()
+
+queue = Queue()
+queue.enqueue(10)
+queue.enqueue(20)
+queue.enqueue(30)
+q1 = queue.dequeue()
+q2 = queue.front()
+
+passed = 0
+if s1 == 3 { passed = passed + 1 }
+if s2 == 2 { passed = passed + 1 }
+if q1 == 10 { passed = passed + 1 }
+if q2 == 20 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

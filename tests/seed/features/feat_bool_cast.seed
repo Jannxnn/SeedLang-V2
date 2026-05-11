@@ -1,0 +1,3 @@
+// 布尔类型转换测试：各种类型到布尔值的转换规则
+// EXPECT: true
+result = toBool(1)

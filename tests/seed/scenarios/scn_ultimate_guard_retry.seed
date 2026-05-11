@@ -1,0 +1,16 @@
+// 场景测试 - ultimate guard retry（终极）：守卫模式与重试机制组合
+// EXPECT: "ready"
+count = 0
+fn probe() {
+    count = count + 1
+    if count < 4 { return null }
+    return "ready"
+}
+res = null
+i = 0
+while i < 5 {
+    t = probe()
+    if t != null { res = t }
+    i = i + 1
+}
+result = res

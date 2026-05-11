@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Seed 稳定性交付物 · 预览</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --card: #1a2332;
+      --line: rgba(120, 160, 220, 0.25);
+      --text: #e8eef7;
+      --muted: #8fa3c4;
+      --accent: #5b8def;
+      --ok: #3ecf8e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: radial-gradient(ellipse 80% 50% at 50% -20%, #1a3050, var(--bg));
+      color: var(--text);
+      padding: 28px 18px 48px;
+      line-height: 1.55;
+    }
+    .wrap { max-width: 560px; margin: 0 auto; }
+    h1 {
+      font-size: 1.35rem;
+      font-weight: 650;
+      margin: 0 0 8px;
+      letter-spacing: -0.02em;
+    }
+    .sub { color: var(--muted); font-size: 0.92rem; margin-bottom: 22px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin-bottom: 16px;
+    }
+    .card h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 12px; }
+    table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+    th, td { text-align: left; padding: 8px 0; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); font-weight: 500; font-size: 0.85rem; }
+    tr:last-child td { border-bottom: none; }
+    .amt { text-align: right; font-weight: 600; }
+    .totals { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+    .row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.95rem; }
+    .row strong { color: var(--ok); font-size: 1.05rem; }
+    .tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(91, 141, 239, 0.15);
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+    .how {
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+    .how code {
+      display: block;
+      margin: 8px 0;
+      padding: 10px 12px;
+      background: #0c1018;
+      border-radius: 8px;
+      color: #c5d4f0;
+      font-size: 0.82rem;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+    }
+    .path { word-break: break-all; font-size: 0.8rem; opacity: 0.9; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="tag">SeedLang · 桌面可预览</div>
+    <h1>稳定性交付物 · 金额汇总演示</h1>
+    <p class="sub">下方数字由本页内嵌脚本按与 <code>app.seed</code> 相同规则即时算出（非远程服务）。</p>
+
+    <div class="card">
+      <h2>明细</h2>
+      <table>
+        <thead><tr><th>项</th><th class="amt">金额</th></tr></thead>
+        <tbody id="lines"></tbody>
+      </table>
+      <div class="totals" id="totals"></div>
+    </div>
+
+    <div class="card">
+      <h2>怎么用 / 和 Seed 源码的关系</h2>
+      <p class="how">
+        真正可回归的「逻辑源文件」是上一级目录里的 <strong>app.seed</strong>；CI/本机请用测试比对输出。
+      </p>
+      <code>npm test -- --quick</code>
+      <code>npm run preview:stability-web</code>
+      <p class="how">第二条会在浏览器里打开本页（需已 <code>npm run build</code> 生成 dist，测试不依赖本页）。</p>
+      <p class="how path" id="filePath"></p>
+    </div>
+  </div>
+
+  <script>
+    // 与 app.seed 中 rates 保持一致；改 app.seed 时请同步改此处并更新 golden.txt
+    const rates = [199, 49, 1200, 0, -15];
+    const labels = ["项 1", "项 2", "项 3", "项 4", "折扣"];
+
+    let sub = 0;
+    for (let i = 0; i < rates.length; i++) sub += rates[i];
+    const vat = Math.floor((sub * 13 + 50) / 100);
+    const grand = sub + vat;
+
+    const tbody = document.getElementById("lines");
+    rates.forEach((r, i) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = "<td>" + labels[i] + "</td><td class=\"amt\">" + r + "</td>";
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById("totals").innerHTML =
+      '<div class="row"><span>行数</span><span>' + rates.length + "</span></div>" +
+      '<div class="row"><span>小计</span><span>' + sub + "</span></div>" +
+      '<div class="row"><span>税额 (13% 四舍五入到元)</span><span>' + vat + "</span></div>" +
+      '<div class="row"><span>合计</span><strong>' + grand + "</strong></div>";
+
+    document.getElementById("filePath").textContent =
+      "本页路径: " + decodeURI(location.pathname.replace(/^\//, ""));
+
+    document.title = "合计 " + grand + " · Seed 交付物预览";
+  </script>
+</body>
+</html>

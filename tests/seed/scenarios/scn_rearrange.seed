@@ -1,0 +1,107 @@
+// 场景测试 - rearrange：字符串重排（相邻字符不同）
+// EXPECT: "OK:4"
+fn reorganizeString(s) {
+    count = {}
+    chars = split(s "")
+    
+    for c in chars {
+        if count[c] == null { count[c] = 0 }
+        count[c] = count[c] + 1
+    }
+    
+    maxCount = 0
+    maxChar = ""
+    for c in keys(count) {
+        if count[c] > maxCount {
+            maxCount = count[c]
+            maxChar = c
+        }
+    }
+    
+    if maxCount > (len(s) + 1) / 2 { return "" }
+    
+    result = []
+    i = 0
+    while i < len(s) {
+        push(result "")
+        i = i + 1
+    }
+    
+    idx = 0
+    while count[maxChar] > 0 {
+        result[idx] = maxChar
+        idx = idx + 2
+        count[maxChar] = count[maxChar] - 1
+    }
+    
+    for c in keys(count) {
+        while count[c] > 0 {
+            if idx >= len(s) { idx = 1 }
+            result[idx] = c
+            idx = idx + 2
+            count[c] = count[c] - 1
+        }
+    }
+    
+    return join(result "")
+}
+
+fn rearrangeBarcodes(barcodes) {
+    if len(barcodes) <= 1 { return barcodes }
+    
+    count = {}
+    for b in barcodes {
+        if count[b] == null { count[b] = 0 }
+        count[b] = count[b] + 1
+    }
+    
+    maxCount = 0
+    maxCode = 0
+    for b in keys(count) {
+        if count[b] > maxCount {
+            maxCount = count[b]
+            maxCode = b
+        }
+    }
+    
+    result = []
+    i = 0
+    while i < len(barcodes) {
+        push(result 0)
+        i = i + 1
+    }
+    
+    idx = 0
+    while count[maxCode] > 0 {
+        result[idx] = maxCode
+        idx = idx + 2
+        count[maxCode] = count[maxCode] - 1
+    }
+    
+    for b in keys(count) {
+        while count[b] > 0 {
+            if idx >= len(barcodes) { idx = 1 }
+            result[idx] = b
+            idx = idx + 2
+            count[b] = count[b] - 1
+        }
+    }
+    
+    return result
+}
+
+passed = 0
+
+result1 = reorganizeString("aab")
+if len(result1) == 3 { passed = passed + 1 }
+
+result2 = reorganizeString("aaab")
+if result2 == "" { passed = passed + 1 }
+
+barcodes = rearrangeBarcodes([1 1 1 2 2 2])
+if len(barcodes) == 6 { passed = passed + 1 }
+
+result3 = reorganizeString("aba")
+if len(result3) == 3 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

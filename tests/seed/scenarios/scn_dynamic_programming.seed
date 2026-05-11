@@ -1,0 +1,98 @@
+// 场景测试 - dynamic programming：0-1 背包问题动态规划解法
+// EXPECT: "OK:4"
+fn knapsack(weights values capacity) {
+    n = len(weights)
+    dp = []
+    
+    i = 0
+    while i <= n {
+        row = []
+        j = 0
+        while j <= capacity {
+            push(row 0)
+            j = j + 1
+        }
+        push(dp row)
+        i = i + 1
+    }
+    
+    i = 1
+    while i <= n {
+        w = 0
+        while w <= capacity {
+            if weights[i - 1] <= w {
+                dp[i][w] = max(
+                    dp[i - 1][w]
+                    dp[i - 1][w - weights[i - 1]] + values[i - 1]
+                )
+            } else {
+                dp[i][w] = dp[i - 1][w]
+            }
+            w = w + 1
+        }
+        i = i + 1
+    }
+    
+    return dp[n][capacity]
+}
+
+fn longestIncreasingSubsequence(arr) {
+    if len(arr) == 0 { return 0 }
+    
+    dp = []
+    for x in arr { push(dp 1) }
+    
+    i = 1
+    while i < len(arr) {
+        j = 0
+        while j < i {
+            if arr[i] > arr[j] && dp[i] < dp[j] + 1 {
+                dp[i] = dp[j] + 1
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    
+    maxLen = dp[0]
+    for x in dp {
+        if x > maxLen { maxLen = x }
+    }
+    return maxLen
+}
+
+fn coinChange(coins amount) {
+    dp = []
+    i = 0
+    while i <= amount {
+        push(dp amount + 1)
+        i = i + 1
+    }
+    dp[0] = 0
+    
+    i = 1
+    while i <= amount {
+        for coin in coins {
+            if coin <= i {
+                dp[i] = min(dp[i] dp[i - coin] + 1)
+            }
+        }
+        i = i + 1
+    }
+    
+    if dp[amount] > amount { return -1 }
+    return dp[amount]
+}
+
+passed = 0
+
+weights = [1 3 4 5]
+values = [1 4 5 7]
+if knapsack(weights values 7) == 9 { passed = passed + 1 }
+
+if longestIncreasingSubsequence([10 9 2 5 3 7 101 18]) == 4 { passed = passed + 1 }
+
+if coinChange([1 2 5] 11) == 3 { passed = passed + 1 }
+if coinChange([2] 3) == -1 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

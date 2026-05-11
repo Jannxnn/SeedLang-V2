@@ -1,0 +1,65 @@
+// 场景测试 - skip list：跳表数据结构实现
+// EXPECT: "OK:4"
+class SkipList {
+    init() {
+        this.head = { val: null next: null down: null }
+        this.levels = 1
+    }
+    
+    insert(val) {
+        update = []
+        current = this.head
+        
+        while current != null {
+            while current.next != null && current.next.val < val {
+                current = current.next
+            }
+            push(update current)
+            current = current.down
+        }
+        
+        insertBelow = true
+        prevNode = null
+        
+        while insertBelow && len(update) > 0 {
+            updateNode = update[len(update) - 1]
+            update = slice(update 0 len(update) - 1)
+            
+            newNode = { val: val next: updateNode.next down: prevNode }
+            updateNode.next = newNode
+            prevNode = newNode
+            
+            insertBelow = random() < 0.5
+        }
+    }
+    
+    search(val) {
+        current = this.head
+        
+        while current != null {
+            while current.next != null && current.next.val < val {
+                current = current.next
+            }
+            if current.next != null && current.next.val == val {
+                return true
+            }
+            current = current.down
+        }
+        return false
+    }
+}
+
+sl = SkipList()
+sl.insert(1)
+sl.insert(3)
+sl.insert(5)
+sl.insert(7)
+sl.insert(9)
+
+passed = 0
+if sl.search(1) { passed = passed + 1 }
+if sl.search(5) { passed = passed + 1 }
+if sl.search(9) { passed = passed + 1 }
+if sl.search(4) == false { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

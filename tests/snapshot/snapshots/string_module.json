@@ -1,0 +1,16 @@
+{
+  "name": "string_module",
+  "code": "\ntext = \"hello world\"\nresult = {\n    upper: upper(text),\n    lower: lower(text),\n    length: len(text)\n}\nprint(result.upper)\nprint(result.lower)\n",
+  "output": [
+    "HELLO WORLD",
+    "hello world"
+  ],
+  "globals": {
+    "result": {
+      "length": 11,
+      "lower": "hello world",
+      "upper": "HELLO WORLD"
+    }
+  },
+  "timestamp": "2026-04-09T19:19:27.118Z"
+}

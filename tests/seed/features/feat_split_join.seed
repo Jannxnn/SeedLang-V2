@@ -1,0 +1,4 @@
+// split/join 测试：字符串分割与数组拼接
+// EXPECT: "a-b-c"
+arr = split("a,b,c" ",")
+result = join(arr "-")

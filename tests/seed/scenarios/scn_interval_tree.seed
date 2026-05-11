@@ -1,0 +1,63 @@
+// 场景测试 - interval tree：区间树数据结构（线段树）
+// EXPECT: "OK:4"
+class IntervalTree {
+    init() {
+        this.root = null
+    }
+    
+    insert(start end) {
+        this.root = this._insert(this.root start end)
+    }
+    
+    _insert(node start end) {
+        if node == null {
+            return { start: start end: end max: end left: null right: null }
+        }
+        
+        if start < node.start {
+            node.left = this._insert(node.left start end)
+        } else {
+            node.right = this._insert(node.right start end)
+        }
+        
+        if node.max < end {
+            node.max = end
+        }
+        
+        return node
+    }
+    
+    overlaps(start end) {
+        return this._overlaps(this.root start end)
+    }
+    
+    _overlaps(node start end) {
+        if node == null { return false }
+        
+        if start < node.end && end > node.start {
+            return true
+        }
+        
+        if node.left != null && node.left.max > start {
+            return this._overlaps(node.left start end)
+        }
+        
+        return this._overlaps(node.right start end)
+    }
+}
+
+it = IntervalTree()
+it.insert(15 20)
+it.insert(10 30)
+it.insert(17 19)
+it.insert(5 20)
+it.insert(12 15)
+it.insert(30 40)
+
+passed = 0
+if it.overlaps(14 16) { passed = passed + 1 }
+if it.overlaps(21 23) { passed = passed + 1 }
+if it.overlaps(5 10) { passed = passed + 1 }
+if it.overlaps(25 29) { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

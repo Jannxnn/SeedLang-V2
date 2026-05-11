@@ -1,0 +1,11 @@
+macro parallel_for(var range body) {
+    __tasks__ = []
+    for var in range {
+        __task__ = scheduler.spawn(|| {
+            body
+        })
+        __tasks__ = __tasks__ + [__task__]
+    }
+    __results__ = scheduler.run()
+    result = __results__
+}

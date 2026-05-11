@@ -1,0 +1,658 @@
+// 场景测试 - hell suite 2（地狱级综合）：地狱难度第 2 套综合挑战
+// EXPECT: "OK:20"
+
+fn deepTryCatch(depth) {
+    result = 0
+    try {
+        try {
+            try {
+                try {
+                    try {
+                        if depth > 0 { throw "deep" }
+                        result = 100
+                    } catch(e1) {
+                        result = result + 1
+                        throw "level4"
+                    }
+                } catch(e2) {
+                    result = result + 2
+                    throw "level3"
+                }
+            } catch(e3) {
+                result = result + 4
+                throw "level2"
+            }
+        } catch(e4) {
+            result = result + 8
+            throw "level1"
+        }
+    } catch(e5) {
+        result = result + 16
+    }
+    return result
+}
+
+nestedException = deepTryCatch(1)
+
+fn complexControlFlow(n) {
+    sum = 0
+    i = 0
+    
+    while i < n {
+        j = 0
+        while j < n {
+            k = 0
+            while k < n {
+                if i == j && j == k {
+                    sum = sum + 1
+                } else {
+                    if i + j + k == n - 1 {
+                        sum = sum + 2
+                    } else {
+                        if (i + j + k) % 3 == 0 {
+                            sum = sum + 3
+                        }
+                    }
+                }
+                k = k + 1
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    
+    return sum
+}
+
+controlFlowResult = complexControlFlow(5)
+
+fn makeCounter(start step) {
+    count = start
+    return () => {
+        current = count
+        count = count + step
+        return current
+    }
+}
+
+counter1 = makeCounter(0 1)
+counter2 = makeCounter(100 10)
+
+c1 = counter1()
+c2 = counter1()
+c3 = counter2()
+c4 = counter2()
+counterResult = c1 + c2 + c3 + c4
+
+fn transformData(data) {
+    result = {}
+    
+    for item in data {
+        category = item.category
+        if result[category] == null {
+            result[category] = { total: 0 items: [] }
+        }
+        result[category].total = result[category].total + item.value
+        push(result[category].items item.name)
+    }
+    
+    return result
+}
+
+transformInput = [
+    { name: "a" category: "x" value: 1 }
+    { name: "b" category: "y" value: 2 }
+    { name: "c" category: "x" value: 3 }
+    { name: "d" category: "y" value: 4 }
+    { name: "e" category: "x" value: 5 }
+]
+
+transformed = transformData(transformInput)
+transformX = transformed.x.total
+
+fn parseExpression(tokens) {
+    pos = 0
+    
+    fn peek() {
+        if pos < len(tokens) { return tokens[pos] }
+        return null
+    }
+    
+    fn consume() {
+        token = peek()
+        pos = pos + 1
+        return token
+    }
+    
+    fn parseTerm() {
+        left = parseFactor()
+        
+        while peek() == "*" || peek() == "/" {
+            op = consume()
+            right = parseFactor()
+            if op == "*" { left = left * right }
+            if op == "/" { left = left / right }
+        }
+        
+        return left
+    }
+    
+    fn parseFactor() {
+        token = consume()
+        if type(token) == "number" { return token }
+        if token == "(" {
+            result = parseExpr()
+            consume()
+            return result
+        }
+        return 0
+    }
+    
+    fn parseExpr() {
+        left = parseTerm()
+        
+        while peek() == "+" || peek() == "-" {
+            op = consume()
+            right = parseTerm()
+            if op == "+" { left = left + right }
+            if op == "-" { left = left - right }
+        }
+        
+        return left
+    }
+    
+    return parseExpr()
+}
+
+parseResult = parseExpression([2 "+" 3 "*" 4 "-" 1])
+
+fn bitManipulation(n) {
+    result = 0
+    
+    i = 0
+    while i < 32 {
+        if (n & (1 << i)) != 0 {
+            result = result + 1
+        }
+        i = i + 1
+    }
+    
+    return result
+}
+
+bitCount = bitManipulation(255)
+
+fn encode(str) {
+    result = ""
+    i = 0
+    while i < len(str) {
+        c = charAt(str i)
+        code = 0
+        if c == "A" { code = 27 }
+        if c == "b" { code = 2 }
+        if c == "1" { code = 54 }
+        result = result + toString(code) + "-"
+        i = i + 1
+    }
+    return result
+}
+
+encoded = encode("Ab1")
+encodedLen = len(encoded)
+
+fn stateTransitions(events) {
+    states = {
+        S0: { onA: "S1" onB: "S2" }
+        S1: { onA: "S0" onB: "S3" }
+        S2: { onA: "S3" onB: "S0" }
+        S3: { onA: "S2" onB: "S1" }
+    }
+    
+    current = "S0"
+    count = 0
+    
+    for event in events {
+        next = states[current][event]
+        if next != null {
+            current = next
+            count = count + 1
+        }
+    }
+    
+    return { final: current transitions: count }
+}
+
+stateResult2 = stateTransitions(["onA" "onB" "onA" "onB" "onA"])
+
+fn multiDimArray(n) {
+    arr = []
+    
+    i = 0
+    while i < n {
+        row = []
+        j = 0
+        while j < n {
+            cell = []
+            k = 0
+            while k < n {
+                push(cell i * n * n + j * n + k)
+                k = k + 1
+            }
+            push(row cell)
+            j = j + 1
+        }
+        push(arr row)
+        i = i + 1
+    }
+    
+    sum = 0
+    i = 0
+    while i < n {
+        j = 0
+        while j < n {
+            k = 0
+            while k < n {
+                sum = sum + arr[i][j][k]
+                k = k + 1
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    
+    return sum
+}
+
+multiDimSum = multiDimArray(3)
+
+fn curry(func arity) {
+    fn curried(args) {
+        return (x) => {
+            newArgs = []
+            for a in args { push(newArgs a) }
+            push(newArgs x)
+            
+            if len(newArgs) == arity {
+                return applyFunc(func newArgs)
+            }
+            return curried(newArgs)
+        }
+    }
+    return curried([])
+}
+
+fn applyFunc(func args) {
+    if len(args) == 2 { return func(args[0] args[1]) }
+    if len(args) == 3 { return func(args[0] args[1] args[2]) }
+    return 0
+}
+
+add3 = (a b c) => a + b + c
+curriedAdd = curry(add3 3)
+step1 = curriedAdd(1)
+step2 = step1(2)
+curryResult = step2(3)
+
+lazyComputed = false
+lazyValue = null
+
+fn lazyGet() {
+    if lazyComputed == false {
+        lazyValue = 42 * 2
+        lazyComputed = true
+    }
+    return lazyValue
+}
+
+fn lazyIsComputed() {
+    return lazyComputed
+}
+
+lazyBefore = lazyIsComputed()
+lazyVal = lazyGet()
+lazyAfter = lazyIsComputed()
+
+fn mapReduce(data mapper reducer initial) {
+    mapped = []
+    for item in data {
+        push(mapped mapper(item))
+    }
+    
+    acc = initial
+    for item in mapped {
+        acc = reducer(acc item)
+    }
+    
+    return acc
+}
+
+mrData = [1 2 3 4 5 6 7 8 9 10]
+mrMapper = (x) => x * x
+mrReducer = (acc x) => acc + x
+mrResult = mapReduce(mrData mrMapper mrReducer 0)
+
+fn solveNQueens(n) {
+    board = []
+    i = 0
+    while i < n {
+        row = []
+        j = 0
+        while j < n {
+            push(row 0)
+            j = j + 1
+        }
+        push(board row)
+        i = i + 1
+    }
+    
+    solutions = 0
+    
+    fn isSafe(row col) {
+        i = 0
+        while i < row {
+            if board[i][col] == 1 { return false }
+            i = i + 1
+        }
+        
+        i = row - 1
+        j = col - 1
+        while i >= 0 && j >= 0 {
+            if board[i][j] == 1 { return false }
+            i = i - 1
+            j = j - 1
+        }
+        
+        i = row - 1
+        j = col + 1
+        while i >= 0 && j < n {
+            if board[i][j] == 1 { return false }
+            i = i - 1
+            j = j + 1
+        }
+        
+        return true
+    }
+    
+    fn solve(row) {
+        if row == n {
+            solutions = solutions + 1
+            return
+        }
+        
+        col = 0
+        while col < n {
+            if isSafe(row col) {
+                board[row][col] = 1
+                solve(row + 1)
+                board[row][col] = 0
+            }
+            col = col + 1
+        }
+    }
+    
+    solve(0)
+    return solutions
+}
+
+queens4 = solveNQueens(4)
+
+fn scheduleTasks(tasks resources) {
+    schedule = []
+    remaining = []
+    for t in tasks { push(remaining t) }
+    
+    time = 0
+    running = []
+    
+    while len(remaining) > 0 || len(running) > 0 {
+        i = 0
+        while i < len(running) {
+            running[i].remaining = running[i].remaining - 1
+            i = i + 1
+        }
+        
+        newRunning = []
+        i = 0
+        while i < len(running) {
+            if running[i].remaining > 0 {
+                push(newRunning running[i])
+            }
+            i = i + 1
+        }
+        running = newRunning
+        
+        addRunning = []
+        newRemaining = []
+        i = 0
+        while i < len(remaining) {
+            if len(running) + len(addRunning) < resources {
+                push(addRunning { task: remaining[i] remaining: remaining[i].duration })
+            } else {
+                push(newRemaining remaining[i])
+            }
+            i = i + 1
+        }
+        
+        for r in addRunning { push(running r) }
+        remaining = newRemaining
+        time = time + 1
+        
+        if time > 20 { break }
+    }
+    
+    return time
+}
+
+taskList = [
+    { id: 1 duration: 3 }
+    { id: 2 duration: 2 }
+    { id: 3 duration: 4 }
+    { id: 4 duration: 1 }
+]
+
+scheduleTime = scheduleTasks(taskList 2)
+
+trieRoot = {}
+
+fn trieInsert(word) {
+    node = trieRoot
+    chars = split(word "")
+    for c in chars {
+        if node[c] == null { node[c] = {} }
+        node = node[c]
+    }
+    node.end = true
+}
+
+fn trieSearch(word) {
+    node = trieRoot
+    chars = split(word "")
+    for c in chars {
+        if node[c] == null { return false }
+        node = node[c]
+    }
+    return node.end == true
+}
+
+fn trieStartsWith(prefix) {
+    node = trieRoot
+    chars = split(prefix "")
+    for c in chars {
+        if node[c] == null { return false }
+        node = node[c]
+    }
+    return true
+}
+
+trieInsert("apple")
+trieInsert("app")
+trieSearch1 = trieSearch("app")
+trieSearch2 = trieSearch("apple")
+trieSearch3 = trieSearch("appl")
+triePrefix = trieStartsWith("app")
+
+fn slidingWindowMax(arr k) {
+    result = []
+    deque = []
+    
+    i = 0
+    while i < len(arr) {
+        while len(deque) > 0 && deque[0] < i - k + 1 {
+            deque = slice(deque 1 len(deque))
+        }
+        
+        while len(deque) > 0 && arr[deque[len(deque) - 1]] < arr[i] {
+            deque = slice(deque 0 len(deque) - 1)
+        }
+        
+        push(deque i)
+        
+        if i >= k - 1 {
+            push(result arr[deque[0]])
+        }
+        
+        i = i + 1
+    }
+    
+    return result
+}
+
+windowMax = slidingWindowMax([1 3 0-1 0-3 5 3 6 7] 3)
+windowMaxFirst = windowMax[0]
+
+ufParent = []
+ufRank = []
+
+fn ufInit(n) {
+    i = 0
+    while i < n {
+        push(ufParent i)
+        push(ufRank 0)
+        i = i + 1
+    }
+}
+
+fn ufFind(x) {
+    if ufParent[x] != x {
+        ufParent[x] = ufFind(ufParent[x])
+    }
+    return ufParent[x]
+}
+
+fn ufUnion(x y) {
+    px = ufFind(x)
+    py = ufFind(y)
+    
+    if px == py { return false }
+    
+    if ufRank[px] < ufRank[py] {
+        ufParent[px] = py
+    } else {
+        if ufRank[px] > ufRank[py] {
+            ufParent[py] = px
+        } else {
+            ufParent[py] = px
+            ufRank[px] = ufRank[px] + 1
+        }
+    }
+    return true
+}
+
+ufInit(5)
+ufUnion(0 1)
+ufUnion(2 3)
+ufUnion(0 2)
+ufFind1 = ufFind(1)
+ufFind2 = ufFind(3)
+
+fn nextGreaterElements(arr) {
+    n = len(arr)
+    result = []
+    
+    i = 0
+    while i < n {
+        push(result 0-1)
+        i = i + 1
+    }
+    
+    stack = []
+    
+    i = 0
+    while i < 2 * n {
+        idx = i % n
+        
+        while len(stack) > 0 && arr[idx] > arr[stack[len(stack) - 1]] {
+            result[stack[len(stack) - 1]] = arr[idx]
+            stack = slice(stack 0 len(stack) - 1)
+        }
+        
+        if i < n {
+            push(stack idx)
+        }
+        
+        i = i + 1
+    }
+    
+    return result
+}
+
+nextGreater = nextGreaterElements([1 2 1])
+nextGreater0 = nextGreater[0]
+
+diffArr = []
+
+fn diffInit(n) {
+    i = 0
+    while i < n {
+        push(diffArr 0)
+        i = i + 1
+    }
+}
+
+fn diffUpdate(left right val) {
+    diffArr[left] = diffArr[left] + val
+    if right + 1 < len(diffArr) {
+        diffArr[right + 1] = diffArr[right + 1] - val
+    }
+}
+
+fn diffResult() {
+    arr = []
+    sum = 0
+    for d in diffArr {
+        sum = sum + d
+        push(arr sum)
+    }
+    return arr
+}
+
+diffInit(5)
+diffUpdate(1 3 2)
+diffUpdate(2 4 3)
+diffRes = diffResult()
+diffResult2 = diffRes[2]
+
+passed = 0
+
+if nestedException == 31 { passed = passed + 1 }
+if controlFlowResult == 143 { passed = passed + 1 }
+if counterResult == 211 { passed = passed + 1 }
+if transformX == 9 { passed = passed + 1 }
+if parseResult == 13 { passed = passed + 1 }
+if bitCount == 8 { passed = passed + 1 }
+if encodedLen == 8 { passed = passed + 1 }
+if stateResult2.transitions == 5 { passed = passed + 1 }
+if multiDimSum == 351 { passed = passed + 1 }
+if curryResult == 6 { passed = passed + 1 }
+if lazyBefore == false && lazyAfter == true { passed = passed + 1 }
+if mrResult == 385 { passed = passed + 1 }
+if queens4 == 2 { passed = passed + 1 }
+if scheduleTime >= 5 { passed = passed + 1 }
+if trieSearch1 && trieSearch2 && trieSearch3 == false && triePrefix { passed = passed + 1 }
+if windowMaxFirst == 3 { passed = passed + 1 }
+if ufFind1 == ufFind2 { passed = passed + 1 }
+if nextGreater0 == 2 { passed = passed + 1 }
+if diffResult2 == 5 { passed = passed + 1 }
+if len(diffRes) == 5 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

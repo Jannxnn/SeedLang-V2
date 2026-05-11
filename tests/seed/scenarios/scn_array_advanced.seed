@@ -1,0 +1,44 @@
+// 场景测试 - array advanced：高级数组操作（range/zip/chunk/groupBy）
+// EXPECT: "OK:3"
+fn range(start end) {
+    result = []
+    i = start
+    while i < end {
+        push(result i)
+        i = i + 1
+    }
+    return result
+}
+
+fn zip(arr1 arr2) {
+    result = []
+    minLen = min(len(arr1) len(arr2))
+    i = 0
+    while i < minLen {
+        pair = [arr1[i] arr2[i]]
+        push(result pair)
+        i = i + 1
+    }
+    return result
+}
+
+fn flatten(arr) {
+    result = []
+    for sub in arr {
+        for item in sub {
+            push(result item)
+        }
+    }
+    return result
+}
+
+r = range(0 5)
+z = zip([1 2 3] [4 5 6])
+f = flatten([[1 2] [3 4] [5 6]])
+
+passed = 0
+if len(r) == 5 { passed = passed + 1 }
+if len(z) == 3 { passed = passed + 1 }
+if len(f) == 6 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

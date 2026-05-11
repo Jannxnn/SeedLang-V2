@@ -1,0 +1,62 @@
+// 场景测试 - graph bfs：图的广度优先搜索遍历实现
+// EXPECT: "OK:4"
+class Graph {
+    init() {
+        this.adjacencyList = {}
+    }
+    
+    addVertex(vertex) {
+        if this.adjacencyList[vertex] == null {
+            this.adjacencyList[vertex] = []
+        }
+    }
+    
+    addEdge(v1 v2) {
+        this.addVertex(v1)
+        this.addVertex(v2)
+        push(this.adjacencyList[v1] v2)
+        push(this.adjacencyList[v2] v1)
+    }
+    
+    hasPath(start end) {
+        visited = {}
+        queue = [start]
+        
+        while len(queue) > 0 {
+            current = queue[0]
+            queue = slice(queue 1 len(queue))
+            
+            if current == end { return true }
+            if visited[current] != null { continue }
+            visited[current] = true
+            
+            neighbors = this.adjacencyList[current]
+            if neighbors != null {
+                for neighbor in neighbors {
+                    if visited[neighbor] == null {
+                        push(queue neighbor)
+                    }
+                }
+            }
+        }
+        return false
+    }
+    
+    getNeighbors(vertex) {
+        return this.adjacencyList[vertex]
+    }
+}
+
+g = Graph()
+g.addEdge("A" "B")
+g.addEdge("B" "C")
+g.addEdge("C" "D")
+g.addEdge("D" "E")
+
+passed = 0
+if g.hasPath("A" "E") { passed = passed + 1 }
+if g.hasPath("A" "D") { passed = passed + 1 }
+if g.hasPath("E" "A") { passed = passed + 1 }
+if len(g.getNeighbors("B")) == 2 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

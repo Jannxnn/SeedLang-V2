@@ -1,0 +1,20 @@
+// 场景测试 - complex closure isolation：闭包隔离性与变量捕获独立性验证
+// EXPECT: 37
+fn makeBox(seed) {
+    value = seed
+    fn step(delta) {
+        value = value + delta
+        return value
+    }
+    return step
+}
+
+a = makeBox(1)
+b = makeBox(10)
+
+x1 = a(2)
+x2 = b(5)
+x3 = a(4)
+x4 = b(-3)
+
+result = x1 + x2 + x3 + x4

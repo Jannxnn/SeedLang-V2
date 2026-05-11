@@ -1,0 +1,11 @@
+// 编译器优化：for-in 循环体内 for 循环变量不泄漏到外层
+// 验证 for 循环的 init 变量（i）不会出现在 forInScopedVars 中
+// EXPECT: 45
+sum = 0
+inputs = [10]
+for n in inputs {
+  for (i = 0; i < n; i = i + 1) {
+    sum = sum + i
+  }
+}
+result = sum

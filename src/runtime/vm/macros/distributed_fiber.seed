@@ -1,0 +1,8 @@
+macro distributed_fiber(name body) {
+    fn name() {
+        body
+    }
+    __fiber__ = scheduler.spawn(name)
+    __result__ = scheduler.run()
+    result = __result__
+}

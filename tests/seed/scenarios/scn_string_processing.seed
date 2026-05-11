@@ -1,0 +1,11 @@
+// 场景测试 - string processing：字符串处理（trim/split/join）
+// EXPECT: "A-B-C-D"
+raw = "  a b c d  "
+trimmed = trim(raw)
+lowered = lower(trimmed)
+parts = split(lowered " ")
+upper1 = upper(parts[0])
+upper2 = upper(parts[1])
+upper3 = upper(parts[2])
+upper4 = upper(parts[3])
+result = upper1 + "-" + upper2 + "-" + upper3 + "-" + upper4

@@ -1,0 +1,13 @@
+{
+  "name": "string_processing",
+  "code": "\ntext = \"Hello, World!\"\nresult = upper(text)\nprint(result)\nresult = lower(text)\nprint(result)\nresult = trim(\"  spaces  \")\nprint(result)\n",
+  "output": [
+    "HELLO, WORLD!",
+    "hello, world!",
+    "spaces"
+  ],
+  "globals": {
+    "result": "spaces"
+  },
+  "timestamp": "2026-04-09T19:19:27.097Z"
+}

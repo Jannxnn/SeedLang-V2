@@ -1,0 +1,111 @@
+// 场景测试 - rectangle problems：矩形最大面积（单调栈）
+// EXPECT: "OK:4"
+fn largestRectangleArea(heights) {
+    stack = [-1]
+    maxArea = 0
+    
+    i = 0
+    while i < len(heights) {
+        while len(stack) > 1 && heights[i] < heights[stack[len(stack) - 1]] {
+            h = heights[stack[len(stack) - 1]]
+            stack = slice(stack 0 len(stack) - 1)
+            w = i - stack[len(stack) - 1] - 1
+            area = h * w
+            if area > maxArea { maxArea = area }
+        }
+        push(stack i)
+        i = i + 1
+    }
+    
+    while len(stack) > 1 {
+        h = heights[stack[len(stack) - 1]]
+        stack = slice(stack 0 len(stack) - 1)
+        w = len(heights) - stack[len(stack) - 1] - 1
+        area = h * w
+        if area > maxArea { maxArea = area }
+    }
+    
+    return maxArea
+}
+
+fn maximalRectangle(matrix) {
+    if len(matrix) == 0 { return 0 }
+    
+    cols = len(matrix[0])
+    heights = []
+    i = 0
+    while i < cols {
+        push(heights 0)
+        i = i + 1
+    }
+    
+    maxArea = 0
+    
+    for row in matrix {
+        i = 0
+        while i < cols {
+            if row[i] == 1 {
+                heights[i] = heights[i] + 1
+            } else {
+                heights[i] = 0
+            }
+            i = i + 1
+        }
+        
+        area = largestRectangleArea(heights)
+        if area > maxArea { maxArea = area }
+    }
+    
+    return maxArea
+}
+
+fn maximalSquare(matrix) {
+    if len(matrix) == 0 { return 0 }
+    
+    rows = len(matrix)
+    cols = len(matrix[0])
+    
+    dp = []
+    i = 0
+    while i <= rows {
+        row = []
+        j = 0
+        while j <= cols {
+            push(row 0)
+            j = j + 1
+        }
+        push(dp row)
+        i = i + 1
+    }
+    
+    maxSide = 0
+    
+    i = 1
+    while i <= rows {
+        j = 1
+        while j <= cols {
+            if matrix[i - 1][j - 1] == 1 {
+                dp[i][j] = min(dp[i - 1][j] min(dp[i][j - 1] dp[i - 1][j - 1])) + 1
+                if dp[i][j] > maxSide { maxSide = dp[i][j] }
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    
+    return maxSide * maxSide
+}
+
+passed = 0
+
+if largestRectangleArea([2 1 5 6 2 3]) == 10 { passed = passed + 1 }
+
+matrix = [[1 0 1 0 0] [1 0 1 1 1] [1 1 1 1 1] [1 0 0 1 0]]
+if maximalRectangle(matrix) == 6 { passed = passed + 1 }
+
+squareMatrix = [[1 0 1 0 0] [1 0 1 1 1] [1 1 1 1 1] [1 0 0 1 0]]
+if maximalSquare(squareMatrix) == 4 { passed = passed + 1 }
+
+if largestRectangleArea([1]) == 1 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

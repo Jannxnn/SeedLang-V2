@@ -1,0 +1,33 @@
+// 场景测试 - safe operations：安全运算（除零保护/空值处理）
+// EXPECT: "A:B:C:D"
+fn safeDivide(a b) {
+    if b == 0 { return "ERR" }
+    return a / b
+}
+
+fn safeGet(arr idx) {
+    if idx < 0 || idx >= len(arr) { return "ERR" }
+    return arr[idx]
+}
+
+fn safeProp(obj key) {
+    if obj[key] == null { return "ERR" }
+    return obj[key]
+}
+
+r1 = safeDivide(10 2)
+r2 = safeDivide(10 0)
+r3 = safeGet([1 2 3] 1)
+r4 = safeGet([1 2 3] 10)
+
+obj = { x: 100 }
+r5 = safeProp(obj "x")
+r6 = safeProp(obj "y")
+
+parts = []
+if r1 == 5 { push(parts "A") }
+if r2 == "ERR" { push(parts "B") }
+if r3 == 2 { push(parts "C") }
+if r6 == "ERR" { push(parts "D") }
+
+result = join(parts ":")

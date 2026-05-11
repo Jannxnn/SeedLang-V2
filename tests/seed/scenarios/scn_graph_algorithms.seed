@@ -1,0 +1,97 @@
+// 场景测试 - graph algorithms：图克隆等图论基础算法
+// EXPECT: "OK:4"
+fn cloneGraph(node visited) {
+    if node == null { return null }
+    if visited[node.id] != null { return visited[node.id] }
+    
+    clone = { id: node.id neighbors: [] }
+    visited[node.id] = clone
+    
+    for neighbor in node.neighbors {
+        push(clone.neighbors cloneGraph(neighbor visited))
+    }
+    
+    return clone
+}
+
+fn hasCycle(graph) {
+    visited = {}
+    recStack = {}
+    
+    fn dfs(node) {
+        visited[node] = true
+        recStack[node] = true
+        
+        for neighbor in graph[node] {
+            if visited[neighbor] == null {
+                if dfs(neighbor) { return true }
+            } else {
+                if recStack[neighbor] { return true }
+            }
+        }
+        
+        recStack[node] = false
+        return false
+    }
+    
+    for node in keys(graph) {
+        if visited[node] == null {
+            if dfs(node) { return true }
+        }
+    }
+    
+    return false
+}
+
+fn topologicalSortKahn(graph inDegree nodes) {
+    queue = []
+    for node in nodes {
+        if inDegree[node] == 0 {
+            push(queue node)
+        }
+    }
+    
+    result = []
+    
+    while len(queue) > 0 {
+        current = queue[0]
+        queue = slice(queue 1 len(queue))
+        push(result current)
+        
+        for neighbor in graph[current] {
+            inDegree[neighbor] = inDegree[neighbor] - 1
+            if inDegree[neighbor] == 0 {
+                push(queue neighbor)
+            }
+        }
+    }
+    
+    return result
+}
+
+graph = {
+    "A": ["B" "C"]
+    "B": ["D"]
+    "C": ["D"]
+    "D": []
+}
+
+inDegree = { "A": 0 "B": 1 "C": 1 "D": 2 }
+
+passed = 0
+
+if hasCycle(graph) == false { passed = passed + 1 }
+
+nodes = ["A" "B" "C" "D"]
+sorted = topologicalSortKahn(graph inDegree nodes)
+if sorted[0] == "A" { passed = passed + 1 }
+if sorted[3] == "D" { passed = passed + 1 }
+
+cyclicGraph = {
+    "A": ["B"]
+    "B": ["C"]
+    "C": ["A"]
+}
+if hasCycle(cyclicGraph) { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

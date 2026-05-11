@@ -1,0 +1,8 @@
+// if-else 条件分支测试：条件表达式与真假值分支选择
+// EXPECT: 20
+x = 10
+if x > 5 {
+    result = x * 2
+} else {
+    result = 0
+}

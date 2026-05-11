@@ -1,0 +1,24 @@
+{
+  "name": "json_serialization",
+  "code": "\nimport json\n\ndata = {\n    users: [\n        { name: \"Alice\", age: 30 },\n        { name: \"Bob\", age: 25 }\n    ],\n    total: 2\n}\nresult = json.stringify(data)\nprint(result)\n",
+  "output": [
+    "{\"total\":2,\"users\":[{\"age\":30,\"name\":\"Alice\"},{\"age\":25,\"name\":\"Bob\"}]}"
+  ],
+  "globals": {
+    "result": "{\"total\":2,\"users\":[{\"age\":30,\"name\":\"Alice\"},{\"age\":25,\"name\":\"Bob\"}]}",
+    "data": {
+      "total": 2,
+      "users": [
+        {
+          "age": 30,
+          "name": "Alice"
+        },
+        {
+          "age": 25,
+          "name": "Bob"
+        }
+      ]
+    }
+  },
+  "timestamp": "2026-04-10T10:11:11.226Z"
+}

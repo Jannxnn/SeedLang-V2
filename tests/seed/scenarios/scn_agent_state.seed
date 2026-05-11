@@ -1,0 +1,10 @@
+// 场景测试 - agent state：AI Agent 状态机的状态转换与持久化
+// EXPECT: "done"
+class StateMachine {
+    init(s) { this.s = s }
+    go(n) { this.s = n }
+}
+sm = StateMachine("idle")
+sm.go("running")
+sm.go("done")
+result = sm.s

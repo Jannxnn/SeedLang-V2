@@ -1,0 +1,239 @@
+{
+    "version": "2026.04",
+    "timestamp": 1712736000000,
+    "description": "AI Model Pricing Database - 2026年4月更新",
+    "source": "https://github.com/seedlang/pricing",
+    "models": {
+        "gpt-4": {
+            "input": 0.03,
+            "output": 0.06,
+            "contextWindow": 8192,
+            "provider": "openai",
+            "name": "GPT-4"
+        },
+        "gpt-4-turbo": {
+            "input": 0.01,
+            "output": 0.03,
+            "contextWindow": 128000,
+            "provider": "openai",
+            "name": "GPT-4 Turbo"
+        },
+        "gpt-4o": {
+            "input": 0.005,
+            "output": 0.015,
+            "contextWindow": 128000,
+            "provider": "openai",
+            "name": "GPT-4o"
+        },
+        "gpt-4o-mini": {
+            "input": 0.00015,
+            "output": 0.0006,
+            "contextWindow": 128000,
+            "provider": "openai",
+            "name": "GPT-4o Mini"
+        },
+        "gpt-3.5-turbo": {
+            "input": 0.0005,
+            "output": 0.0015,
+            "contextWindow": 16385,
+            "provider": "openai",
+            "name": "GPT-3.5 Turbo"
+        },
+        "gpt-5": {
+            "input": 0.05,
+            "output": 0.10,
+            "contextWindow": 200000,
+            "provider": "openai",
+            "name": "GPT-5"
+        },
+        "gpt-5-turbo": {
+            "input": 0.02,
+            "output": 0.05,
+            "contextWindow": 256000,
+            "provider": "openai",
+            "name": "GPT-5 Turbo"
+        },
+        "claude-3-opus": {
+            "input": 0.015,
+            "output": 0.075,
+            "contextWindow": 200000,
+            "provider": "anthropic",
+            "name": "Claude 3 Opus"
+        },
+        "claude-3-sonnet": {
+            "input": 0.003,
+            "output": 0.015,
+            "contextWindow": 200000,
+            "provider": "anthropic",
+            "name": "Claude 3 Sonnet"
+        },
+        "claude-3-haiku": {
+            "input": 0.00025,
+            "output": 0.00125,
+            "contextWindow": 200000,
+            "provider": "anthropic",
+            "name": "Claude 3 Haiku"
+        },
+        "claude-3.5-sonnet": {
+            "input": 0.003,
+            "output": 0.015,
+            "contextWindow": 200000,
+            "provider": "anthropic",
+            "name": "Claude 3.5 Sonnet"
+        },
+        "claude-4-opus": {
+            "input": 0.02,
+            "output": 0.10,
+            "contextWindow": 500000,
+            "provider": "anthropic",
+            "name": "Claude 4 Opus"
+        },
+        "claude-4-sonnet": {
+            "input": 0.005,
+            "output": 0.025,
+            "contextWindow": 500000,
+            "provider": "anthropic",
+            "name": "Claude 4 Sonnet"
+        },
+        "gemini-pro": {
+            "input": 0.00025,
+            "output": 0.0005,
+            "contextWindow": 32760,
+            "provider": "google",
+            "name": "Gemini Pro"
+        },
+        "gemini-1.5-pro": {
+            "input": 0.0035,
+            "output": 0.0105,
+            "contextWindow": 1000000,
+            "provider": "google",
+            "name": "Gemini 1.5 Pro"
+        },
+        "gemini-1.5-flash": {
+            "input": 0.000075,
+            "output": 0.0003,
+            "contextWindow": 1000000,
+            "provider": "google",
+            "name": "Gemini 1.5 Flash"
+        },
+        "gemini-2-pro": {
+            "input": 0.005,
+            "output": 0.015,
+            "contextWindow": 2000000,
+            "provider": "google",
+            "name": "Gemini 2 Pro"
+        },
+        "gemini-2-flash": {
+            "input": 0.0001,
+            "output": 0.0004,
+            "contextWindow": 2000000,
+            "provider": "google",
+            "name": "Gemini 2 Flash"
+        },
+        "llama-3-70b": {
+            "input": 0.0007,
+            "output": 0.0009,
+            "contextWindow": 8192,
+            "provider": "meta",
+            "name": "Llama 3 70B"
+        },
+        "llama-3-8b": {
+            "input": 0.00005,
+            "output": 0.0001,
+            "contextWindow": 8192,
+            "provider": "meta",
+            "name": "Llama 3 8B"
+        },
+        "llama-4-400b": {
+            "input": 0.002,
+            "output": 0.003,
+            "contextWindow": 128000,
+            "provider": "meta",
+            "name": "Llama 4 400B"
+        },
+        "llama-4-70b": {
+            "input": 0.0005,
+            "output": 0.0008,
+            "contextWindow": 128000,
+            "provider": "meta",
+            "name": "Llama 4 70B"
+        },
+        "mistral-large": {
+            "input": 0.004,
+            "output": 0.012,
+            "contextWindow": 32768,
+            "provider": "mistral",
+            "name": "Mistral Large"
+        },
+        "mistral-medium": {
+            "input": 0.0027,
+            "output": 0.0081,
+            "contextWindow": 32768,
+            "provider": "mistral",
+            "name": "Mistral Medium"
+        },
+        "mistral-large-2": {
+            "input": 0.003,
+            "output": 0.009,
+            "contextWindow": 128000,
+            "provider": "mistral",
+            "name": "Mistral Large 2"
+        },
+        "deepseek-coder": {
+            "input": 0.00014,
+            "output": 0.00028,
+            "contextWindow": 16384,
+            "provider": "deepseek",
+            "name": "DeepSeek Coder"
+        },
+        "deepseek-chat": {
+            "input": 0.00014,
+            "output": 0.00028,
+            "contextWindow": 64000,
+            "provider": "deepseek",
+            "name": "DeepSeek Chat"
+        },
+        "deepseek-v3": {
+            "input": 0.0001,
+            "output": 0.0002,
+            "contextWindow": 128000,
+            "provider": "deepseek",
+            "name": "DeepSeek V3"
+        },
+        "qwen-2.5-72b": {
+            "input": 0.0004,
+            "output": 0.0006,
+            "contextWindow": 32768,
+            "provider": "alibaba",
+            "name": "Qwen 2.5 72B"
+        },
+        "qwen-2.5-turbo": {
+            "input": 0.0001,
+            "output": 0.0002,
+            "contextWindow": 128000,
+            "provider": "alibaba",
+            "name": "Qwen 2.5 Turbo"
+        },
+        "grok-2": {
+            "input": 0.002,
+            "output": 0.01,
+            "contextWindow": 131072,
+            "provider": "xai",
+            "name": "Grok 2"
+        },
+        "command-r": {
+            "input": 0.0005,
+            "output": 0.0015,
+            "contextWindow": 128000,
+            "provider": "cohere",
+            "name": "Command R"
+        },
+        "command-r-plus": {
+            "input": 0.003,
+            "output": 0.015,
+            "contextWindow": 128000,
+            "provider": "cohere",
+            "name": "Command R+"
+        }
+    }
+}

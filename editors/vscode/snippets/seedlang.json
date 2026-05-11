@@ -1,0 +1,233 @@
+{
+  "Function Declaration": {
+    "prefix": "fn",
+    "body": [
+      "fn ${1:name}(${2:params}) {",
+      "\t${3:body}",
+      "}"
+    ],
+    "description": "Create a function declaration (params: space-separated, NO commas)"
+  },
+  "Async Function": {
+    "prefix": "async",
+    "body": [
+      "async fn ${1:name}(${2:params}) {",
+      "\t${3:body}",
+      "}"
+    ],
+    "description": "Create an async function"
+  },
+  "Arrow Function": {
+    "prefix": "arrow",
+    "body": [
+      "(${1:params}) => ${2:expression}"
+    ],
+    "description": "Create an arrow function"
+  },
+  "If Statement": {
+    "prefix": "if",
+    "body": [
+      "if ${1:condition} {",
+      "\t${2:body}",
+      "}"
+    ],
+    "description": "Create an if statement"
+  },
+  "If-Else Statement": {
+    "prefix": "ifelse",
+    "body": [
+      "if ${1:condition} {",
+      "\t${2:then}",
+      "} else {",
+      "\t${3:else}",
+      "}"
+    ],
+    "description": "Create an if-else statement"
+  },
+  "While Loop": {
+    "prefix": "while",
+    "body": [
+      "${1:i} = 0",
+      "while ${1:i} < ${2:length} {",
+      "\t${3:body}",
+      "\t${1:i} = ${1:i} + 1",
+      "}"
+    ],
+    "description": "Create a while loop (SeedLang uses while, NOT for-in)"
+  },
+  "Switch Statement": {
+    "prefix": "switch",
+    "body": [
+      "switch ${1:value} {",
+      "\tcase ${2:pattern}:",
+      "\t\t${3:body}",
+      "\t\tbreak",
+      "\tdefault:",
+      "\t\t${4:defaultBody}",
+      "}"
+    ],
+    "description": "Create a switch statement"
+  },
+  "Try-Catch": {
+    "prefix": "try",
+    "body": [
+      "try {",
+      "\t${1:tryBlock}",
+      "} catch ${2:e} {",
+      "\t${3:catchBlock}",
+      "}"
+    ],
+    "description": "Create a try-catch block"
+  },
+  "Interface": {
+    "prefix": "interface",
+    "body": [
+      "interface ${1:Name} {",
+      "\t${2:property}: ${3:type}",
+      "}"
+    ],
+    "description": "Create an interface"
+  },
+  "Type Alias": {
+    "prefix": "type",
+    "body": [
+      "type ${1:Name} = ${2:TypeExpression}"
+    ],
+    "description": "Create a type alias"
+  },
+  "Class": {
+    "prefix": "class",
+    "body": [
+      "class ${1:Name} {",
+      "\tfn init() {",
+      "\t\t${2:body}",
+      "\t}",
+      "}"
+    ],
+    "description": "Create a class"
+  },
+  "Import Statement": {
+    "prefix": "import",
+    "body": [
+      "import ${1:module} from \"${2:path}\""
+    ],
+    "description": "Create an import statement"
+  },
+  "Export Statement": {
+    "prefix": "export",
+    "body": [
+      "export ${1:name}"
+    ],
+    "description": "Create an export statement"
+  },
+  "print Output": {
+    "prefix": "log",
+    "body": [
+      "print(\"${1:message}\")"
+    ],
+    "description": "Create a print output statement (NOT print)"
+  },
+  "Symbolic Declaration": {
+    "prefix": "!s",
+    "body": [
+      "!s#v${1:A}>${2:variable} = ${3:value}"
+    ],
+    "description": "Create a symbolic declaration"
+  },
+  "Symbolic Write": {
+    "prefix": "!w",
+    "body": [
+      "!w#v${1:A}>${2:content}"
+    ],
+    "description": "Create a symbolic write action"
+  },
+  "Symbolic Question": {
+    "prefix": "?",
+    "body": [
+      "?#v${1:A}?>${2:condition}->${3:action}"
+    ],
+    "description": "Create a symbolic question"
+  },
+  "Map Function": {
+    "prefix": "map",
+    "body": [
+      "map(${1:array} (${2:item}) => ${3:expression})"
+    ],
+    "description": "Create a map function call (NO commas between args)"
+  },
+  "Filter Function": {
+    "prefix": "filter",
+    "body": [
+      "filter(${1:array} (${2:item}) => ${3:condition})"
+    ],
+    "description": "Create a filter function call (NO commas between args)"
+  },
+  "Reduce Function": {
+    "prefix": "reduce",
+    "body": [
+      "reduce(${1:array} (${2:acc} ${3:item}) => ${4:expression} ${5:initial})"
+    ],
+    "description": "Create a reduce function call (NO commas between args)"
+  },
+  "Array Literal": {
+    "prefix": "arr",
+    "body": [
+      "[${1:item1} ${2:item2} ${3:item3}]"
+    ],
+    "description": "Create an array literal (NO commas between elements)"
+  },
+  "Object Literal": {
+    "prefix": "obj",
+    "body": [
+      "{",
+      "\t${1:key1}: ${2:value1}",
+      "\t${3:key2}: ${4:value2}",
+      "}"
+    ],
+    "description": "Create an object literal (NO commas between properties)"
+  },
+  "Range": {
+    "prefix": "range",
+    "body": [
+      "range(${1:start} ${2:end})"
+    ],
+    "description": "Create a range (NO commas between args)"
+  },
+  "Length": {
+    "prefix": "len",
+    "body": [
+      "len(${1:array})"
+    ],
+    "description": "Get array/string length"
+  },
+  "Push to Array": {
+    "prefix": "push",
+    "body": [
+      "push(${1:array} ${2:item})"
+    ],
+    "description": "Push item to array (NO commas between args)"
+  },
+  "Comment Block": {
+    "prefix": "comment",
+    "body": [
+      "/*",
+      " * ${1:comment}",
+      " */"
+    ],
+    "description": "Create a comment block"
+  },
+  "Variable Declaration": {
+    "prefix": "var",
+    "body": [
+      "${1:name} = ${2:value}"
+    ],
+    "description": "Create a variable declaration"
+  },
+  "Return Statement": {
+    "prefix": "ret",
+    "body": [
+      "return ${1:value}"
+    ],
+    "description": "Create a return statement"
+  }
+}

@@ -1,0 +1,10 @@
+﻿// try-catch-finally 完整测试：三段式异常处理的执行流
+// EXPECT: "caught-done"
+result = ""
+try {
+    throw "e"
+} catch(e) {
+    result = "caught"
+} finally {
+    result = result + "-done"
+}

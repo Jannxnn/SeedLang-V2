@@ -1,0 +1,11 @@
+{
+  "name": "print_output",
+  "code": "\nprint(\"Hello, World!\")\nprint(\"Line 2\")\nprint(\"Line 3\")\n",
+  "output": [
+    "Hello, World!",
+    "Line 2",
+    "Line 3"
+  ],
+  "globals": {},
+  "timestamp": "2026-04-09T19:19:27.092Z"
+}

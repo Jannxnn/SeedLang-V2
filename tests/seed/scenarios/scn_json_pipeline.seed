@@ -1,0 +1,5 @@
+// 场景测试 - json pipeline：JSON 数据提取管道
+// EXPECT: "Ada"
+s = '{"user":{"name":"Ada"}}'
+o = jsonParse(s)
+result = o.user.name

@@ -1,0 +1,95 @@
+// 场景测试 - cost dp：动态规划最小代价爬楼梯问题
+// EXPECT: "OK:4"
+fn minCostClimbingStairs(cost) {
+    n = len(cost)
+    
+    dp = []
+    i = 0
+    while i <= n {
+        push(dp 0)
+        i = i + 1
+    }
+    
+    i = 2
+    while i <= n {
+        dp[i] = min(dp[i - 1] + cost[i - 1] dp[i - 2] + cost[i - 2])
+        i = i + 1
+    }
+    
+    return dp[n]
+}
+
+fn deleteAndEarn(nums) {
+    if len(nums) == 0 { return 0 }
+    
+    maxNum = 0
+    for n in nums {
+        if n > maxNum { maxNum = n }
+    }
+    
+    points = []
+    i = 0
+    while i <= maxNum {
+        push(points 0)
+        i = i + 1
+    }
+    
+    for n in nums {
+        points[n] = points[n] + n
+    }
+    
+    prev2 = 0
+    prev1 = points[1]
+    
+    i = 2
+    while i <= maxNum {
+        current = max(prev1 prev2 + points[i])
+        prev2 = prev1
+        prev1 = current
+        i = i + 1
+    }
+    
+    return prev1
+}
+
+fn paintHouse(costs) {
+    if len(costs) == 0 { return 0 }
+    
+    n = len(costs)
+    
+    dp = []
+    i = 0
+    while i < n {
+        row = []
+        j = 0
+        while j < 3 {
+            push(row 0)
+            j = j + 1
+        }
+        push(dp row)
+        i = i + 1
+    }
+    
+    dp[0][0] = costs[0][0]
+    dp[0][1] = costs[0][1]
+    dp[0][2] = costs[0][2]
+    
+    i = 1
+    while i < n {
+        dp[i][0] = costs[i][0] + min(dp[i - 1][1] dp[i - 1][2])
+        dp[i][1] = costs[i][1] + min(dp[i - 1][0] dp[i - 1][2])
+        dp[i][2] = costs[i][2] + min(dp[i - 1][0] dp[i - 1][1])
+        i = i + 1
+    }
+    
+    return min(dp[n - 1][0] min(dp[n - 1][1] dp[n - 1][2]))
+}
+
+passed = 0
+
+if minCostClimbingStairs([10 15 20]) == 15 { passed = passed + 1 }
+if deleteAndEarn([3 4 2]) == 6 { passed = passed + 1 }
+if paintHouse([[17 2 17] [16 16 5] [14 3 19]]) == 10 { passed = passed + 1 }
+if minCostClimbingStairs([1 100 1 1 1 100 1 1 100 1]) == 6 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

@@ -1,0 +1,11 @@
+{
+  "name": "nested_loops",
+  "code": "\nresult = []\ni = 1\nwhile i < 4 {\n    j = 1\n    while j < 4 {\n        push(result i * j)\n        j = j + 1\n    }\n    i = i + 1\n}\nprint(result)\n",
+  "output": [
+    "[1, 2, 3, 2, 4, 6, 3, 6, 9]"
+  ],
+  "globals": {
+    "result": [1, 2, 3, 2, 4, 6, 3, 6, 9]
+  },
+  "timestamp": "2026-04-10T00:00:00.000Z"
+}

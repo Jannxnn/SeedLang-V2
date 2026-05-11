@@ -1,0 +1,87 @@
+// 场景测试 - greedy fuel：贪心算法加油站问题
+// EXPECT: "OK:4"
+fn minRefuelStops(target startFuel stations) {
+    dp = [startFuel]
+    
+    for station in stations {
+        position = station[0]
+        fuel = station[1]
+        
+        i = len(dp) - 1
+        while i >= 0 {
+            if dp[i] >= position {
+                if i + 1 >= len(dp) {
+                    push(dp dp[i] + fuel)
+                } else {
+                    if dp[i] + fuel > dp[i + 1] {
+                        dp[i + 1] = dp[i] + fuel
+                    }
+                }
+            }
+            i = i - 1
+        }
+    }
+    
+    i = 0
+    while i < len(dp) {
+        if dp[i] >= target { return i }
+        i = i + 1
+    }
+    
+    return -1
+}
+
+fn canCompleteCircuit(gas cost) {
+    totalGas = 0
+    totalCost = 0
+    currentGas = 0
+    start = 0
+    
+    i = 0
+    while i < len(gas) {
+        totalGas = totalGas + gas[i]
+        totalCost = totalCost + cost[i]
+        
+        currentGas = currentGas + gas[i] - cost[i]
+        
+        if currentGas < 0 {
+            start = i + 1
+            currentGas = 0
+        }
+        i = i + 1
+    }
+    
+    if totalGas < totalCost { return -1 }
+    return start
+}
+
+fn jumpGame(nums) {
+    jumps = 0
+    currentEnd = 0
+    farthest = 0
+    
+    i = 0
+    while i < len(nums) - 1 {
+        if i + nums[i] > farthest { farthest = i + nums[i] }
+        
+        if i == currentEnd {
+            jumps = jumps + 1
+            currentEnd = farthest
+        }
+        i = i + 1
+    }
+    
+    return jumps
+}
+
+passed = 0
+
+if minRefuelStops(1 1 []) == 0 { passed = passed + 1 }
+
+if canCompleteCircuit([1 2 3 4 5] [3 4 5 1 2]) == 3 { passed = passed + 1 }
+
+if canCompleteCircuit([2 3 4] [3 4 3]) == -1 { passed = passed + 1 }
+
+if jumpGame([2 3 1 1 4]) == 2 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

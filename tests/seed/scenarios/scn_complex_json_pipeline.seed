@@ -1,0 +1,26 @@
+// 场景测试 - complex json pipeline：JSON 数据的解析/转换/聚合管道
+// EXPECT: 83
+rows = [
+    { n: 1 ok: true }
+    { n: 2 ok: false }
+    { n: 3 ok: true }
+    { n: 4 ok: true }
+]
+
+fn score(row) {
+    if row.ok { return row.n * 10 }
+    return row.n
+}
+
+vals = map(rows score)
+good = filter(vals (x) => x >= 10)
+sum = 0
+i = 0
+while i < len(good) {
+    sum = sum + good[i]
+    i = i + 1
+}
+
+encoded = jsonStringify({ sum: sum count: len(good) })
+decoded = jsonParse(encoded)
+result = decoded.sum + decoded.count

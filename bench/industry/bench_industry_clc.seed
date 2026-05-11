@@ -1,0 +1,654 @@
+fn binaryTreesTest(depth) {
+  fn makeTree(d) {
+    if d == 0 { return [0 0] }
+    return [makeTree(d - 1) makeTree(d - 1)]
+  }
+  fn checkTree(node) {
+    if node[0] == 0 { return 1 }
+    return 1 + checkTree(node[0]) + checkTree(node[1])
+  }
+  totalCheck = 0
+  d = 4
+  while d <= depth {
+    iterations = 1 << (depth - d + 4)
+    check = 0
+    i = 0
+    while i < iterations {
+      t = makeTree(d)
+      check = check + checkTree(t)
+      i = i + 1
+    }
+    totalCheck = totalCheck + check
+    d = d + 2
+  }
+  longCheck = checkTree(makeTree(depth))
+  stretchCheck = checkTree(makeTree(depth + 1))
+  return totalCheck + longCheck + stretchCheck
+}
+
+fn fannkuchTest(n) {
+  perm1 = []
+  for (i = 0; i < n; i = i + 1) { push(perm1 i) }
+  count = []
+  for (i = 0; i < n; i = i + 1) { push(count 0) }
+  maxFlips = 0
+  permSign = 1
+  checkSum = 0
+  while true {
+    perm = []
+    for (j = 0; j < n; j = j + 1) { push(perm perm1[j]) }
+    flipsCount = 0
+    k = perm[0]
+    while k != 0 {
+      j2 = 1
+      l = k
+      while j2 < l {
+        tmp = perm[j2]
+        perm[j2] = perm[l]
+        perm[l] = tmp
+        j2 = j2 + 1
+        l = l - 1
+      }
+      tmp = perm[0]
+      perm[0] = perm[k]
+      perm[k] = tmp
+      flipsCount = flipsCount + 1
+      k = perm[0]
+    }
+    if flipsCount > maxFlips { maxFlips = flipsCount }
+    checkSum = checkSum + permSign * flipsCount
+    permSign = -permSign
+    j = 1
+    while j < n {
+      k = perm1[0]
+      perm1[0] = perm1[j]
+      perm1[j] = k
+      if count[j] + 1 < j + 1 {
+        count[j] = count[j] + 1
+        break
+      }
+      count[j] = 0
+      j = j + 1
+    }
+    if j >= n { break }
+  }
+  return maxFlips * 10000 + abs(checkSum)
+}
+
+fn nbodyTest(n) {
+  fn advance(bodies dt2 dt3 dt4 dt5 dt6 dt7 nb) {
+    ai = 0
+    while ai < nb {
+      bi = bodies[ai]
+      j = ai + 1
+      while j < nb {
+        bj = bodies[j]
+        dx = bi[1] - bj[1]
+        dy = bi[2] - bj[2]
+        dz = bi[3] - bj[3]
+        distSq = dx * dx + dy * dy + dz * dz
+        dist = distSq
+        mag = dt2 / (distSq * dist)
+        bi[4] = bi[4] - dx * bj[0] * mag
+        bi[5] = bi[5] - dy * bj[0] * mag
+        bi[6] = bi[6] - dz * bj[0] * mag
+        bj[4] = bj[4] + dx * bi[0] * mag
+        bj[5] = bj[5] + dy * bi[0] * mag
+        bj[6] = bj[6] + dz * bi[0] * mag
+        j = j + 1
+      }
+      ai = ai + 1
+    }
+    ai = 0
+    while ai < nb {
+      bi = bodies[ai]
+      bi[1] = bi[1] + dt2 * bi[4]
+      bi[2] = bi[2] + dt2 * bi[5]
+      bi[3] = bi[3] + dt2 * bi[6]
+      ai = ai + 1
+    }
+  }
+  fn energy(bodies nb) {
+    e = 0
+    ei = 0
+    while ei < nb {
+      bi = bodies[ei]
+      e = e + bi[0] * (bi[4] * bi[4] + bi[5] * bi[5] + bi[6] * bi[6])
+      j = ei + 1
+      while j < nb {
+        bj = bodies[j]
+        dx = bi[1] - bj[1]
+        dy = bi[2] - bj[2]
+        dz = bi[3] - bj[3]
+        distSq = dx * dx + dy * dy + dz * dz
+        if distSq > 0 { e = e - (bi[0] * bj[0]) * 1000 / distSq }
+        j = j + 1
+      }
+      ei = ei + 1
+    }
+    return e
+  }
+  b0 = [10000 0 0 0 0 0 0]
+  b1 = [9 44046 0 0 0 2769 0]
+  b2 = [2 83433 0 0 0 -1464 0]
+  b3 = [0 127900 0 0 0 515 0]
+  b4 = [0 151338 0 0 0 424 0]
+  bodies = [b0 b1 b2 b3 b4]
+  i = 0
+  while i < n {
+    advance(bodies 1 0 0 0 0 0 5)
+    i = i + 1
+  }
+  return energy(bodies 5)
+}
+
+fn mandelbrotTest(size) {
+  sum = 0
+  y = 0
+  while y < size {
+    ci2 = y * 200 / size - 100
+    x = 0
+    while x < size {
+      cr2 = x * 200 / size - 150
+      zr = 0
+      zi = 0
+      zr2 = 0
+      zi2 = 0
+      iter = 0
+      while iter < 50 && zr2 + zi2 <= 400 {
+        zi = 2 * zr * zi + ci2
+        zr = zr2 - zi2 + cr2
+        zr2 = zr * zr
+        zi2 = zi * zi
+        iter = iter + 1
+      }
+      sum = sum + iter
+      x = x + 1
+    }
+    y = y + 1
+  }
+  return sum
+}
+
+fn spectralNormTest(n) {
+  u = []
+  v = []
+  for (i = 0; i < n; i = i + 1) { push(u 1000) }
+  for (i = 0; i < n; i = i + 1) { push(v 0) }
+  step = 0
+  while step < 10 {
+    i = 0
+    while i < n {
+      v[i] = 0
+      j = 0
+      while j < n {
+        ij = i + j
+        aVal = 1000000 / (ij * (ij + 1) / 2 + i + 1)
+        v[i] = v[i] + aVal * u[j]
+        j = j + 1
+      }
+      i = i + 1
+    }
+    i = 0
+    while i < n {
+      u[i] = 0
+      j = 0
+      while j < n {
+        ij = i + j
+        aVal = 1000000 / (ij * (ij + 1) / 2 + j + 1)
+        u[i] = u[i] + aVal * v[j]
+        j = j + 1
+      }
+      i = i + 1
+    }
+    step = step + 1
+  }
+  vBv = 0
+  vv = 0
+  i = 0
+  while i < n {
+    vBv = vBv + u[i] * v[i]
+    vv = vv + v[i] * v[i]
+    i = i + 1
+  }
+  return vBv / vv
+}
+
+fn heapSortTest(n) {
+  arr = []
+  for (i = 0; i < n; i = i + 1) { push(arr n - i) }
+  fn siftDown(a start2 end2) {
+    root = start2
+    while root * 2 + 1 <= end2 {
+      child = root * 2 + 1
+      swp = root
+      if a[swp] < a[child] { swp = child }
+      if child + 1 <= end2 {
+        if a[swp] < a[child + 1] { swp = child + 1 }
+      }
+      if swp == root { return }
+      tmp = a[root]
+      a[root] = a[swp]
+      a[swp] = tmp
+      root = swp
+    }
+  }
+  start = floor((n - 2) / 2)
+  while start >= 0 {
+    siftDown(arr start n - 1)
+    start = start - 1
+  }
+  end3 = n - 1
+  while end3 > 0 {
+    tmp = arr[0]
+    arr[0] = arr[end3]
+    arr[end3] = tmp
+    end3 = end3 - 1
+    siftDown(arr 0 end3)
+  }
+  return arr[0]
+}
+
+fn quickSortTest(n) {
+  arr = []
+  for (i = 0; i < n; i = i + 1) { push(arr n - i) }
+  fn qsort(a lo hi) {
+    if lo >= hi { return }
+    pivot = a[lo + floor((hi - lo) / 2)]
+    qi = lo
+    qj = hi
+    while qi <= qj {
+      while a[qi] < pivot { qi = qi + 1 }
+      while a[qj] > pivot { qj = qj - 1 }
+      if qi <= qj {
+        tmp = a[qi]
+        a[qi] = a[qj]
+        a[qj] = tmp
+        qi = qi + 1
+        qj = qj - 1
+      }
+    }
+    qsort(a lo qj)
+    qsort(a qi hi)
+  }
+  qsort(arr 0 n - 1)
+  return arr[0]
+}
+
+fn hashMapOpsTest(n) {
+  map = {}
+  i = 0
+  while i < n {
+    key = toString(i % 1000)
+    map[key] = i
+    i = i + 1
+  }
+  sum = 0
+  i = 0
+  while i < n {
+    key = toString(i % 1000)
+    val = map[key]
+    if val != null { sum = sum + val }
+    i = i + 1
+  }
+  k = keys(map)
+  return len(k) * 10000 + sum % 10000
+}
+
+fn graphBfsTest(n) {
+  adj = {}
+  i = 0
+  while i < n {
+    key = toString(i)
+    adj[key] = []
+    if i + 1 < n { push(adj[key] toString(i + 1)) }
+    if i * 2 < n { push(adj[key] toString(i * 2)) }
+    i = i + 1
+  }
+  visited = {}
+  queue = ["0"]
+  visited["0"] = true
+  count = 0
+  while len(queue) > 0 {
+    node = queue[0]
+    newQueue = []
+    qi = 0
+    while qi < len(queue) - 1 {
+      push(newQueue queue[qi + 1])
+      qi = qi + 1
+    }
+    queue = newQueue
+    count = count + 1
+    neighbors = adj[node]
+    if neighbors != null {
+      ni = 0
+      while ni < len(neighbors) {
+        nb = neighbors[ni]
+        if visited[nb] == null {
+          visited[nb] = true
+          push(queue nb)
+        }
+        ni = ni + 1
+      }
+    }
+  }
+  return count
+}
+
+fn linkedListOpsTest(n) {
+  head = null
+  i = 0
+  while i < n {
+    head = { val: i next: head }
+    i = i + 1
+  }
+  sum = 0
+  cur = head
+  while cur != null {
+    sum = sum + cur.val
+    cur = cur.next
+  }
+  return sum
+}
+
+fn jsonTokenizeTest(n) {
+  json = "{"
+  i = 0
+  while i < 10 {
+    key = "k" + toString(i)
+    json = json + "\"" + key + "\":" + toString(i * 100)
+    if i < 9 { json = json + "," }
+    i = i + 1
+  }
+  json = json + "}"
+  tokens = 0
+  iter = 0
+  while iter < n {
+    i = 0
+    while i < len(json) {
+      c = charAt(json i)
+      if c == "{" || c == "}" || c == ":" || c == "," {
+        tokens = tokens + 1
+      }
+      if c == "\"" {
+        tokens = tokens + 1
+        j = i + 1
+        while j < len(json) && charAt(json j) != "\"" {
+          j = j + 1
+        }
+        i = j
+      }
+      i = i + 1
+    }
+    iter = iter + 1
+  }
+  return tokens
+}
+
+fn csvParseTest(n) {
+  rows = 0
+  iter = 0
+  while iter < n {
+    line = "42,Alice,95,A,true"
+    fields = split(line ",")
+    rows = rows + len(fields)
+    iter = iter + 1
+  }
+  return rows
+}
+
+fn stringSearchTest(n) {
+  text = ""
+  i = 0
+  while i < 100 {
+    text = text + "abcdefghij"
+    i = i + 1
+  }
+  pattern = "fgh"
+  count = 0
+  iter = 0
+  while iter < n {
+    i = 0
+    while i <= len(text) - len(pattern) {
+      found = true
+      j = 0
+      while j < len(pattern) {
+        if charAt(text i + j) != charAt(pattern j) {
+          found = false
+          break
+        }
+        j = j + 1
+      }
+      if found { count = count + 1 }
+      i = i + 1
+    }
+    iter = iter + 1
+  }
+  return count
+}
+
+fn templateRenderTest(n) {
+  template = "Hello {name}! Your score is {score}. Status: {status}"
+  total = 0
+  i = 0
+  while i < n {
+    result = replace(template "{name}" "World")
+    result = replace(result "{score}" "100")
+    result = replace(result "{status}" "active")
+    total = total + len(result)
+    i = i + 1
+  }
+  return total
+}
+
+fn matrixMulTest(n) {
+  a = []
+  b = []
+  c = []
+  i = 0
+  while i < n {
+    rowA = []
+    rowB = []
+    rowC = []
+    j = 0
+    while j < n {
+      push(rowA i + j + 1)
+      push(rowB i - j + n)
+      push(rowC 0)
+      j = j + 1
+    }
+    push(a rowA)
+    push(b rowB)
+    push(c rowC)
+    i = i + 1
+  }
+  i = 0
+  while i < n {
+    j = 0
+    while j < n {
+      sum = 0
+      k = 0
+      while k < n {
+        sum = sum + a[i][k] * b[k][j]
+        k = k + 1
+      }
+      c[i][j] = sum
+      j = j + 1
+    }
+    i = i + 1
+  }
+  return c[0][0]
+}
+
+fn monteCarloPiTest(n) {
+  inside = 0
+  seed = 42
+  i = 0
+  while i < n {
+    seed = seed * 6364136223846793005 + 1
+    x = (seed >> 33) % 10000
+    seed = seed * 6364136223846793005 + 1
+    y = (seed >> 33) % 10000
+    if x * x + y * y <= 100000000 { inside = inside + 1 }
+    i = i + 1
+  }
+  return inside
+}
+
+fn linpackTest(n) {
+  a = []
+  i = 0
+  while i < n {
+    row = []
+    j = 0
+    while j < n {
+      if i == j { push(row 2) }
+      else { push(row 1) }
+      j = j + 1
+    }
+    push(a row)
+    i = i + 1
+  }
+  b = []
+  i = 0
+  while i < n {
+    push(b n + 1)
+    i = i + 1
+  }
+  k = 0
+  while k < n {
+    maxRow = k
+    maxVal = abs(a[k][k])
+    i = k + 1
+    while i < n {
+      if abs(a[i][k]) > maxVal {
+        maxVal = abs(a[i][k])
+        maxRow = i
+      }
+      i = i + 1
+    }
+    if maxRow != k {
+      tmp = a[k]
+      a[k] = a[maxRow]
+      a[maxRow] = tmp
+      tmpB = b[k]
+      b[k] = b[maxRow]
+      b[maxRow] = tmpB
+    }
+    i = k + 1
+    while i < n {
+      factor = a[i][k] * 1000 / a[k][k]
+      j = k + 1
+      while j < n {
+        a[i][j] = a[i][j] * 1000 - factor * a[k][j] / 1000
+        j = j + 1
+      }
+      b[i] = b[i] * 1000 - factor * b[k] / 1000
+      i = i + 1
+    }
+    k = k + 1
+  }
+  x = []
+  i = 0
+  while i < n { push(x 0)
+    i = i + 1
+  }
+  i = n - 1
+  while i >= 0 {
+    sum = b[i]
+    j = i + 1
+    while j < n {
+      sum = sum - a[i][j] * x[j]
+      j = j + 1
+    }
+    x[i] = sum * 1000 / a[i][i]
+    i = i - 1
+  }
+  return x[0]
+}
+
+fn stateMachineTest(n) {
+  state = 0
+  count = 0
+  i = 0
+  while i < n {
+    if state == 0 {
+      if i % 3 == 0 { state = 1 }
+      else { state = 2 }
+      count = count + 1
+    } else if state == 1 {
+      if i % 5 == 0 { state = 0 }
+      else { state = 3 }
+      count = count + 2
+    } else if state == 2 {
+      if i % 7 == 0 { state = 0 }
+      else { state = 1 }
+      count = count + 3
+    } else {
+      state = 0
+      count = count + 4
+    }
+    i = i + 1
+  }
+  return count
+}
+
+fn miniInterpreterTest(n) {
+  code = [1 100 2 5 3 0 1 200 2 3 3 0 0 0]
+  stack = []
+  ip = 0
+  result = 0
+  steps = 0
+  while steps < n {
+    op = code[ip % len(code)]
+    if op == 0 { break }
+    if op == 1 {
+      ip = ip + 1
+      push(stack code[ip % len(code)])
+    }
+    if op == 2 {
+      ip = ip + 1
+      cnt = code[ip % len(code)]
+      sum = 0
+      j = 0
+      while j < cnt {
+        if len(stack) > 0 {
+          sum = sum + stack[len(stack) - 1]
+        }
+        j = j + 1
+      }
+      result = result + sum
+    }
+    if op == 3 {
+      ip = ip + 1
+      result = result + code[ip % len(code)]
+    }
+    ip = ip + 1
+    steps = steps + 1
+  }
+  return result
+}
+
+fn eventDispatchTest(n) {
+  handlers = {}
+  eventTypes = ["click" "hover" "scroll" "resize" "focus"]
+  i = 0
+  while i < 5 {
+    key = eventTypes[i]
+    handlers[key] = 0
+    i = i + 1
+  }
+  i = 0
+  while i < n {
+    eventType = eventTypes[i % 5]
+    handlers[eventType] = handlers[eventType] + 1
+    i = i + 1
+  }
+  total = 0
+  i = 0
+  while i < 5 {
+    total = total + handlers[eventTypes[i]]
+    i = i + 1
+  }
+  return total
+}

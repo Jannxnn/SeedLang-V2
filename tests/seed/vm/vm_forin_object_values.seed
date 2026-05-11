@@ -1,0 +1,8 @@
+// 对象 for-in 迭代：遍历对象属性值求和
+// EXPECT: 6
+obj = { a: 1 b: 2 c: 3 }
+sum = 0
+for v in obj {
+  sum = sum + v
+}
+result = sum

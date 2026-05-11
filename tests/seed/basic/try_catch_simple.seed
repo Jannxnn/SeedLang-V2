@@ -1,0 +1,8 @@
+// 简单 try-catch 测试：基本的异常捕获与处理
+// EXPECT: "boom"
+result = "ok"
+try {
+    throw "boom"
+} catch(e) {
+    result = e
+}

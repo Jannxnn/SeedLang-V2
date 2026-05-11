@@ -1,0 +1,8 @@
+// VM 优化：MAKE_RANGE_ARRAY — range() 生成数组并遍历求和
+// range(1 11) 生成 [1..10]，求和 = 55
+// EXPECT: 55
+total = 0
+for i in range(1 11) {
+    total = total + i
+}
+result = total

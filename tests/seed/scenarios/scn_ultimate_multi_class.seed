@@ -1,0 +1,7 @@
+// 场景测试 - ultimate multi class（终极）：多类协作综合测试
+// EXPECT: 18
+class A { init(v) { this.v = v } get() { return this.v } }
+class B { init(v) { this.v = v } get() { return this.v } }
+a = A(7)
+b = B(11)
+result = a.get() + b.get()

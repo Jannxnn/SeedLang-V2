@@ -1,0 +1,11 @@
+{
+  "name": "class_inheritance",
+  "code": "\nclass Dog {\n    init(name) {\n        this.name = name\n    }\n    fn speak() {\n        return this.name + \" says Woof!\"\n    }\n}\n\ndog = Dog(\"Buddy\")\nresult = dog.speak()\nprint(result)\n",
+  "output": [
+    "Buddy says Woof!"
+  ],
+  "globals": {
+    "result": "Buddy says Woof!"
+  },
+  "timestamp": "2026-04-11T00:00:00.000Z"
+}

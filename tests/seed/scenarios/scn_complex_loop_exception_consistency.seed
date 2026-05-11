@@ -1,0 +1,19 @@
+// 场景测试 - complex loop exception consistency：循环中异常处理的一致性行为
+// EXPECT: "21:2"
+i = 0
+sum = 0
+fails = 0
+
+while i < 8 {
+    try {
+        if i == 2 { throw "e2" }
+        if i == 5 { throw "e5" }
+        sum = sum + i
+    } catch(e) {
+        fails = fails + 1
+    } finally {
+        i = i + 1
+    }
+}
+
+result = toString(sum) + ":" + toString(fails)

@@ -1,0 +1,28 @@
+// 场景测试 - pascal triangle：帕斯卡三角（杨辉三角）构建
+// EXPECT: 32
+fn factorial(n) {
+    if n <= 1 { return 1 }
+    return n * factorial(n - 1)
+}
+
+fn combination(n k) {
+    return factorial(n) / (factorial(k) * factorial(n - k))
+}
+
+fn pascalRow(n) {
+    row = []
+    k = 0
+    while k <= n {
+        push(row combination(n k))
+        k = k + 1
+    }
+    return row
+}
+
+row5 = pascalRow(5)
+sum = 0
+for v in row5 {
+    sum = sum + v
+}
+
+result = sum

@@ -1,0 +1,83 @@
+// 场景测试 - bit advanced：位运算高级应用（最大单词长度积）
+// EXPECT: "OK:4"
+fn maxProduct(words) {
+    maxProd = 0
+    masks = []
+    
+    for word in words {
+        mask = 0
+        chars = split(word "")
+        for c in chars {
+            bit = 1 << (charAt(c 0) - 97)
+            mask = mask | bit
+        }
+        push(masks mask)
+    }
+    
+    i = 0
+    while i < len(words) {
+        j = i + 1
+        while j < len(words) {
+            if (masks[i] & masks[j]) == 0 {
+                prod = len(words[i]) * len(words[j])
+                if prod > maxProd { maxProd = prod }
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    
+    return maxProd
+}
+
+fn findRepeatedDnaSequences(s) {
+    seen = {}
+    result = []
+    
+    i = 0
+    while i <= len(s) - 10 {
+        sub = substring(s i i + 10)
+        if seen[sub] == 1 {
+            push(result sub)
+            seen[sub] = 2
+        } else {
+            if seen[sub] == null {
+                seen[sub] = 1
+            }
+        }
+        i = i + 1
+    }
+    
+    return result
+}
+
+fn countBits(n) {
+    result = []
+    i = 0
+    while i <= n {
+        push(result 0)
+        i = i + 1
+    }
+    
+    i = 1
+    while i <= n {
+        result[i] = result[i >> 1] + (i & 1)
+        i = i + 1
+    }
+    
+    return result
+}
+
+passed = 0
+
+if maxProduct(["abcw" "baz" "foo" "bar" "xtfn" "abcdef"]) == 16 { passed = passed + 1 }
+
+bits = countBits(5)
+if bits[0] == 0 && bits[1] == 1 && bits[2] == 1 && bits[3] == 2 { passed = passed + 1 }
+
+if maxProduct(["a" "ab" "abc" "d" "cd" "bcd" "abcd"]) == 4 { passed = passed + 1 }
+
+bits2 = countBits(2)
+if bits2[0] == 0 && bits2[1] == 1 && bits2[2] == 1 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

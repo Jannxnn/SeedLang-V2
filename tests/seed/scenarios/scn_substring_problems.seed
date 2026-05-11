@@ -1,0 +1,154 @@
+// 场景测试 - substring problems：最小覆盖子串等
+// EXPECT: "OK:4"
+fn minWindow(s t) {
+    if len(s) < len(t) { return "" }
+    
+    need = {}
+    for c in split(t "") {
+        if need[c] == null { need[c] = 0 }
+        need[c] = need[c] + 1
+    }
+    
+    missing = len(t)
+    left = 0
+    minLen = len(s) + 1
+    minStart = 0
+    
+    right = 0
+    while right < len(s) {
+        c = charAt(s right)
+        
+        if need[c] != null {
+            if need[c] > 0 { missing = missing - 1 }
+            need[c] = need[c] - 1
+        }
+        
+        while missing == 0 {
+            if right - left + 1 < minLen {
+                minLen = right - left + 1
+                minStart = left
+            }
+            
+            leftChar = charAt(s left)
+            if need[leftChar] != null {
+                need[leftChar] = need[leftChar] + 1
+                if need[leftChar] > 0 { missing = missing + 1 }
+            }
+            left = left + 1
+        }
+        
+        right = right + 1
+    }
+    
+    if minLen > len(s) { return "" }
+    return substring(s minStart minStart + minLen)
+}
+
+fn checkInclusion(s1 s2) {
+    if len(s1) > len(s2) { return false }
+    
+    count1 = {}
+    count2 = {}
+    
+    for c in split(s1 "") {
+        if count1[c] == null { count1[c] = 0 }
+        count1[c] = count1[c] + 1
+    }
+    
+    i = 0
+    while i < len(s1) {
+        c = charAt(s2 i)
+        if count2[c] == null { count2[c] = 0 }
+        count2[c] = count2[c] + 1
+        i = i + 1
+    }
+    
+    fn matches() {
+        for k in keys(count1) {
+            if count1[k] != count2[k] { return false }
+        }
+        return true
+    }
+    
+    if matches() { return true }
+    
+    i = len(s1)
+    while i < len(s2) {
+        newChar = charAt(s2 i)
+        oldChar = charAt(s2 i - len(s1))
+        
+        if count2[newChar] == null { count2[newChar] = 0 }
+        count2[newChar] = count2[newChar] + 1
+        
+        count2[oldChar] = count2[oldChar] - 1
+        
+        if matches() { return true }
+        
+        i = i + 1
+    }
+    
+    return false
+}
+
+fn findAnagrams(s p) {
+    result = []
+    
+    if len(s) < len(p) { return result }
+    
+    pCount = {}
+    sCount = {}
+    
+    for c in split(p "") {
+        if pCount[c] == null { pCount[c] = 0 }
+        pCount[c] = pCount[c] + 1
+    }
+    
+    i = 0
+    while i < len(p) {
+        c = charAt(s i)
+        if sCount[c] == null { sCount[c] = 0 }
+        sCount[c] = sCount[c] + 1
+        i = i + 1
+    }
+    
+    fn mapsEqual() {
+        for k in keys(pCount) {
+            if pCount[k] != sCount[k] { return false }
+        }
+        for k in keys(sCount) {
+            if sCount[k] != 0 and pCount[k] != sCount[k] { return false }
+        }
+        return true
+    }
+    
+    if mapsEqual() { push(result 0) }
+    
+    i = len(p)
+    while i < len(s) {
+        newChar = charAt(s i)
+        oldChar = charAt(s i - len(p))
+        
+        if sCount[newChar] == null { sCount[newChar] = 0 }
+        sCount[newChar] = sCount[newChar] + 1
+        
+        sCount[oldChar] = sCount[oldChar] - 1
+        
+        if mapsEqual() { push(result i - len(p) + 1) }
+        
+        i = i + 1
+    }
+    
+    return result
+}
+
+passed = 0
+
+if minWindow("ADOBECODEBANC" "ABC") == "BANC" { passed = passed + 1 }
+if checkInclusion("ab" "eidbaooo") { passed = passed + 1 }
+
+anagrams = findAnagrams("cbaebabacd" "abc")
+if len(anagrams) == 2 { passed = passed + 1 }
+
+if checkInclusion("ab" "eidboaoo") == false { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

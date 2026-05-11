@@ -1,0 +1,16 @@
+// 调试输出测试：验证变量声明、字符串拼接、print 格式化输出的正确性
+
+print("Start")
+x = 10
+print("x = " + x)
+fn test(n r e) {
+    if r == e {
+        print("[OK] " + n)
+    } else {
+        print("[FAIL] " + n)
+    }
+}
+test("sqrt" sqrt(16) 4)
+test="pow" pow(2 3) 8)
+test="abs" abs(-5) 5)
+print("End")

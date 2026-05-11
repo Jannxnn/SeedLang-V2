@@ -1,0 +1,55 @@
+// 场景测试 - decorator pattern：装饰器模式的动态功能增强
+// EXPECT: "OK:4"
+class Decorator {
+    static addLogging(func) {
+        return (x) => {
+            result = func(x)
+            return result
+        }
+    }
+    
+    static addMemoization(func) {
+        cache = {}
+        return (x) => {
+            key = toString(x)
+            if cache[key] != null { return cache[key] }
+            result = func(x)
+            cache[key] = result
+            return result
+        }
+    }
+    
+    static addRetry(func maxRetries) {
+        return (x) => {
+            attempts = 0
+            while attempts < maxRetries {
+                try {
+                    return func(x)
+                } catch(e) {
+                    attempts = attempts + 1
+                }
+            }
+            return null
+        }
+    }
+}
+
+callCount = 0
+fn slowSquare(x) {
+    callCount = callCount + 1
+    return x * x
+}
+
+memoSquare = Decorator.addMemoization(slowSquare)
+
+passed = 0
+r1 = memoSquare(5)
+r2 = memoSquare(5)
+r3 = memoSquare(6)
+
+if r1 == 25 { passed = passed + 1 }
+if r2 == 25 { passed = passed + 1 }
+if r3 == 36 { passed = passed + 1 }
+if callCount == 2 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

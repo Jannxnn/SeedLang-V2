@@ -1,0 +1,19 @@
+// 场景测试 - hell exception chain（地狱级）：长异常链传播压力测试
+// EXPECT: "e1|e2|e3"
+r = ""
+try {
+    try {
+        try {
+            throw "e1"
+        } catch(a) {
+            r = a
+            throw "e2"
+        }
+    } catch(b) {
+        r = r + "|" + b
+        throw "e3"
+    }
+} catch(c) {
+    r = r + "|" + c
+}
+result = r

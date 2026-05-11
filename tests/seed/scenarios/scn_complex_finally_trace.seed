@@ -1,0 +1,23 @@
+// 场景测试 - complex finally trace：finally 块执行路径的完整追踪
+// EXPECT: "ABCD"
+trace = ""
+
+fn mark(s) {
+    trace = trace + s
+}
+
+try {
+    mark("A")
+    try {
+        mark("B")
+        throw "x"
+    } catch(e) {
+        mark("C")
+    } finally {
+        mark("D")
+    }
+} catch(e2) {
+    mark("Z")
+}
+
+result = trace

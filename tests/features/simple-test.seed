@@ -1,0 +1,7 @@
+// 基础 Hello World 测试：验证 print、字面量赋值、字符串拼接的最小可用性
+
+print("Hello from SeedLang!")
+x = 42
+print("x = " + x)
+y = x + 8
+print("y = " + y)

@@ -1,0 +1,72 @@
+// 场景测试 - house robber：打家劫舍动态规划问题
+// EXPECT: "OK:4"
+fn rob(nums) {
+    if len(nums) == 0 { return 0 }
+    if len(nums) == 1 { return nums[0] }
+    
+    prev2 = 0
+    prev1 = nums[0]
+    
+    i = 1
+    while i < len(nums) {
+        current = max(prev1 prev2 + nums[i])
+        prev2 = prev1
+        prev1 = current
+        i = i + 1
+    }
+    
+    return prev1
+}
+
+fn robCircular(nums) {
+    if len(nums) == 0 { return 0 }
+    if len(nums) == 1 { return nums[0] }
+    
+    fn robLinear(arr) {
+        if len(arr) == 0 { return 0 }
+        if len(arr) == 1 { return arr[0] }
+        
+        prev2 = 0
+        prev1 = arr[0]
+        
+        i = 1
+        while i < len(arr) {
+            current = max(prev1 prev2 + arr[i])
+            prev2 = prev1
+            prev1 = current
+            i = i + 1
+        }
+        
+        return prev1
+    }
+    
+    return max(robLinear(slice(nums 0 len(nums) - 1)) robLinear(slice(nums 1 len(nums))))
+}
+
+fn houseRobberIII(root) {
+    fn dfs(node) {
+        if node == null { return [0 0] }
+        
+        left = dfs(node.left)
+        right = dfs(node.right)
+        
+        rob = node.val + left[1] + right[1]
+        notRob = max(left[0] left[1]) + max(right[0] right[1])
+        
+        return [rob notRob]
+    }
+    
+    result = dfs(root)
+    return max(result[0] result[1])
+}
+
+passed = 0
+
+if rob([1 2 3 1]) == 4 { passed = passed + 1 }
+if rob([2 7 9 3 1]) == 12 { passed = passed + 1 }
+if robCircular([2 3 2]) == 3 { passed = passed + 1 }
+
+tree = { val: 3 left: { val: 2 left: null right: { val: 3 left: null right: null } } right: { val: 3 left: null right: { val: 1 left: null right: null } } }
+if houseRobberIII(tree) == 7 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

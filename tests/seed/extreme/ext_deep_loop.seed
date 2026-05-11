@@ -1,0 +1,9 @@
+// 深度循环测试：多层嵌套循环的执行与退出
+// EXPECT: 499500
+i = 0
+sum = 0
+while i < 1000 {
+    sum = sum + i
+    i = i + 1
+}
+result = sum

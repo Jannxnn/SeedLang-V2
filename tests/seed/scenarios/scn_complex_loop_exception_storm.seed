@@ -1,0 +1,21 @@
+// 场景测试 - complex loop exception storm：高密度异常场景下的循环稳定性
+// EXPECT: "365|xfxfxfxx"
+i = 0
+sum = 0
+trace = ""
+while i < 30 {
+    try {
+        if i - floor(i / 7) * 7 == 0 {
+            throw "X"
+        }
+        sum = sum + i
+    } catch(e) {
+        trace = trace + "x"
+    } finally {
+        if i - floor(i / 10) * 10 == 0 {
+            trace = trace + "f"
+        }
+    }
+    i = i + 1
+}
+result = toString(sum) + "|" + trace

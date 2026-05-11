@@ -1,0 +1,22 @@
+// 场景测试 - complex class state flow：复杂类状态流转与多实例交互
+// EXPECT: 12
+class Counter {
+    init(v) { this.v = v }
+    inc() { this.v = this.v + 1 return this.v }
+    dec() { this.v = this.v - 1 return this.v }
+}
+
+fn runSteps(c n) {
+    i = 0
+    total = 0
+    while i < n {
+        total = total + c.inc()
+        i = i + 1
+    }
+    return total
+}
+
+c = Counter(1)
+a = runSteps(c 3)
+b = c.dec()
+result = a + b

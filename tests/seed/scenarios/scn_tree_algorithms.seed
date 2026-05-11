@@ -1,0 +1,57 @@
+// 场景测试 - tree algorithms：二叉搜索树验证等树算法
+// EXPECT: "OK:4"
+fn isValidBST(node minVal maxVal) {
+    if node == null { return true }
+    
+    if minVal != null && node.val <= minVal { return false }
+    if maxVal != null && node.val >= maxVal { return false }
+    
+    return isValidBST(node.left minVal node.val) && 
+           isValidBST(node.right node.val maxVal)
+}
+
+fn treeHeight(node) {
+    if node == null { return 0 }
+    leftHeight = treeHeight(node.left)
+    rightHeight = treeHeight(node.right)
+    return 1 + max(leftHeight rightHeight)
+}
+
+fn isBalancedTree(node) {
+    if node == null { return true }
+    
+    leftHeight = treeHeight(node.left)
+    rightHeight = treeHeight(node.right)
+    
+    if abs(leftHeight - rightHeight) > 1 { return false }
+    
+    return isBalancedTree(node.left) && isBalancedTree(node.right)
+}
+
+fn countNodes(node) {
+    if node == null { return 0 }
+    return 1 + countNodes(node.left) + countNodes(node.right)
+}
+
+tree = {
+    val: 10
+    left: {
+        val: 5
+        left: { val: 3 left: null right: null }
+        right: { val: 7 left: null right: null }
+    }
+    right: {
+        val: 15
+        left: null
+        right: { val: 20 left: null right: null }
+    }
+}
+
+passed = 0
+
+if isValidBST(tree null null) { passed = passed + 1 }
+if treeHeight(tree) == 3 { passed = passed + 1 }
+if isBalancedTree(tree) { passed = passed + 1 }
+if countNodes(tree) == 6 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

@@ -1,0 +1,91 @@
+// 场景测试 - optimization problems：优化问题（最小转账次数）
+// EXPECT: "OK:4"
+fn minTransfers(transactions) {
+    balance = {}
+    
+    for t in transactions {
+        from = t[0]
+        to = t[1]
+        amount = t[2]
+        
+        if balance[from] == null { balance[from] = 0 }
+        if balance[to] == null { balance[to] = 0 }
+        
+        balance[from] = balance[from] - amount
+        balance[to] = balance[to] + amount
+    }
+    
+    debts = []
+    for key in keys(balance) {
+        if balance[key] != 0 {
+            push(debts balance[key])
+        }
+    }
+    
+    fn dfs(start) {
+        while start < len(debts) && debts[start] == 0 {
+            start = start + 1
+        }
+        
+        if start == len(debts) { return 0 }
+        
+        minTrans = 999999
+        
+        i = start + 1
+        while i < len(debts) {
+            if debts[i] * debts[start] < 0 {
+                debts[i] = debts[i] + debts[start]
+                trans = 1 + dfs(start + 1)
+                if trans < minTrans { minTrans = trans }
+                debts[i] = debts[i] - debts[start]
+            }
+            i = i + 1
+        }
+        
+        return minTrans
+    }
+    
+    return dfs(0)
+}
+
+fn canPartitionKSubsets(nums k) {
+    sum = 0
+    for n in nums { sum = sum + n }
+    
+    if sum % k != 0 { return false }
+    
+    target = sum / k
+    used = []
+    for n in nums { push(used false) }
+    
+    fn backtrack(start currentSum count) {
+        if count == k { return true }
+        if currentSum == target { return backtrack(0 0 count + 1) }
+        
+        i = start
+        while i < len(nums) {
+            if used[i] == false && currentSum + nums[i] <= target {
+                used[i] = true
+                if backtrack(i + 1 currentSum + nums[i] count) { return true }
+                used[i] = false
+            }
+            i = i + 1
+        }
+        
+        return false
+    }
+    
+    return backtrack(0 0 0)
+}
+
+passed = 0
+
+if minTransfers([[0 1 10] [2 0 5]]) == 2 { passed = passed + 1 }
+
+if canPartitionKSubsets([4 3 2 3 5 2 1] 4) { passed = passed + 1 }
+
+if canPartitionKSubsets([1 2 3 4] 3) == false { passed = passed + 1 }
+
+if minTransfers([[0 1 10] [1 0 10]]) == 0 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

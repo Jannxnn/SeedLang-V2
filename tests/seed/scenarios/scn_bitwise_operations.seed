@@ -1,0 +1,12 @@
+// 场景测试 - bitwise operations：基础位运算（与或非异或移位）
+// EXPECT: 74
+a = 0b1010
+b = 0b1100
+
+band = a & b
+bor = a | b
+xor = a ^ b
+left = a << 2
+right = b >> 1
+
+result = band + bor + xor + left + right

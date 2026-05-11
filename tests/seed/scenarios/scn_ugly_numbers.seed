@@ -1,0 +1,74 @@
+// 场景测试 - ugly numbers：丑数（质因子仅 2/3/5）
+// EXPECT: "OK:4"
+fn nthUglyNumber(n) {
+    ugly = [1]
+    
+    i2 = 0
+    i3 = 0
+    i5 = 0
+    
+    while len(ugly) < n {
+        next2 = ugly[i2] * 2
+        next3 = ugly[i3] * 3
+        next5 = ugly[i5] * 5
+        
+        nextUgly = min(next2 min(next3 next5))
+        
+        push(ugly nextUgly)
+        
+        if nextUgly == next2 { i2 = i2 + 1 }
+        if nextUgly == next3 { i3 = i3 + 1 }
+        if nextUgly == next5 { i5 = i5 + 1 }
+    }
+    
+    return ugly[n - 1]
+}
+
+fn nthSuperUglyNumber(n primes) {
+    ugly = [1]
+    indices = []
+    
+    for p in primes { push(indices 0) }
+    
+    while len(ugly) < n {
+        nextUgly = 999999
+        
+        i = 0
+        while i < len(primes) {
+            candidate = ugly[indices[i]] * primes[i]
+            if candidate < nextUgly { nextUgly = candidate }
+            i = i + 1
+        }
+        
+        push(ugly nextUgly)
+        
+        i = 0
+        while i < len(primes) {
+            if ugly[indices[i]] * primes[i] == nextUgly {
+                indices[i] = indices[i] + 1
+            }
+            i = i + 1
+        }
+    }
+    
+    return ugly[n - 1]
+}
+
+fn isUgly(n) {
+    if n <= 0 { return false }
+    
+    while n % 2 == 0 { n = n / 2 }
+    while n % 3 == 0 { n = n / 3 }
+    while n % 5 == 0 { n = n / 5 }
+    
+    return n == 1
+}
+
+passed = 0
+
+if nthUglyNumber(10) == 12 { passed = passed + 1 }
+if nthSuperUglyNumber(12 [2 7 13 19]) == 32 { passed = passed + 1 }
+if isUgly(6) { passed = passed + 1 }
+if isUgly(14) == false { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

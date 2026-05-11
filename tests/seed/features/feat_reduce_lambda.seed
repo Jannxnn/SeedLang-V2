@@ -1,0 +1,4 @@
+// reduce 高阶函数测试：lambda 表达式的归约聚合功能
+// EXPECT: "hELLO"
+s = "Hello"
+result = charAt(lower(s) 0) + upper(substring(s 1 5))

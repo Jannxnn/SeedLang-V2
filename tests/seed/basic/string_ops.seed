@@ -1,0 +1,5 @@
+// 字符串操作测试：拼接、截取、替换等基本操作
+// EXPECT: "5h"
+s = "  HeLLo  "
+t = trim(lower(s))
+result = len(t) + charAt(t 0)

@@ -1,0 +1,53 @@
+// 场景测试 - data serialization：CSV 解析等数据序列化/反序列化
+// EXPECT: "OK:3"
+fn parseCSV(line) {
+    return split(line ",")
+}
+
+fn buildCSV(fields) {
+    return join(fields ",")
+}
+
+fn parseQueryString(qs) {
+    result = {}
+    pairs = split(qs "&")
+    i = 0
+    while i < len(pairs) {
+        pair = pairs[i]
+        eq = indexOf(pair "=")
+        if eq >= 0 {
+            key = substring(pair 0 eq)
+            value = substring(pair eq + 1)
+            result[key] = value
+        }
+        i = i + 1
+    }
+    return result
+}
+
+fn buildQueryString(obj) {
+    parts = []
+    ks = keys(obj)
+    i = 0
+    while i < len(ks) {
+        k = ks[i]
+        push(parts k + "=" + toString(obj[k]))
+        i = i + 1
+    }
+    return join(parts "&")
+}
+
+csv = "a,b,c"
+fields = parseCSV(csv)
+back = buildCSV(fields)
+
+qs = "name=John&age=30"
+parsed = parseQueryString(qs)
+rebuilt = buildQueryString({ name: "John" age: 30 })
+
+passed = 0
+if len(fields) == 3 { passed = passed + 1 }
+if parsed.name == "John" { passed = passed + 1 }
+if parsed.age == "30" { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

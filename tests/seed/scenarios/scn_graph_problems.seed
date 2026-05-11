@@ -1,0 +1,86 @@
+// 场景测试 - graph problems：图的方向重排等高级图问题
+// EXPECT: "OK:4"
+fn minReorder(n connections) {
+    graph = {}
+    
+    for conn in connections {
+        from = conn[0]
+        to = conn[1]
+        
+        if graph[from] == null { graph[from] = [] }
+        if graph[to] == null { graph[to] = [] }
+        
+        edgeForward = [to 1]
+        push(graph[from] edgeForward)
+        edgeBackward = [from 0]
+        push(graph[to] edgeBackward)
+    }
+    
+    visited = {}
+    changes = 0
+    
+    fn dfs(node) {
+        visited[node] = true
+        
+        for neighbor in graph[node] {
+            nextNode = neighbor[0]
+            direction = neighbor[1]
+            
+            if visited[nextNode] == null {
+                changes = changes + direction
+                dfs(nextNode)
+            }
+        }
+    }
+    
+    dfs(0)
+    return changes
+}
+
+fn findCenter(edges) {
+    edge1 = edges[0]
+    edge2 = edges[1]
+    
+    if edge1[0] == edge2[0] || edge1[0] == edge2[1] {
+        return edge1[0]
+    }
+    return edge1[1]
+}
+
+fn findJudge(n trust) {
+    trustCount = {}
+    trustedBy = {}
+    
+    i = 1
+    while i <= n {
+        trustCount[i] = 0
+        trustedBy[i] = 0
+        i = i + 1
+    }
+    
+    for t in trust {
+        trustCount[t[0]] = trustCount[t[0]] + 1
+        trustedBy[t[1]] = trustedBy[t[1]] + 1
+    }
+    
+    i = 1
+    while i <= n {
+        if trustCount[i] == 0 && trustedBy[i] == n - 1 {
+            return i
+        }
+        i = i + 1
+    }
+    
+    return -1
+}
+
+passed = 0
+
+if minReorder(6 [[0 1] [1 3] [2 3] [4 0] [4 5]]) == 3 { passed = passed + 1 }
+
+if findCenter([[1 2] [2 3] [4 2]]) == 2 { passed = passed + 1 }
+
+if findJudge(2 [[1 2]]) == 2 { passed = passed + 1 }
+if findJudge(3 [[1 3] [2 3]]) == 3 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

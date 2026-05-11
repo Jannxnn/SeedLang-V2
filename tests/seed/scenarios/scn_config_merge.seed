@@ -1,0 +1,6 @@
+// 场景测试 - config merge：配置对象的深度合并与覆盖策略
+// EXPECT: 3
+a = { timeout: 10 retry: 1 }
+b = { retry: 3 }
+c = merge(a b)
+result = c.retry

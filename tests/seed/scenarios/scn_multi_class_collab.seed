@@ -1,0 +1,43 @@
+// 场景测试 - multi class collab：多类协作与复杂交互
+// EXPECT: 150
+class Entity {
+    init(name) {
+        this.name = name
+        this.active = true
+    }
+    getName() { return this.name }
+    isActive() { return this.active }
+    deactivate() { this.active = false }
+}
+
+class Manager {
+    init() {
+        this.entities = []
+    }
+    add(e) {
+        push(this.entities e)
+    }
+    countActive() {
+        cnt = 0
+        for e in this.entities {
+            if e.isActive() { cnt = cnt + 1 }
+        }
+        return cnt
+    }
+    deactivateAll() {
+        for e in this.entities {
+            e.deactivate()
+        }
+    }
+}
+
+m = Manager()
+m.add(Entity("A"))
+m.add(Entity("B"))
+m.add(Entity("C"))
+
+active1 = m.countActive()
+m.deactivateAll()
+active2 = m.countActive()
+
+result = active1 * 50 + active2 * 100

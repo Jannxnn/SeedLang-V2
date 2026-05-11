@@ -1,0 +1,103 @@
+// 场景测试 - string math：字符串数学运算（大数乘法）
+// EXPECT: "OK:4"
+fn multiply(num1 num2) {
+    if num1 == "0" || num2 == "0" { return "0" }
+    
+    m = len(num1)
+    n = len(num2)
+    
+    result = []
+    i = 0
+    while i < m + n {
+        push(result 0)
+        i = i + 1
+    }
+    
+    i = m - 1
+    while i >= 0 {
+        j = n - 1
+        while j >= 0 {
+            mul = (charAt(num1 i) - 48) * (charAt(num2 j) - 48)
+            p1 = i + j
+            p2 = i + j + 1
+            
+            sum = mul + result[p2]
+            result[p2] = sum % 10
+            result[p1] = result[p1] + floor(sum / 10)
+            
+            j = j - 1
+        }
+        i = i - 1
+    }
+    
+    str = ""
+    i = 0
+    while i < len(result) {
+        if str == "" && result[i] == 0 {
+            i = i + 1
+            continue
+        }
+        str = str + toString(result[i])
+        i = i + 1
+    }
+    
+    if str == "" { return "0" }
+    return str
+}
+
+fn addStrings(num1 num2) {
+    i = len(num1) - 1
+    j = len(num2) - 1
+    carry = 0
+    result = ""
+    
+    while i >= 0 || j >= 0 || carry > 0 {
+        n1 = 0
+        if i >= 0 { n1 = charAt(num1 i) - 48 }
+        
+        n2 = 0
+        if j >= 0 { n2 = charAt(num2 j) - 48 }
+        
+        sum = n1 + n2 + carry
+        carry = floor(sum / 10)
+        result = toString(sum % 10) + result
+        
+        i = i - 1
+        j = j - 1
+    }
+    
+    return result
+}
+
+fn addBinary(a b) {
+    i = len(a) - 1
+    j = len(b) - 1
+    carry = 0
+    result = ""
+    
+    while i >= 0 || j >= 0 || carry > 0 {
+        n1 = 0
+        if i >= 0 { n1 = charAt(a i) - 48 }
+        
+        n2 = 0
+        if j >= 0 { n2 = charAt(b j) - 48 }
+        
+        sum = n1 + n2 + carry
+        carry = floor(sum / 2)
+        result = toString(sum % 2) + result
+        
+        i = i - 1
+        j = j - 1
+    }
+    
+    return result
+}
+
+passed = 0
+
+if multiply("2" "3") == "6" { passed = passed + 1 }
+if multiply("123" "456") == "56088" { passed = passed + 1 }
+if addStrings("11" "123") == "134" { passed = passed + 1 }
+if addBinary("11" "1") == "100" { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

@@ -1,0 +1,57 @@
+// 场景测试 - object utilities：对象工具函数（深拷贝/合并/冻结）
+// EXPECT: "OK:4"
+fn createReactive(obj) {
+    return new Proxy(obj {
+        get: (target key) => {
+            return target[key]
+        }
+        set: (target key value) => {
+            target[key] = value
+            return true
+        }
+    })
+}
+
+fn deepClone(obj) {
+    if type(obj) != "object" { return obj }
+    if obj == null { return null }
+    
+    clone = {}
+    for k in keys(obj) {
+        v = obj[k]
+        if type(v) == "object" {
+            clone[k] = deepClone(v)
+        } else {
+            clone[k] = v
+        }
+    }
+    return clone
+}
+
+fn isEqual(a b) {
+    if type(a) != type(b) { return false }
+    if type(a) != "object" { return a == b }
+    if a == null && b == null { return true }
+    if a == null || b == null { return false }
+    
+    keysA = keys(a)
+    keysB = keys(b)
+    if len(keysA) != len(keysB) { return false }
+    
+    for k in keysA {
+        if isEqual(a[k] b[k]) == false { return false }
+    }
+    return true
+}
+
+obj1 = { a: 1 b: { c: 2 } }
+obj2 = deepClone(obj1)
+obj2.b.c = 99
+
+passed = 0
+if obj1.b.c == 2 { passed = passed + 1 }
+if obj2.b.c == 99 { passed = passed + 1 }
+if isEqual({ x: 1 } { x: 1 }) { passed = passed + 1 }
+if isEqual({ x: 1 } { x: 2 }) == false { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

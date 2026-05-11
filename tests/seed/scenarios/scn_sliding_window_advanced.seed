@@ -1,0 +1,78 @@
+// EXPECT: "OK:4"
+fn lengthOfLongestSubstring(s) {
+    charIndex = {}
+    left = 0
+    maxLen = 0
+    
+    right = 0
+    while right < len(s) {
+        c = charAt(s right)
+        
+        if charIndex[c] != null && charIndex[c] >= left {
+            left = charIndex[c] + 1
+        }
+        
+        charIndex[c] = right
+        currentLen = right - left + 1
+        if currentLen > maxLen {
+            maxLen = currentLen
+        }
+        right = right + 1
+    }
+    
+    return maxLen
+}
+
+fn minWindow(s t) {
+    if len(s) < len(t) { return "" }
+    
+    need = {}
+    for c in split(t "") {
+        if need[c] == null { need[c] = 0 }
+        need[c] = need[c] + 1
+    }
+    
+    missing = len(t)
+    left = 0
+    minLen = len(s) + 1
+    minStart = 0
+    
+    right = 0
+    while right < len(s) {
+        c = charAt(s right)
+        
+        if need[c] != null {
+            if need[c] > 0 { missing = missing - 1 }
+            need[c] = need[c] - 1
+        }
+        
+        while missing == 0 {
+            if right - left + 1 < minLen {
+                minLen = right - left + 1
+                minStart = left
+            }
+            
+            leftChar = charAt(s left)
+            if need[leftChar] != null {
+                need[leftChar] = need[leftChar] + 1
+                if need[leftChar] > 0 { missing = missing + 1 }
+            }
+            left = left + 1
+        }
+        
+        right = right + 1
+    }
+    
+    if minLen > len(s) { return "" }
+    return substring(s minStart minStart + minLen)
+}
+
+passed = 0
+
+if lengthOfLongestSubstring("abcabcbb") == 3 { passed = passed + 1 }
+if lengthOfLongestSubstring("bbbbb") == 1 { passed = passed + 1 }
+
+if minWindow("ADOBECODEBANC" "ABC") == "BANC" { passed = passed + 1 }
+if minWindow("a" "a") == "a" { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

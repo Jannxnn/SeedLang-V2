@@ -1,0 +1,57 @@
+// 场景测试 - search algorithms：线性搜索/二分搜索等搜索算法
+// EXPECT: "OK:4"
+fn linearSearch(arr target) {
+    i = 0
+    while i < len(arr) {
+        if arr[i] == target { return i }
+        i = i + 1
+    }
+    return -1
+}
+
+fn binarySearch(arr target) {
+    left = 0
+    right = len(arr) - 1
+    
+    while left <= right {
+        mid = floor((left + right) / 2)
+        if arr[mid] == target { return mid }
+        if arr[mid] < target {
+            left = mid + 1
+        } else {
+            right = mid - 1
+        }
+    }
+    return -1
+}
+
+fn jumpSearch(arr target) {
+    n = len(arr)
+    step = floor(sqrt(n))
+    prev = 0
+    
+    while arr[min(step n) - 1] < target {
+        prev = step
+        step = step + floor(sqrt(n))
+        if prev >= n { return -1 }
+    }
+    
+    while arr[prev] < target {
+        prev = prev + 1
+        if prev == min(step n) { return -1 }
+    }
+    
+    if arr[prev] == target { return prev }
+    return -1
+}
+
+arr = [1 3 5 7 9 11 13 15 17 19]
+
+passed = 0
+
+if linearSearch(arr 7) == 3 { passed = passed + 1 }
+if binarySearch(arr 11) == 5 { passed = passed + 1 }
+if jumpSearch(arr 15) == 7 { passed = passed + 1 }
+if linearSearch(arr 100) == -1 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

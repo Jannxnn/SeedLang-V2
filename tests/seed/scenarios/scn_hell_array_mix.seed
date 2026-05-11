@@ -1,0 +1,8 @@
+// 场景测试 - hell array mix（地狱级）：数组混合操作压力测试
+// EXPECT: 24
+arr = [1 2 3 4 5]
+push(arr 6)
+push(arr 7)
+a = pop(arr)
+b = pop(arr)
+result = a + b + len(arr) + arr[0] + arr[4]

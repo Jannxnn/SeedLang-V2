@@ -1,0 +1,110 @@
+// 场景测试 - redundant connection：冗余连接检测（并查集）
+// EXPECT: "OK:4"
+fn findRedundantConnection(edges) {
+    parent = {}
+    rank = {}
+    
+    fn find(x) {
+        if parent[x] == null {
+            parent[x] = x
+            rank[x] = 0
+        }
+        
+        if parent[x] != x {
+            parent[x] = find(parent[x])
+        }
+        
+        return parent[x]
+    }
+    
+    fn union(x y) {
+        rootX = find(x)
+        rootY = find(y)
+        
+        if rootX == rootY { return false }
+        
+        if rank[rootX] < rank[rootY] {
+            parent[rootX] = rootY
+        } else {
+            if rank[rootX] > rank[rootY] {
+                parent[rootY] = rootX
+            } else {
+                parent[rootY] = rootX
+                rank[rootX] = rank[rootX] + 1
+            }
+        }
+        
+        return true
+    }
+    
+    for edge in edges {
+        if union(edge[0] edge[1]) == false {
+            return edge
+        }
+    }
+    
+    return []
+}
+
+fn findRedundantDirectedConnection(edges) {
+    parent = {}
+    candidate1 = null
+    candidate2 = null
+    
+    for edge in edges {
+        if parent[edge[1]] != null {
+            candidate1 = [parent[edge[1]] edge[1]]
+            candidate2 = edge
+        } else {
+            parent[edge[1]] = edge[0]
+        }
+    }
+    
+    uf = {}
+    
+    fn findRoot(uf x limit) {
+        if uf[x] == null { uf[x] = x }
+        steps = 0
+        while uf[x] != x && steps < limit {
+            x = uf[x]
+            if uf[x] == null { uf[x] = x }
+            steps = steps + 1
+        }
+        return x
+    }
+
+    limit = len(edges) + 5
+    for edge in edges {
+        if candidate2 != null && edge[0] == candidate2[0] && edge[1] == candidate2[1] {
+            continue
+        }
+
+        rootU = findRoot(uf edge[0] limit)
+        rootV = findRoot(uf edge[1] limit)
+
+        if rootU == rootV {
+            if candidate1 != null { return candidate1 }
+            return edge
+        }
+
+        uf[rootV] = rootU
+    }
+
+    return candidate2
+}
+
+passed = 0
+
+result1 = findRedundantConnection([[1 2] [1 3] [2 3]])
+if result1[0] == 2 && result1[1] == 3 { passed = passed + 1 }
+
+result2 = findRedundantConnection([[1 2] [2 3] [3 4] [1 4] [1 5]])
+if result2[0] == 1 && result2[1] == 4 { passed = passed + 1 }
+
+result3 = findRedundantDirectedConnection([[1 2] [1 3] [2 3]])
+if result3[0] == 2 && result3[1] == 3 { passed = passed + 1 }
+
+result4 = findRedundantDirectedConnection([[1 2] [2 3] [3 4] [4 1] [1 5]])
+if result4[0] == 4 && result4[1] == 1 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

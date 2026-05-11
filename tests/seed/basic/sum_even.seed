@@ -1,0 +1,11 @@
+// 偶数求和测试：循环筛选偶数并累加
+// EXPECT: 30
+i = 0
+sum = 0
+while i <= 10 {
+    if i / 2 == floor(i / 2) {
+        sum = sum + i
+    }
+    i = i + 1
+}
+result = sum

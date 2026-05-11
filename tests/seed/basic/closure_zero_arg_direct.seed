@@ -1,0 +1,15 @@
+// EXPECT: 6
+fn makeCounter() {
+    count = 0
+    fn next() {
+        count = count + 1
+        return count
+    }
+    return next
+}
+
+c = makeCounter()
+a = c()
+b = c()
+c3 = c()
+result = a + b + c3

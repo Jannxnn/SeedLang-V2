@@ -1,0 +1,3 @@
+// 字符串边界测试：空串/单字符/Unicode 边界行为
+// EXPECT: ""
+result = trim("    ")

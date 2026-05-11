@@ -1,0 +1,191 @@
+// SeedLang Lumen Lite Web Logic (1D 优化版)
+// 算法保持一致：直接光 + 阴影采样 + 多次扩散（简化 GI）
+
+lumen = { w: 64 h: 36 occ1: [] emi1: [] direct1: [] gi1: [] tmp1: [] lightX: 28 lightY: 8 tick: 0 }
+
+fn make1D(n init) {
+    arr = []
+    i = 0
+    while i < n {
+        push(arr init)
+        i = i + 1
+    }
+    return arr
+}
+
+fn lumenInit(w h) {
+    lumen.w = w
+    lumen.h = h
+    lumen.lightX = w * 0.55
+    lumen.lightY = h * 0.22
+    lumen.tick = 0
+
+    n = w * h
+    lumen.occ1 = make1D(n 0)
+    lumen.emi1 = make1D(n 0)
+    lumen.direct1 = make1D(n 0)
+    lumen.gi1 = make1D(n 0)
+    lumen.tmp1 = make1D(n 0)
+
+    x = 0
+    while x < w {
+        lumen.occ1[(h - 3) * w + x] = 1
+        lumen.occ1[(h - 2) * w + x] = 1
+        lumen.occ1[(h - 1) * w + x] = 1
+        x = x + 1
+    }
+
+    p1 = floor(w * 0.2)
+    y = floor(h * 0.25)
+    while y < h - 3 {
+        lumen.occ1[y * w + p1] = 1
+        lumen.occ1[y * w + p1 + 1] = 1
+        y = y + 1
+    }
+
+    p2 = floor(w * 0.48)
+    y = floor(h * 0.35)
+    while y < h - 3 {
+        lumen.occ1[y * w + p2] = 1
+        lumen.occ1[y * w + p2 + 1] = 1
+        lumen.occ1[y * w + p2 + 2] = 1
+        y = y + 1
+    }
+
+    p3 = floor(w * 0.76)
+    y = floor(h * 0.28)
+    while y < h - 3 {
+        lumen.occ1[y * w + p3] = 1
+        lumen.occ1[y * w + p3 + 1] = 1
+        y = y + 1
+    }
+
+    lumen.emi1[2 * w + 3] = 1.0
+    lumen.emi1[2 * w + (w - 4)] = 0.75
+}
+
+fn lumenSetLight(x y) {
+    lumen.lightX = max(0 min(lumen.w x))
+    lumen.lightY = max(0 min(lumen.h y))
+}
+
+fn lumenShadow(x y lx ly) {
+    dx = lx - x
+    dy = ly - y
+    dist = sqrt(dx * dx + dy * dy)
+    if dist < 1 { return 1.0 }
+
+    steps = floor(dist * 1.15)
+    if steps < 1 { steps = 1 }
+
+    i = 1
+    while i < steps {
+        t = i / steps
+        sx = floor(x + dx * t)
+        sy = floor(y + dy * t)
+        if sx >= 0 and sx < lumen.w and sy >= 0 and sy < lumen.h {
+            if lumen.occ1[sy * lumen.w + sx] == 1 {
+                return 0.08
+            }
+        }
+        i = i + 1
+    }
+    return 1.0
+}
+
+fn lumenComputeDirect() {
+    radius = max(10 floor(lumen.w * 0.32))
+    invRadius = 1 / radius
+    y = 0
+    while y < lumen.h {
+        yBase = y * lumen.w
+        x = 0
+        while x < lumen.w {
+            i = yBase + x
+            if lumen.occ1[i] == 1 {
+                lumen.direct1[i] = 0
+            } else {
+                dx = lumen.lightX - x
+                dy = lumen.lightY - y
+                d = sqrt(dx * dx + dy * dy)
+                val = 0.02 + lumen.emi1[i] * 1.7
+                if d < radius {
+                    atten = 1 - d * invRadius
+                    sh = lumenShadow(x y lumen.lightX lumen.lightY)
+                    val = val + atten * atten * sh
+                }
+                lumen.direct1[i] = val
+            }
+            x = x + 1
+        }
+        y = y + 1
+    }
+}
+
+fn lumenDiffuse(iterations) {
+    n = lumen.w * lumen.h
+    i = 0
+    while i < n {
+        lumen.gi1[i] = lumen.direct1[i]
+        i = i + 1
+    }
+
+    it = 0
+    while it < iterations {
+        y = 0
+        while y < lumen.h {
+            yBase = y * lumen.w
+            x = 0
+            while x < lumen.w {
+                i0 = yBase + x
+                if lumen.occ1[i0] == 1 {
+                    lumen.tmp1[i0] = 0
+                } else {
+                    base = lumen.gi1[i0] * 0.34
+                    acc = 0
+                    ncnt = 0
+
+                    oy = -1
+                    while oy <= 1 {
+                        ox = -1
+                        while ox <= 1 {
+                            if not (ox == 0 and oy == 0) {
+                                nx = x + ox
+                                ny = y + oy
+                                if nx >= 0 and nx < lumen.w and ny >= 0 and ny < lumen.h {
+                                    ni = ny * lumen.w + nx
+                                    if lumen.occ1[ni] == 0 {
+                                        acc = acc + lumen.gi1[ni]
+                                        ncnt = ncnt + 1
+                                    }
+                                }
+                            }
+                            ox = ox + 1
+                        }
+                        oy = oy + 1
+                    }
+
+                    if ncnt > 0 {
+                        lumen.tmp1[i0] = base + (acc / ncnt) * 0.62
+                    } else {
+                        lumen.tmp1[i0] = base
+                    }
+                }
+                x = x + 1
+            }
+            y = y + 1
+        }
+
+        swap = lumen.gi1
+        lumen.gi1 = lumen.tmp1
+        lumen.tmp1 = swap
+        it = it + 1
+    }
+}
+
+fn lumenStep() {
+    lumen.tick = lumen.tick + 1
+    lumenComputeDirect()
+    lumenDiffuse(4)
+    return lumen.gi1
+}

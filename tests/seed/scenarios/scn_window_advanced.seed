@@ -1,0 +1,141 @@
+// 场景测试 - window advanced：高级滑动窗口（变长/多条件）
+// EXPECT: "OK:4"
+fn maxSlidingWindow(nums k) {
+    if len(nums) == 0 || k == 0 { return [] }
+    
+    result = []
+    deque = []
+    
+    i = 0
+    while i < len(nums) {
+        while len(deque) > 0 && deque[0] < i - k + 1 {
+            deque = slice(deque 1 len(deque))
+        }
+        
+        while len(deque) > 0 && nums[deque[len(deque) - 1]] < nums[i] {
+            deque = slice(deque 0 len(deque) - 1)
+        }
+        
+        push(deque i)
+        
+        if i >= k - 1 {
+            push(result nums[deque[0]])
+        }
+        
+        i = i + 1
+    }
+    
+    return result
+}
+
+fn minWindowSubstring(s t) {
+    if len(s) < len(t) { return "" }
+    
+    need = {}
+    for c in split(t "") {
+        if need[c] == null { need[c] = 0 }
+        need[c] = need[c] + 1
+    }
+    
+    missing = len(t)
+    left = 0
+    minLen = len(s) + 1
+    minStart = 0
+    
+    right = 0
+    while right < len(s) {
+        c = charAt(s right)
+        
+        if need[c] != null {
+            if need[c] > 0 { missing = missing - 1 }
+            need[c] = need[c] - 1
+        }
+        
+        while missing == 0 {
+            if right - left + 1 < minLen {
+                minLen = right - left + 1
+                minStart = left
+            }
+            
+            leftChar = charAt(s left)
+            if need[leftChar] != null {
+                need[leftChar] = need[leftChar] + 1
+                if need[leftChar] > 0 { missing = missing + 1 }
+            }
+            left = left + 1
+        }
+        
+        right = right + 1
+    }
+    
+    if minLen > len(s) { return "" }
+    return substring(s minStart minStart + minLen)
+}
+
+fn findAnagrams(s p) {
+    result = []
+    
+    if len(s) < len(p) { return result }
+    
+    pCount = {}
+    sCount = {}
+    
+    for c in split(p "") {
+        if pCount[c] == null { pCount[c] = 0 }
+        pCount[c] = pCount[c] + 1
+    }
+    
+    i = 0
+    while i < len(p) {
+        c = charAt(s i)
+        if sCount[c] == null { sCount[c] = 0 }
+        sCount[c] = sCount[c] + 1
+        i = i + 1
+    }
+    
+    fn mapsEqual(m1 m2) {
+        for k in keys(m1) {
+            if m1[k] != m2[k] { return false }
+        }
+        for k in keys(m2) {
+            if m1[k] != m2[k] { return false }
+        }
+        return true
+    }
+    
+    if mapsEqual(pCount sCount) { push(result 0) }
+    
+    i = len(p)
+    while i < len(s) {
+        newChar = charAt(s i)
+        oldChar = charAt(s i - len(p))
+        
+        if sCount[newChar] == null { sCount[newChar] = 0 }
+        sCount[newChar] = sCount[newChar] + 1
+        
+        sCount[oldChar] = sCount[oldChar] - 1
+        if sCount[oldChar] == 0 { sCount[oldChar] = null }
+        
+        if mapsEqual(pCount sCount) {
+            push(result i - len(p) + 1)
+        }
+        
+        i = i + 1
+    }
+    
+    return result
+}
+
+passed = 0
+
+maxs = maxSlidingWindow([1 3 -1 -3 5 3 6 7] 3)
+if maxs[0] == 3 && maxs[1] == 3 && maxs[2] == 5 { passed = passed + 1 }
+
+if minWindowSubstring("ADOBECODEBANC" "ABC") == "BANC" { passed = passed + 1 }
+
+anagrams = findAnagrams("cbaebabacd" "abc")
+if len(anagrams) == 2 { passed = passed + 1 }
+
+if anagrams[0] == 0 && anagrams[1] == 6 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

@@ -1,0 +1,7 @@
+// CLC regression: replacing a map SlArray* value must release the old array and retain the new one.
+data = jsonParse("{\"nums\": [1, 2, 3]}")
+fresh = [10 20]
+data.set("nums" fresh)
+a = data.getArr("nums")
+print(a[0])
+print(a[1])

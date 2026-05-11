@@ -1,0 +1,55 @@
+{
+  "name": "variables_and_assignment",
+  "source": "\nx = 10\ny = 20\nz = x + y\nprint(z)\n",
+  "bytecode": {
+    "code": [
+      1,
+      0,
+      11,
+      0,
+      1,
+      1,
+      11,
+      1,
+      116,
+      0,
+      1,
+      11,
+      2,
+      10,
+      3,
+      10,
+      2,
+      63,
+      1,
+      5,
+      255
+    ],
+    "codeDisasm": [
+      "   0 CONST 0",
+      "   2 SET_GLOBAL 0",
+      "   4 CONST 1",
+      "   6 SET_GLOBAL 1",
+      "   8 ADD_GLOBAL2",
+      "   9 NOP",
+      "  10 CONST 11",
+      "  12 NULL",
+      "  13 GET_GLOBAL 3",
+      "  15 GET_GLOBAL 2",
+      "  17 CALL 1 5",
+      "  20 HALT"
+    ],
+    "consts": [
+      10,
+      20
+    ],
+    "vars": [
+      "x",
+      "y",
+      "z",
+      "print"
+    ],
+    "funcNames": {}
+  },
+  "version": 1
+}

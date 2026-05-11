@@ -1,0 +1,73 @@
+// 场景测试 - advanced memoization：带 TTL 的高级记忆化缓存策略
+// EXPECT: "OK:4"
+fn memoizeWithTTL(mapper ttlMs) {
+    cache = {}
+    return (arg) => {
+        key = toString(arg)
+        now = timestamp()
+        
+        if cache[key] != null {
+            if now - cache[key].timestamp < ttlMs {
+                return cache[key].value
+            }
+        }
+        
+        value = mapper(arg)
+        cache[key] = { value: value timestamp: now }
+        return value
+    }
+}
+
+fn debounce(handler delay) {
+    lastCall = 0
+    scheduled = false
+    lastArg = null
+    
+    return (arg) => {
+        lastArg = arg
+        now = timestamp()
+        
+        if now - lastCall >= delay {
+            lastCall = now
+            return handler(arg)
+        }
+        return null
+    }
+}
+
+fn throttle(handler limit) {
+    lastCall = 0
+    return (arg) => {
+        now = timestamp()
+        if now - lastCall >= limit {
+            lastCall = now
+            return handler(arg)
+        }
+        return null
+    }
+}
+
+callCount = 0
+fn expensiveOp(x) {
+    callCount = callCount + 1
+    return x * x
+}
+
+memoized = memoizeWithTTL(expensiveOp 1000)
+
+passed = 0
+
+r1 = memoized(5)
+r2 = memoized(5)
+if callCount == 1 { passed = passed + 1 }
+if r1 == 25 && r2 == 25 { passed = passed + 1 }
+
+r3 = memoized(6)
+if callCount == 2 { passed = passed + 1 }
+
+throttled = throttle(expensiveOp 100)
+t1 = throttled(10)
+t2 = throttled(10)
+if callCount >= 2 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

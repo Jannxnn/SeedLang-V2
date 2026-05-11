@@ -1,0 +1,7 @@
+// VM 优化：FOR_PUSH_RANGE — for 循环 push 优化
+// EXPECT: 10
+arr = []
+for (i = 0; i < 10; i = i + 1) {
+    push(arr i)
+}
+result = len(arr)

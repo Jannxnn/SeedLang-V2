@@ -1,0 +1,25 @@
+// 场景测试 - complex retry budget：带重试预算的容错重试机制
+// EXPECT: "ok@3#0"
+attempt = 0
+budget = 2
+done = false
+status = "init"
+
+fn flaky() {
+    attempt = attempt + 1
+    if attempt < 3 {
+        throw "busy"
+    }
+    return "ok@" + toString(attempt)
+}
+
+while done == false && budget >= 0 {
+    try {
+        status = flaky()
+        done = true
+    } catch(e) {
+        budget = budget - 1
+    }
+}
+
+result = status + "#" + toString(budget)

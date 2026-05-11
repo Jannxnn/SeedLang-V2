@@ -1,0 +1,6 @@
+// 数组与对象组合测试：数组中存储对象及属性访问
+// EXPECT: 6
+arr = [1 2 3]
+obj = { base: 0 }
+obj.base = len(arr)
+result = obj.base + len(arr)

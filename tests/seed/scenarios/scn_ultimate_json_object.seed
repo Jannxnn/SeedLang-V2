@@ -1,0 +1,5 @@
+// 场景测试 - ultimate json object（终极）：JSON 对象解析与提取
+// EXPECT: "ok-3"
+s = '{"status":"ok","data":[1,2,3]}'
+o = jsonParse(s)
+result = o.status + "-" + toString(len(o.data))

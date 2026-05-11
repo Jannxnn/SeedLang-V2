@@ -1,0 +1,25 @@
+// 场景测试 - complex deep nested finally：深层嵌套 try-catch-finally 的执行顺序追踪
+// EXPECT: "T|C3|F3|C2|F2|C1|F1|END"
+trace = "T"
+try {
+    try {
+        try {
+            throw "E3"
+        } catch(e3) {
+            trace = trace + "|C3"
+            throw "E2"
+        } finally {
+            trace = trace + "|F3"
+        }
+    } catch(e2) {
+        trace = trace + "|C2"
+        throw "E1"
+    } finally {
+        trace = trace + "|F2"
+    }
+} catch(e1) {
+    trace = trace + "|C1"
+} finally {
+    trace = trace + "|F1"
+}
+result = trace + "|END"

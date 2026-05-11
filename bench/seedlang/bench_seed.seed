@@ -1,0 +1,473 @@
+fn emit(name n result start) {
+  ms = timestamp() - start
+  print(name + "(" + toString(n) + ")=" + toString(result) + " " + toString(ms) + "ms")
+}
+
+fn fib(n) {
+  if n <= 1 { return n }
+  return fib(n - 1) + fib(n - 2)
+}
+
+fn loopTest(n) {
+  x = 0
+  for (i = 0; i < n; i = i + 1) { x = x + i * i }
+  return x
+}
+
+fn nestedLoopTest(n) {
+  sum = 0
+  for (i = 0; i < n; i = i + 1) {
+    for (j = 0; j < n; j = j + 1) { sum = sum + i * j }
+  }
+  return sum
+}
+
+fn arraySumTest(n) {
+  arr = []
+  for (i = 0; i < n; i = i + 1) { push(arr i) }
+  sum = 0
+  for (i = 0; i < n; i = i + 1) { sum = sum + arr[i] }
+  return sum
+}
+
+fn mathTest(n) {
+  x = 0
+  for (i = 0; i < n; i = i + 1) { x = x + i * i - i }
+  return x
+}
+
+fn pureLoopTest(n) {
+  s = 0
+  for (i = 0; i < n; i = i + 1) { s = s + i * i }
+  return s
+}
+
+fn pushTest(n) {
+  arr = []
+  for (i = 0; i < n; i = i + 1) { push(arr i) }
+  return len(arr)
+}
+
+fn pushIndexTest(n) {
+  arr = []
+  for (i = 0; i < n; i = i + 1) { push(arr i) }
+  s = 0
+  for (i = 0; i < n; i = i + 1) { s = s + arr[i] }
+  return s
+}
+
+fn indexAssignTest(n) {
+  arr = []
+  for (i = 0; i < n; i = i + 1) { arr[i] = i }
+  return len(arr)
+}
+
+fn buildArray(n) {
+  arr = []
+  for (i = 0; i < n; i = i + 1) { push(arr i) }
+  return arr
+}
+
+fn funcPushTest(n) {
+  result = buildArray(n)
+  return len(result)
+}
+
+fn nestedLoop1kTest(n) {
+  s = 0
+  for (i = 0; i < n; i = i + 1) {
+    for (j = 0; j < n; j = j + 1) { s = s + i * j }
+  }
+  return s
+}
+
+fn conditionalTest(n) {
+  c = 0
+  for (i = 0; i < n; i = i + 1) { if i % 2 == 0 { c = c + 1 } }
+  return c
+}
+
+fn mathOpTest(n) {
+  r = 0
+  for (i = 0; i < n; i = i + 1) { r = r + i * 2 - floor(i / 2) }
+  return r
+}
+
+fn antiOptArraySumTest(n) {
+  arr = []
+  for (i = 0; i < n; i = i + 1) { push(arr i) }
+  idx = 0
+  s = 0
+  for (i = 0; i < n; i = i + 1) {
+    idx = idx + 97
+    if idx >= n { idx = idx - n }
+    s = s + arr[idx]
+  }
+  return s
+}
+
+fn stringConcatTest(n) {
+  s = ""
+  for (i = 0; i < n; i = i + 1) { s = s + toString(i % 10) }
+  return len(s)
+}
+
+fn arrayReadTest(n) {
+  arr = []
+  for (i = 0; i < n; i = i + 1) { push(arr i) }
+  s = 0
+  for (i = 0; i < n; i = i + 1) { s = s + arr[i] }
+  return s
+}
+
+fn arrayAliasReverseReadTest(n) {
+  arr = []
+  alias = arr
+  for (i = 0; i < n; i = i + 1) { push(arr i) }
+  s = 0
+  for (i = 0; i < n; i = i + 1) { s = s + alias[n - 1 - i] }
+  return s
+}
+
+fn objPropTest(n) {
+  obj = {a: 1}
+  for (i = 0; i < n; i = i + 1) { obj.a = obj.a + 1 }
+  return obj.a
+}
+
+fn add(a b) { return a + b }
+
+fn funcCallTest(n) {
+  s = 0
+  for (i = 0; i < n; i = i + 1) { s = add(s i) }
+  return s
+}
+
+fn recursiveFib30Test(n) {
+  return fib(30)
+}
+
+fn fibRaw(n) {
+  if n <= 1 { return n }
+  return fibRaw(n - 1) + fibRaw(n - 2)
+}
+
+fn fibRaw30Test(n) {
+  return fibRaw(30)
+}
+
+fn counter() {
+  count = 0
+  fn inc() {
+    count = count + 1
+    return count
+  }
+  return inc
+}
+
+fn closureCounterTest(n) {
+  c = counter()
+  result = 0
+  for (i = 0; i < n; i = i + 1) { result = c() }
+  return result
+}
+
+fn closureObjCallTest(n) {
+  holder = {c: counter()}
+  sum = 0
+  for (i = 0; i < n; i = i + 1) { sum = sum + holder.c() }
+  return sum
+}
+
+fn arrayLiteralTest(n) {
+  for (i = 0; i < n; i = i + 1) { arr = [1 2 3 4 5 6 7 8 9 10] }
+  return 10
+}
+
+fn objLiteralTest(n) {
+  for (i = 0; i < n; i = i + 1) { obj = {a: 1 b: 2 c: 3} }
+  return 1
+}
+
+fn ternaryTest(n) {
+  r = 0
+  for (i = 0; i < n; i = i + 1) {
+    if i % 2 == 0 {
+      r = r + 1
+    } else {
+      r = r - 1
+    }
+  }
+  return r
+}
+
+fn whileLoopTest(n) {
+  i = 0
+  s = 0
+  while i < n {
+    s = s + i * i
+    i = i + 1
+  }
+  return s
+}
+
+fn multiAssignTest(n) {
+  a = 0
+  b = 0
+  c = 0
+  for (i = 0; i < n; i = i + 1) {
+    a = i
+    b = i + 1
+    c = i + 2
+  }
+  return a + b + c
+}
+
+fn funcLoopTest(n) {
+  s = 0
+  for (i = 0; i < n; i = i + 1) { s = s + i * i }
+  return s
+}
+
+fn funcMathTest(n) {
+  x = 0
+  for (i = 0; i < n; i = i + 1) { x = x + i * i - i }
+  return x
+}
+
+fn benchFib() {
+  start = timestamp()
+  result = fib(20)
+  emit("fib" 20 result start)
+  start = timestamp()
+  result = fib(25)
+  emit("fib" 25 result start)
+  start = timestamp()
+  result = fib(30)
+  emit("fib" 30 result start)
+  start = timestamp()
+  result = fib(35)
+  emit("fib" 35 result start)
+}
+
+fn benchLoop() {
+  start = timestamp()
+  result = loopTest(100000)
+  emit("loop" 100000 result start)
+  start = timestamp()
+  result = loopTest(1000000)
+  emit("loop" 1000000 result start)
+  start = timestamp()
+  result = loopTest(10000000)
+  emit("loop" 10000000 result start)
+}
+
+fn benchNestedLoop() {
+  start = timestamp()
+  result = nestedLoopTest(100)
+  emit("nested_loop" 100 result start)
+  start = timestamp()
+  result = nestedLoopTest(300)
+  emit("nested_loop" 300 result start)
+  start = timestamp()
+  result = nestedLoopTest(500)
+  emit("nested_loop" 500 result start)
+}
+
+fn benchArraySum() {
+  start = timestamp()
+  result = arraySumTest(50000)
+  emit("array_sum" 50000 result start)
+  start = timestamp()
+  result = arraySumTest(100000)
+  emit("array_sum" 100000 result start)
+  start = timestamp()
+  result = arraySumTest(1000000)
+  emit("array_sum" 1000000 result start)
+}
+
+fn benchMath() {
+  start = timestamp()
+  result = mathTest(100000)
+  emit("math" 100000 result start)
+  start = timestamp()
+  result = mathTest(1000000)
+  emit("math" 1000000 result start)
+  start = timestamp()
+  result = mathTest(10000000)
+  emit("math" 10000000 result start)
+}
+
+fn benchPureLoop() {
+  start = timestamp()
+  result = pureLoopTest(1000000)
+  emit("pure_loop" 1000000 result start)
+}
+
+fn benchPush() {
+  start = timestamp()
+  result = pushTest(100000)
+  emit("push" 100000 result start)
+}
+
+fn benchPushIndex() {
+  start = timestamp()
+  result = pushIndexTest(100000)
+  emit("push_index" 100000 result start)
+}
+
+fn benchIndexAssign() {
+  start = timestamp()
+  result = indexAssignTest(100000)
+  emit("index_assign" 100000 result start)
+}
+
+fn benchFuncPush() {
+  start = timestamp()
+  result = funcPushTest(100000)
+  emit("func_push" 100000 result start)
+}
+
+fn benchNestedLoop1k() {
+  start = timestamp()
+  result = nestedLoop1kTest(1000)
+  emit("nested_loop_1k" 1000 result start)
+}
+
+fn benchConditional() {
+  start = timestamp()
+  result = conditionalTest(1000000)
+  emit("conditional" 1000000 result start)
+}
+
+fn benchMathOp() {
+  start = timestamp()
+  result = mathOpTest(1000000)
+  emit("math_op" 1000000 result start)
+}
+
+fn benchAntiOptArraySum() {
+  start = timestamp()
+  result = antiOptArraySumTest(1000000)
+  emit("anti_opt_array_sum" 1000000 result start)
+}
+
+fn benchStringConcat() {
+  start = timestamp()
+  result = stringConcatTest(50000)
+  emit("string_concat" 50000 result start)
+}
+
+fn benchArrayRead() {
+  start = timestamp()
+  result = arrayReadTest(100000)
+  emit("array_read" 100000 result start)
+}
+
+fn benchArrayAliasReverseRead() {
+  start = timestamp()
+  result = arrayAliasReverseReadTest(100000)
+  emit("array_alias_reverse_read" 100000 result start)
+}
+
+fn benchObjProp() {
+  start = timestamp()
+  result = objPropTest(100000)
+  emit("obj_prop" 100000 result start)
+}
+
+fn benchFuncCall() {
+  start = timestamp()
+  result = funcCallTest(100000)
+  emit("func_call" 100000 result start)
+}
+
+fn benchRecursiveFib30() {
+  start = timestamp()
+  result = recursiveFib30Test(30)
+  emit("recursive_fib_30" 30 result start)
+}
+
+fn benchClosureCounter() {
+  start = timestamp()
+  result = closureCounterTest(100000)
+  emit("closure_counter" 100000 result start)
+}
+
+fn benchClosureObjCall() {
+  start = timestamp()
+  result = closureObjCallTest(100000)
+  emit("closure_obj_call" 100000 result start)
+}
+
+fn benchArrayLiteral() {
+  start = timestamp()
+  result = arrayLiteralTest(100000)
+  emit("array_literal" 100000 result start)
+}
+
+fn benchObjLiteral() {
+  start = timestamp()
+  result = objLiteralTest(100000)
+  emit("obj_literal" 100000 result start)
+}
+
+fn benchTernary() {
+  start = timestamp()
+  result = ternaryTest(1000000)
+  emit("ternary" 1000000 result start)
+}
+
+fn benchWhileLoop() {
+  start = timestamp()
+  result = whileLoopTest(100000)
+  emit("while_loop" 100000 result start)
+}
+
+fn benchMultiAssign() {
+  start = timestamp()
+  result = multiAssignTest(100000)
+  emit("multi_assign" 100000 result start)
+}
+
+fn benchFuncLoop() {
+  start = timestamp()
+  result = funcLoopTest(1000000)
+  emit("func_loop" 1000000 result start)
+}
+
+fn benchFuncMath() {
+  start = timestamp()
+  result = funcMathTest(1000000)
+  emit("func_math" 1000000 result start)
+}
+
+benchFib()
+benchLoop()
+benchNestedLoop()
+benchArraySum()
+benchMath()
+benchPureLoop()
+benchPush()
+benchPushIndex()
+benchIndexAssign()
+benchFuncPush()
+benchNestedLoop1k()
+benchConditional()
+benchMathOp()
+benchAntiOptArraySum()
+benchStringConcat()
+benchArrayRead()
+benchArrayAliasReverseRead()
+benchObjProp()
+benchFuncCall()
+benchRecursiveFib30()
+benchClosureCounter()
+benchClosureObjCall()
+benchArrayLiteral()
+benchObjLiteral()
+benchTernary()
+benchWhileLoop()
+benchMultiAssign()
+benchFuncLoop()
+benchFuncMath()

@@ -1,0 +1,83 @@
+// 场景测试 - consecutive sequence：最长连续序列的查找算法
+// EXPECT: "OK:4"
+fn longestConsecutive(nums) {
+    if len(nums) == 0 { return 0 }
+    
+    numSet = {}
+    for n in nums { numSet[n] = true }
+    
+    longest = 0
+    
+    for n in nums {
+        if numSet[n - 1] == null {
+            current = n
+            streak = 1
+            
+            while numSet[current + 1] != null {
+                current = current + 1
+                streak = streak + 1
+            }
+            
+            if streak > longest { longest = streak }
+        }
+    }
+    
+    return longest
+}
+
+fn longestConsecutiveSequence(nums) {
+    if len(nums) == 0 { return 0 }
+    
+    parent = {}
+    size = {}
+    
+    fn find(x) {
+        if parent[x] == null {
+            parent[x] = x
+            size[x] = 1
+        }
+        
+        if parent[x] != x {
+            parent[x] = find(parent[x])
+        }
+        
+        return parent[x]
+    }
+    
+    fn union(x y) {
+        rootX = find(x)
+        rootY = find(y)
+        
+        if rootX != rootY {
+            parent[rootX] = rootY
+            size[rootY] = size[rootY] + size[rootX]
+        }
+    }
+    
+    for n in nums {
+        if parent[n] == null {
+            parent[n] = n
+            size[n] = 1
+        }
+        
+        if parent[n - 1] != null { union(n n - 1) }
+        if parent[n + 1] != null { union(n n + 1) }
+    }
+    
+    maxSize = 0
+    for n in nums {
+        root = find(n)
+        if size[root] > maxSize { maxSize = size[root] }
+    }
+    
+    return maxSize
+}
+
+passed = 0
+
+if longestConsecutive([100 4 200 1 3 2]) == 4 { passed = passed + 1 }
+if longestConsecutive([0 3 7 2 5 8 4 6 0 1]) == 9 { passed = passed + 1 }
+if longestConsecutive([]) == 0 { passed = passed + 1 }
+if longestConsecutive([1 2 0 1]) == 3 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

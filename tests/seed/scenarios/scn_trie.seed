@@ -1,0 +1,53 @@
+// 场景测试 - trie：前缀树（字典树）数据结构
+// EXPECT: "OK:4"
+class Trie {
+    init() {
+        this.root = {}
+    }
+    
+    insert(word) {
+        node = this.root
+        chars = split(word "")
+        for char in chars {
+            if node[char] == null {
+                node[char] = {}
+            }
+            node = node[char]
+        }
+        node.isEnd = true
+    }
+    
+    search(word) {
+        node = this.root
+        chars = split(word "")
+        for char in chars {
+            if node[char] == null { return false }
+            node = node[char]
+        }
+        return node.isEnd == true
+    }
+    
+    startsWith(prefix) {
+        node = this.root
+        chars = split(prefix "")
+        for char in chars {
+            if node[char] == null { return false }
+            node = node[char]
+        }
+        return true
+    }
+}
+
+trie = Trie()
+trie.insert("apple")
+trie.insert("app")
+trie.insert("application")
+trie.insert("banana")
+
+passed = 0
+if trie.search("apple") { passed = passed + 1 }
+if trie.search("app") { passed = passed + 1 }
+if trie.search("appl") == false { passed = passed + 1 }
+if trie.startsWith("ban") { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

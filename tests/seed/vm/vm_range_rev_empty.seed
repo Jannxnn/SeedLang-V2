@@ -1,0 +1,8 @@
+// rangeRev(0) 无元素；rangeRev(3 3) hi==lo 无元素
+// EXPECT: 0
+a = len(rangeRev(0))
+b = 0
+for i in rangeRev(3 3) {
+  b = b + 1
+}
+result = a + b

@@ -1,0 +1,16 @@
+{
+  "name": "Seed",
+  "version": "1.0.0",
+  "main": "main.seed",
+  "runtime": "general",
+  "options": {
+    "debug": false,
+    "strict": true
+  },
+  "dependencies": {},
+  "scripts": {
+    "run": "seedlang main.seed",
+    "watch": "seedlang --watch main.seed",
+    "build": "seedlang --compile main.seed -o dist/main.js"
+  }
+}

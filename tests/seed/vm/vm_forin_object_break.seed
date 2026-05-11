@@ -1,0 +1,11 @@
+// 对象 for-in 迭代：带 break 提前退出
+// EXPECT: 3
+obj = { a: 1 b: 2 c: 3 }
+sum = 0
+for v in obj {
+  sum = sum + v
+  if sum > 2 {
+    break
+  }
+}
+result = sum

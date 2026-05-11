@@ -1,0 +1,119 @@
+// 场景测试 - bfs problems：腐烂橘子等广度优先搜索经典问题
+// EXPECT: "OK:4"
+fn orangesRotting(grid) {
+    rows = len(grid)
+    cols = len(grid[0])
+    
+    queue = []
+    fresh = 0
+    
+    i = 0
+    while i < rows {
+        j = 0
+        while j < cols {
+            if grid[i][j] == 2 {
+                cell = [i j]
+                push(queue cell)
+            } else {
+                if grid[i][j] == 1 {
+                    fresh = fresh + 1
+                }
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    
+    if fresh == 0 { return 0 }
+    
+    minutes = 0
+    directions = [[0 1] [1 0] [0 -1] [-1 0]]
+    
+    while len(queue) > 0 && fresh > 0 {
+        size = len(queue)
+        
+        k = 0
+        while k < size {
+            current = queue[0]
+            queue = slice(queue 1 len(queue))
+            
+            for dir in directions {
+                newRow = current[0] + dir[0]
+                newCol = current[1] + dir[1]
+                
+                if newRow >= 0 && newRow < rows && newCol >= 0 && newCol < cols {
+                    if grid[newRow][newCol] == 1 {
+                        grid[newRow][newCol] = 2
+                        fresh = fresh - 1
+                        nextCell = [newRow newCol]
+                        push(queue nextCell)
+                    }
+                }
+            }
+            k = k + 1
+        }
+        
+        if len(queue) > 0 { minutes = minutes + 1 }
+    }
+    
+    if fresh == 0 { return minutes }
+    return -1
+}
+
+fn wallsAndGates(rooms) {
+    if len(rooms) == 0 { return }
+    
+    rows = len(rooms)
+    cols = len(rooms[0])
+    queue = []
+    
+    i = 0
+    while i < rows {
+        j = 0
+        while j < cols {
+            if rooms[i][j] == 0 {
+                gate = [i j]
+                push(queue gate)
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    
+    directions = [[0 1] [1 0] [0 -1] [-1 0]]
+    
+    while len(queue) > 0 {
+        current = queue[0]
+        queue = slice(queue 1 len(queue))
+        
+        for dir in directions {
+            newRow = current[0] + dir[0]
+            newCol = current[1] + dir[1]
+            
+            if newRow >= 0 && newRow < rows && newCol >= 0 && newCol < cols {
+                if rooms[newRow][newCol] == 999999 {
+                    rooms[newRow][newCol] = rooms[current[0]][current[1]] + 1
+                    gateNext = [newRow newCol]
+                    push(queue gateNext)
+                }
+            }
+        }
+    }
+}
+
+passed = 0
+
+grid1 = [[2 1 1] [1 1 0] [0 1 1]]
+if orangesRotting(grid1) == 4 { passed = passed + 1 }
+
+grid2 = [[2 1 1] [0 1 1] [1 0 1]]
+if orangesRotting(grid2) == -1 { passed = passed + 1 }
+
+rooms = [[999999 -1 0 999999] [999999 999999 999999 -1] [999999 -1 999999 -1] [0 -1 999999 999999]]
+wallsAndGates(rooms)
+if rooms[0][0] == 3 { passed = passed + 1 }
+
+grid3 = [[0 2]]
+if orangesRotting(grid3) == 0 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

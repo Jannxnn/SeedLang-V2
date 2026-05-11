@@ -1,0 +1,100 @@
+// 场景测试 - array advanced algos：K 路归并排序等高级数组算法
+// EXPECT: "OK:4"
+fn mergeKSortedArrays(arrays) {
+    result = []
+    
+    while true {
+        minVal = null
+        minIdx = -1
+        
+        i = 0
+        while i < len(arrays) {
+            if len(arrays[i]) > 0 {
+                if minVal == null || arrays[i][0] < minVal {
+                    minVal = arrays[i][0]
+                    minIdx = i
+                }
+            }
+            i = i + 1
+        }
+        
+        if minIdx == -1 { break }
+        
+        push(result minVal)
+        arrays[minIdx] = slice(arrays[minIdx] 1 len(arrays[minIdx]))
+    }
+    
+    return result
+}
+
+fn findMedianSortedArrays(nums1 nums2) {
+    merged = []
+    i = 0
+    j = 0
+    
+    while i < len(nums1) && j < len(nums2) {
+        if nums1[i] < nums2[j] {
+            push(merged nums1[i])
+            i = i + 1
+        } else {
+            push(merged nums2[j])
+            j = j + 1
+        }
+    }
+    
+    while i < len(nums1) {
+        push(merged nums1[i])
+        i = i + 1
+    }
+    
+    while j < len(nums2) {
+        push(merged nums2[j])
+        j = j + 1
+    }
+    
+    n = len(merged)
+    if n % 2 == 1 {
+        return merged[floor(n / 2)]
+    }
+    return (merged[n / 2 - 1] + merged[n / 2]) / 2
+}
+
+fn longestConsecutive(nums) {
+    numSet = {}
+    for n in nums {
+        numSet[n] = true
+    }
+    
+    longest = 0
+    
+    for n in nums {
+        if numSet[n - 1] == null {
+            current = n
+            streak = 1
+            
+            while numSet[current + 1] != null {
+                current = current + 1
+                streak = streak + 1
+            }
+            
+            if streak > longest {
+                longest = streak
+            }
+        }
+    }
+    
+    return longest
+}
+
+passed = 0
+
+merged = mergeKSortedArrays([[1 4 7] [2 5 8] [3 6 9]])
+if merged[0] == 1 && merged[8] == 9 { passed = passed + 1 }
+
+median = findMedianSortedArrays([1 3] [2])
+if median == 2 { passed = passed + 1 }
+
+if longestConsecutive([100 4 200 1 3 2]) == 4 { passed = passed + 1 }
+if longestConsecutive([0 3 7 2 5 8 4 6 0 1]) == 9 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

@@ -1,0 +1,17 @@
+// 场景测试 - complex recursive throw：递归调用中的异常抛出与栈展开
+// EXPECT: 104
+fn walk(n) {
+    if n <= 0 {
+        throw "stop"
+    }
+    return 1 + walk(n - 1)
+}
+
+value = 0
+try {
+    value = walk(5)
+} catch(e) {
+    value = 100 + len(e)
+}
+
+result = value

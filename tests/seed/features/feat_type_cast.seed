@@ -1,0 +1,6 @@
+﻿// 类型转换测试：toInt/toFloat/toString/toBool 显式转换
+// EXPECT: "7:7:7"
+a = toInt("7")
+b = toFloat("7")
+c = toString(7)
+result = toString(a) + ":" + toString(b) + ":" + c

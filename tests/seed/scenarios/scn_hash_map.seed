@@ -1,0 +1,83 @@
+// 场景测试 - hash map：哈希表数据结构的实现与操作
+// EXPECT: "OK:4"
+class HashMap {
+    init(size) {
+        this.size = size
+        this.buckets = []
+        i = 0
+        while i < size {
+            bucket = []
+            push(this.buckets bucket)
+            i = i + 1
+        }
+    }
+    
+    hash(key) {
+        str = toString(key)
+        hash = 0
+        chars = split(str "")
+        for char in chars {
+            hash = hash + (charAt(char 0) - 0)
+        }
+        return hash % this.size
+    }
+    
+    set(key value) {
+        idx = this.hash(key)
+        bucket = this.buckets[idx]
+        
+        i = 0
+        while i < len(bucket) {
+            if bucket[i].key == key {
+                bucket[i].value = value
+                return
+            }
+            i = i + 1
+        }
+        push(bucket { key: key value: value })
+    }
+    
+    get(key) {
+        idx = this.hash(key)
+        bucket = this.buckets[idx]
+        
+        for entry in bucket {
+            if entry.key == key { return entry.value }
+        }
+        return null
+    }
+    
+    has(key) {
+        return this.get(key) != null
+    }
+    
+    delete(key) {
+        idx = this.hash(key)
+        bucket = this.buckets[idx]
+        
+        newBucket = []
+        for entry in bucket {
+            if entry.key != key {
+                push(newBucket entry)
+            }
+        }
+        this.buckets[idx] = newBucket
+    }
+}
+
+map = HashMap(10)
+map.set("name" "Alice")
+map.set("age" 30)
+map.set("city" "NYC")
+
+passed = 0
+if map.get("name") == "Alice" { passed = passed + 1 }
+if map.get("age") == 30 { passed = passed + 1 }
+
+map.set("age" 31)
+if map.get("age") == 31 { passed = passed + 1 }
+
+map.delete("city")
+if map.get("city") == null { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

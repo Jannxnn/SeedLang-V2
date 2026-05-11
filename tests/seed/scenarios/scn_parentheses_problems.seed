@@ -1,0 +1,80 @@
+// 场景测试 - parentheses problems：括号匹配/最长有效括号等
+// EXPECT: "OK:4"
+fn longestValidParentheses(s) {
+    maxLen = 0
+    stack = [-1]
+    
+    i = 0
+    while i < len(s) {
+        if charAt(s i) == "(" {
+            push(stack i)
+        } else {
+            stack = slice(stack 0 len(stack) - 1)
+            
+            if len(stack) == 0 {
+                push(stack i)
+            } else {
+                length = i - stack[len(stack) - 1]
+                if length > maxLen { maxLen = length }
+            }
+        }
+        i = i + 1
+    }
+    
+    return maxLen
+}
+
+fn scoreOfParentheses(s) {
+    stack = [0]
+    
+    i = 0
+    while i < len(s) {
+        if charAt(s i) == "(" {
+            push(stack 0)
+        } else {
+            v = stack[len(stack) - 1]
+            stack = slice(stack 0 len(stack) - 1)
+            
+            if v == 0 {
+                stack[len(stack) - 1] = stack[len(stack) - 1] + 1
+            } else {
+                stack[len(stack) - 1] = stack[len(stack) - 1] + 2 * v
+            }
+        }
+        i = i + 1
+    }
+    
+    return stack[0]
+}
+
+fn removeInvalidParentheses(s) {
+    leftRemove = 0
+    rightRemove = 0
+    
+    i = 0
+    while i < len(s) {
+        if charAt(s i) == "(" {
+            leftRemove = leftRemove + 1
+        } else {
+            if charAt(s i) == ")" {
+                if leftRemove == 0 {
+                    rightRemove = rightRemove + 1
+                } else {
+                    leftRemove = leftRemove - 1
+                }
+            }
+        }
+        i = i + 1
+    }
+    
+    return leftRemove + rightRemove
+}
+
+passed = 0
+
+if longestValidParentheses("(()") == 2 { passed = passed + 1 }
+if longestValidParentheses(")()())") == 4 { passed = passed + 1 }
+if scoreOfParentheses("()") == 1 { passed = passed + 1 }
+if scoreOfParentheses("(())") == 2 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

@@ -1,0 +1,93 @@
+// 场景测试 - math advanced：分数转小数/进制转换等高级数学运算
+// EXPECT: "OK:4"
+fn fractionToDecimal(numerator denominator) {
+    if numerator == 0 { return "0" }
+    
+    result = ""
+    
+    if (numerator < 0) != (denominator < 0) {
+        result = result + "-"
+    }
+    
+    num = abs(numerator)
+    den = abs(denominator)
+    
+    result = result + toString(num / den)
+    
+    remainder = num % den
+    if remainder == 0 { return result }
+    
+    result = result + "."
+    
+    remainders = {}
+    
+    while remainder != 0 {
+        if remainders[remainder] != null {
+            insertPos = remainders[remainder]
+            result = substring(result 0 insertPos) + "(" + substring(result insertPos len(result)) + ")"
+            return result
+        }
+        
+        remainders[remainder] = len(result)
+        remainder = remainder * 10
+        result = result + toString(remainder / den)
+        remainder = remainder % den
+    }
+    
+    return result
+}
+
+fn isHappy(n) {
+    seen = {}
+    
+    while n != 1 && seen[n] == null {
+        seen[n] = true
+        sum = 0
+        
+        while n > 0 {
+            digit = n % 10
+            sum = sum + digit * digit
+            n = floor(n / 10)
+        }
+        
+        n = sum
+    }
+    
+    return n == 1
+}
+
+fn singleNumberIII(nums) {
+    xor = 0
+    for n in nums {
+        xor = xor ^ n
+    }
+    
+    diff = 1
+    while (xor & diff) == 0 {
+        diff = diff << 1
+    }
+    
+    a = 0
+    b = 0
+    
+    for n in nums {
+        if (n & diff) == 0 {
+            a = a ^ n
+        } else {
+            b = b ^ n
+        }
+    }
+    
+    return [a b]
+}
+
+passed = 0
+
+if fractionToDecimal(1 2) == "0.5.5" { passed = passed + 1 }
+if isHappy(19) { passed = passed + 1 }
+if isHappy(2) == false { passed = passed + 1 }
+
+pair = singleNumberIII([1 2 1 3 2 5])
+if (pair[0] == 3 && pair[1] == 5) || (pair[0] == 5 && pair[1] == 3) { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

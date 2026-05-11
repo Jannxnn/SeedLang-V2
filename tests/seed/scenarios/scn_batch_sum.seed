@@ -1,0 +1,9 @@
+// 场景测试 - batch sum：批量累加操作的数值计算
+// EXPECT: 9900
+i = 0
+sum = 0
+while i < 100 {
+    sum = sum + i * 2
+    i = i + 1
+}
+result = sum

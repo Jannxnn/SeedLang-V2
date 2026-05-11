@@ -1,0 +1,52 @@
+// 场景测试 - bit manipulation：二进制位反转等位操作技巧
+// EXPECT: "OK:4"
+fn reverseBits(n) {
+    result = 0
+    i = 0
+    while i < 32 {
+        result = result * 2 + n % 2
+        n = floor(n / 2)
+        i = i + 1
+    }
+    return result
+}
+
+fn countBits(n) {
+    count = 0
+    while n > 0 {
+        count = count + n % 2
+        n = floor(n / 2)
+    }
+    return count
+}
+
+fn singleNumber(nums) {
+    result = 0
+    for n in nums {
+        result = result ^ n
+    }
+    return result
+}
+
+fn isPowerOfTwo(n) {
+    if n <= 0 { return false }
+    return (n & (n - 1)) == 0
+}
+
+fn getSum(a b) {
+    while b != 0 {
+        carry = a & b
+        a = a ^ b
+        b = carry << 1
+    }
+    return a
+}
+
+passed = 0
+
+if countBits(7) == 3 { passed = passed + 1 }
+if singleNumber([4 1 2 1 2]) == 4 { passed = passed + 1 }
+if isPowerOfTwo(16) { passed = passed + 1 }
+if isPowerOfTwo(15) == false { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

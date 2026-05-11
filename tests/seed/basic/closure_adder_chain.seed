@@ -1,0 +1,10 @@
+// 闭包加法链测试：多次闭包嵌套的累加器模式
+// EXPECT: 15
+fn make(a) {
+    return fn(b) {
+        return fn(c) {
+            return a + b + c
+        }
+    }
+}
+result = make(4)(5)(6)

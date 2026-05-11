@@ -1,0 +1,4 @@
+// 矩阵行列式内置函数测试：matDet 计算行列式
+// EXPECT: -2
+a = [[1 2] [3 4]]
+result = matDet(a)

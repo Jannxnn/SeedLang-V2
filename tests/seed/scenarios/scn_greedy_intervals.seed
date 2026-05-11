@@ -1,0 +1,94 @@
+// 场景测试 - greedy intervals：区间调度/最长递增链等贪心问题
+// EXPECT: "OK:4"
+fn findLongestChain(pairs) {
+    pairs = sort(pairs)
+    
+    count = 1
+    end = pairs[0][1]
+    
+    i = 1
+    while i < len(pairs) {
+        if pairs[i][0] > end {
+            count = count + 1
+            end = pairs[i][1]
+        } else {
+            if pairs[i][1] < end {
+                end = pairs[i][1]
+            }
+        }
+        i = i + 1
+    }
+    
+    return count
+}
+
+fn maxEvents(events) {
+    events = sort(events)
+    
+    attended = 0
+    day = 0
+    i = 0
+    minHeap = []
+    
+    while i < len(events) || len(minHeap) > 0 {
+        if len(minHeap) == 0 {
+            day = events[i][0]
+        }
+        
+        while i < len(events) && events[i][0] <= day {
+            push(minHeap events[i][1])
+            minHeap = sort(minHeap)
+            i = i + 1
+        }
+        
+        while len(minHeap) > 0 && minHeap[0] < day {
+            minHeap = slice(minHeap 1 len(minHeap))
+        }
+        
+        if len(minHeap) > 0 {
+            minHeap = slice(minHeap 1 len(minHeap))
+            attended = attended + 1
+            day = day + 1
+        }
+    }
+    
+    return attended
+}
+
+fn videoStitching(clips time) {
+    clips = sort(clips)
+    
+    count = 0
+    currentEnd = 0
+    nextEnd = 0
+    i = 0
+    
+    while i < len(clips) && currentEnd < time {
+        while i < len(clips) && clips[i][0] <= currentEnd {
+            if clips[i][1] > nextEnd { nextEnd = clips[i][1] }
+            i = i + 1
+        }
+        
+        if nextEnd == currentEnd { return -1 }
+        
+        count = count + 1
+        currentEnd = nextEnd
+    }
+    
+    if currentEnd >= time { return count }
+    return -1
+}
+
+passed = 0
+
+if findLongestChain([[1 2] [2 3] [3 4]]) == 2 { passed = passed + 1 }
+
+events = [[1 2] [2 3] [3 4]]
+if maxEvents(events) == 3 { passed = passed + 1 }
+
+clips = [[0 2] [4 6] [8 10] [1 9] [1 5] [5 9]]
+if videoStitching(clips 10) == 3 { passed = passed + 1 }
+
+if findLongestChain([[1 2] [7 8] [4 5]]) == 3 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

@@ -1,0 +1,9 @@
+// 极端数组增长测试：大规模 push 操作的性能与正确性
+// EXPECT: 100
+arr = []
+i = 0
+while i < 100 {
+    push(arr i)
+    i = i + 1
+}
+result = len(arr)

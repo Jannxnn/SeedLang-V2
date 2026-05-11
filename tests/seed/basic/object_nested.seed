@@ -1,0 +1,4 @@
+// 嵌套对象测试：对象属性值为另一对象的深层访问
+// EXPECT: 15
+obj = { user: { age: 7 score: 8 } }
+result = obj.user.age + obj.user.score

@@ -1,0 +1,4 @@
+// 场景测试 - string index：字符串索引与字符查找操作
+// EXPECT: "A3"
+s = "abc"
+result = upper(charAt(s 0)) + toString(len(s))

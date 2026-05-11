@@ -1,0 +1,9 @@
+// 循环边界测试：for/while 循环的边界条件与终止行为
+// EXPECT: 45
+sum = 0
+i = 0
+while i < 10 {
+    sum = sum + i
+    i = i + 1
+}
+result = sum

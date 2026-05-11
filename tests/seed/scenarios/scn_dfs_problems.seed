@@ -1,0 +1,136 @@
+// 场景测试 - dfs problems：太平洋大西洋水流等 DFS 经典问题
+// EXPECT: "OK:4"
+fn pacificAtlantic(matrix) {
+    if len(matrix) == 0 { return [] }
+    
+    rows = len(matrix)
+    cols = len(matrix[0])
+    
+    pacific = []
+    atlantic = []
+    
+    i = 0
+    while i < rows {
+        row = []
+        j = 0
+        while j < cols {
+            push(row false)
+            j = j + 1
+        }
+        push(pacific row)
+        push(atlantic row)
+        i = i + 1
+    }
+    
+    fn dfs(r c visited prevHeight) {
+        if r < 0 || r >= rows || c < 0 || c >= cols { return }
+        if visited[r][c] { return }
+        if matrix[r][c] < prevHeight { return }
+        
+        visited[r][c] = true
+        
+        dfs(r + 1 c visited matrix[r][c])
+        dfs(r - 1 c visited matrix[r][c])
+        dfs(r c + 1 visited matrix[r][c])
+        dfs(r c - 1 visited matrix[r][c])
+    }
+    
+    i = 0
+    while i < rows {
+        dfs(i 0 pacific 0)
+        dfs(i cols - 1 atlantic 0)
+        i = i + 1
+    }
+    
+    j = 0
+    while j < cols {
+        dfs(0 j pacific 0)
+        dfs(rows - 1 j atlantic 0)
+        j = j + 1
+    }
+    
+    result = []
+    i = 0
+    while i < rows {
+        j = 0
+        while j < cols {
+            if pacific[i][j] && atlantic[i][j] {
+                cell = [i j]
+                push(result cell)
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    
+    return result
+}
+
+fn longestIncreasingPath(matrix) {
+    if len(matrix) == 0 { return 0 }
+    
+    rows = len(matrix)
+    cols = len(matrix[0])
+    
+    memo = []
+    i = 0
+    while i < rows {
+        row = []
+        j = 0
+        while j < cols {
+            push(row 0)
+            j = j + 1
+        }
+        push(memo row)
+        i = i + 1
+    }
+    
+    fn dfs(r c prevVal) {
+        if r < 0 || r >= rows || c < 0 || c >= cols { return 0 }
+        if matrix[r][c] <= prevVal { return 0 }
+        if memo[r][c] > 0 { return memo[r][c] }
+        
+        maxLen = 1
+        directions = [[0 1] [1 0] [0 -1] [-1 0]]
+        
+        for dir in directions {
+            length = 1 + dfs(r + dir[0] c + dir[1] matrix[r][c])
+            if length > maxLen { maxLen = length }
+        }
+        
+        memo[r][c] = maxLen
+        return maxLen
+    }
+    
+    maxPath = 0
+    i = 0
+    while i < rows {
+        j = 0
+        while j < cols {
+            path = dfs(i j -999999)
+            if path > maxPath { maxPath = path }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    
+    return maxPath
+}
+
+passed = 0
+
+matrix1 = [[1 2 2 3 5] [3 2 3 4 4] [2 4 5 3 1] [6 7 1 4 5] [5 1 1 2 4]]
+result1 = pacificAtlantic(matrix1)
+if len(result1) == 25 { passed = passed + 1 }
+
+matrix2 = [[9 9 4] [6 6 8] [2 1 1]]
+if longestIncreasingPath(matrix2) == 4 { passed = passed + 1 }
+
+matrix3 = [[3 4 5] [3 2 6] [2 2 1]]
+if longestIncreasingPath(matrix3) == 4 { passed = passed + 1 }
+
+matrix4 = [[1]]
+result4 = pacificAtlantic(matrix4)
+if len(result4) == 1 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

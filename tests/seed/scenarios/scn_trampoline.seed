@@ -1,0 +1,37 @@
+// 场景测试 - trampoline：蹦床模式（尾递归优化为迭代）
+// EXPECT: "OK:3"
+fn trampoline(fn) {
+    return (args) => {
+        result = fn(args)
+        while type(result) == "function" {
+            result = result()
+        }
+        return result
+    }
+}
+
+fn sumToTrampoline(n acc) {
+    if n <= 0 { return acc }
+    return () => sumToTrampoline(n - 1 acc + n)
+}
+
+fn factorialTrampoline(n acc) {
+    if n <= 1 { return acc }
+    return () => factorialTrampoline(n - 1 acc * n)
+}
+
+fn fibTrampoline(n a b) {
+    if n <= 0 { return a }
+    return () => fibTrampoline(n - 1 b a + b)
+}
+
+sum = trampoline(sumToTrampoline)
+fact = trampoline(factorialTrampoline)
+fib = trampoline(fibTrampoline)
+
+passed = 0
+if sum([10 0]) == 55 { passed = passed + 1 }
+if fact([5 1]) == 120 { passed = passed + 1 }
+if fib([10 0 1]) == 55 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

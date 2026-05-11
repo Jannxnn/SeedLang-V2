@@ -1,0 +1,12 @@
+// 场景测试 - ultimate stateful（终极）：有状态工作流的状态管理
+// EXPECT: 7
+class Workflow {
+    init() { this.step = 0 }
+    next() { this.step = this.step + 1 }
+    jump(x) { this.step = this.step + x }
+}
+w = Workflow()
+w.next()
+w.next()
+w.jump(5)
+result = w.step

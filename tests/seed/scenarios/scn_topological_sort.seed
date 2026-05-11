@@ -1,0 +1,73 @@
+// 场景测试 - topological sort：拓扑排序数据结构实现
+// EXPECT: "OK:4"
+class DependencyGraph {
+    init() {
+        this.nodes = {}
+    }
+    
+    addNode(node) {
+        if this.nodes[node] == null {
+            this.nodes[node] = { deps: [] visited: false }
+        }
+    }
+    
+    addDependency(node dependency) {
+        this.addNode(node)
+        this.addNode(dependency)
+        push(this.nodes[node].deps dependency)
+    }
+    
+    topologicalSort() {
+        result = []
+        visited = {}
+        temp = {}
+        
+        fn visit(node) {
+            if temp[node] { return false }
+            if visited[node] { return true }
+            
+            temp[node] = true
+            
+            if this.nodes[node] != null {
+                for dep in this.nodes[node].deps {
+                    if visit(dep) == false { return false }
+                }
+            }
+            
+            temp[node] = false
+            visited[node] = true
+            push(result node)
+            return true
+        }
+        
+        for node in keys(this.nodes) {
+            if visited[node] == false {
+                if visit(node) == false { return null }
+            }
+        }
+        
+        return result
+    }
+}
+
+graph = DependencyGraph()
+graph.addDependency("C" "A")
+graph.addDependency("C" "B")
+graph.addDependency("D" "C")
+graph.addDependency("E" "D")
+
+sorted = graph.topologicalSort()
+
+passed = 0
+if sorted != null { passed = passed + 1 }
+
+aIdx = indexOf(sorted "A")
+bIdx = indexOf(sorted "B")
+cIdx = indexOf(sorted "C")
+dIdx = indexOf(sorted "D")
+
+if aIdx < cIdx { passed = passed + 1 }
+if bIdx < cIdx { passed = passed + 1 }
+if cIdx < dIdx { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

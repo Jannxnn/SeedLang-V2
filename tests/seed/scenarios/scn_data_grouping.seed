@@ -1,0 +1,51 @@
+// 场景测试 - data grouping：数组按 key 分组聚合操作
+// EXPECT: "OK:4"
+fn groupBy(arr keyFn) {
+    groups = {}
+    for item in arr {
+        key = keyFn(item)
+        if groups[key] == null {
+            groups[key] = []
+        }
+        push(groups[key] item)
+    }
+    return groups
+}
+
+fn countBy(arr keyFn) {
+    counts = {}
+    for item in arr {
+        key = keyFn(item)
+        if counts[key] == null {
+            counts[key] = 0
+        }
+        counts[key] = counts[key] + 1
+    }
+    return counts
+}
+
+fn uniq(arr) {
+    seen = {}
+    result = []
+    for item in arr {
+        key = toString(item)
+        if seen[key] == null {
+            seen[key] = true
+            push(result item)
+        }
+    }
+    return result
+}
+
+data = [1 2 3 4 5 6]
+groups = groupBy(data (x) => x % 2 == 0 ? "even" : "odd")
+counts = countBy(data (x) => x % 2 == 0 ? "even" : "odd")
+unique = uniq([1 1 2 2 3 3])
+
+passed = 0
+if len(groups.even) == 3 { passed = passed + 1 }
+if len(groups.odd) == 3 { passed = passed + 1 }
+if counts.even == 3 { passed = passed + 1 }
+if len(unique) == 3 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

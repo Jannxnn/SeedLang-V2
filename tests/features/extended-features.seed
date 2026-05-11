@@ -1,0 +1,378 @@
+// ============================================
+// SeedLang 功能测试 - 纯 SeedLang 语法编写
+// ============================================
+
+passed = 0
+failed = 0
+
+fn test(name result expected) {
+    if result == expected {
+        passed = passed + 1
+        print("  [OK] " + name)
+    } else {
+        failed = failed + 1
+        print("  [FAIL] " + name)
+    }
+}
+
+fn assertTrue(name condition) {
+    if condition {
+        passed = passed + 1
+        print("  [OK] " + name)
+    } else {
+        failed = failed + 1
+        print("  [FAIL] " + name)
+    }
+}
+
+print("============================================================")
+print("       SeedLang Extended Feature Tests (Pure SeedLang)")
+print("============================================================")
+
+print("\n[1. Object Literal]\n")
+
+base = {a: 1 b: 2}
+obj = {...base c: 3}
+test("spread" obj.c 3)
+
+k = "key"
+obj2 = {[k]: "val"}
+test("computed" obj2.key "val")
+
+name = "Test"
+obj3 = {name}
+test("shorthand" obj3.name "Test")
+
+nested = {user: {name: "Alice"}}
+test("nested" nested.user.name "Alice")
+
+print("\n[2. Math Functions]\n")
+
+test("sqrt" sqrt(16) 4)
+test("pow" pow(2 3) 8)
+test("abs" abs(-5) 5)
+test("min" min(1 5) 1)
+test("max" max(1 5) 5)
+test("floor" floor(3.7) 3)
+test("ceil" ceil(3.2) 4)
+test("round" round(3.5) 4)
+
+print("\n[3. String Functions]\n")
+
+test("upper" upper("hello") "HELLO")
+test("lower" lower("WORLD") "world")
+test("trim" trim("  hi  ") "hi")
+test("len" len("abc") 3)
+test("charAt" charAt("abc" 0) "a")
+test("substring" substring("abc" 0 2) "ab")
+test("replace" replace("abc" "b" "x") "axc")
+concatResult = "a" + "b"
+test("concat" concatResult "ab")
+
+arr = split("a,b" ",")
+test("split len" len(arr) 2)
+
+joined = join(["a" "b"] "-")
+test("join" joined "a-b")
+
+repeated = repeat("x" 3)
+test("repeat" repeated "xxx")
+
+containsResult = contains("hello" "ll")
+test("contains" containsResult true)
+
+startsWithResult = startsWith("hello" "he")
+test("startsWith" startssWithResult true)
+
+endsWithResult = endsWith("hello" "lo")
+test("endsWith" endsWithResult true)
+
+print("\n[4. Array Functions]\n")
+
+nums = [1 2 3]
+push(nums 4)
+test("push" len(nums) 4)
+test("index" nums[0] 1)
+
+rev = reverse([1 2 3])
+test("reverse" rev[0] 3)
+
+sorted = sort([3 1 2])
+test("sort" sorted[0] 1)
+
+sliced = slice([1 2 3 4] 1 3)
+test("slice" sliced[0] 2)
+
+concatenated = concat([1] [2])
+test("concat" len(concatenated) 2)
+
+doubled = map([1 2] (x) => x * 2)
+test("map" doubled[0] 2)
+
+evens = filter([1 2 3 4] (x) => x > 2)
+test("filter" len(evens) 2)
+
+sum = reduce([1 2 3] (a b) => a + b 0)
+test("reduce" sum 6)
+
+idx = indexOf([10 20] 20)
+test("indexOf" idx 1)
+
+multi = [[1 2] [3 4]]
+test("multi-dim" multi[1][0] 3)
+
+print("\n[5. Object Operations]\n")
+
+user = {name: "A" age: 25}
+keysList = keys(user)
+test("keys" len(keysList) 2)
+
+vals = values(user)
+test("values" len(vals) 2)
+
+merged = merge({a: 1} {b: 2})
+test("merge" merged.b 2)
+
+prop = "name"
+val = user[prop]
+test("dynamic access" val "A")
+
+print("\n[6. Type Conversion]\n")
+
+test("toString" toString(42) "42")
+test("toInt" toInt("123") 123)
+test("toFloat" toFloat("3.14") 3.14)
+test("type num" type(42) "number")
+test("type str" type("hi") "string")
+test("toBool T" toBool(1) true)
+test("toBool F" toBool(0) false)
+
+print("\n[7. Base Conversion]\n")
+
+bin = toBinary(10)
+test("toBinary" bin "1010")
+
+oct = toOctal(8)
+test("toOctal" oct "10")
+
+hex = toHex(255)
+test("toHex" hex "FF")
+
+parsed = parseBase("1010" 2)
+test("parseBase" parsed 10)
+
+print("\n[8. Bitwise]\n")
+
+andResult = 12 & 10
+test("AND" andResult 8)
+
+orResult = 12 | 10
+test("OR" orResult 14)
+
+xorResult = 12 ^ 10
+test("XOR" xorResult 6)
+
+shiftLeft = 1 << 4
+test("<<" shiftLeft 16)
+
+shiftRight = 16 >> 2
+test(">>" shiftRight 4)
+
+notResult = ~0
+expectedNot = -1
+test("NOT" notResult expectedNot)
+
+flags = 0b1010
+mask = 0b0010
+bitResult = flags & mask != 0
+test("bitmask" bitResult true)
+
+print("\n[9. Control Flow]\n")
+
+x = 10
+if x > 15 {
+    r = "big"
+} else if x > 5 {
+    r = "medium"
+} else {
+    r = "small"
+}
+test("if-else" r "medium")
+
+i = 0
+cnt = 0
+while i < 5 {
+    i = i + 1
+    if i < 3 { continue }
+    cnt = cnt + 1
+}
+test("while continue" cnt 3)
+
+j = 0
+s = 0
+while true {
+    j = j + 1
+    s = s + j
+    if j >= 10 { break }
+}
+test("while break" s 55)
+
+loopSum = 0
+for (k = 1; k <= 5; k = k + 1) {
+    loopSum = loopSum + k
+}
+test("for loop" loopSum 15)
+
+val = 2
+sw = ""
+switch (val) {
+    case 1:
+        sw = "one"
+    case 2:
+        sw = "two"
+    default:
+        sw = "other"
+}
+test("switch" sw "two")
+
+print("\n[10. Functions & Recursion]\n")
+
+fn add(a b) { return a + b }
+test("add" add(3 4) 7)
+
+fn fact(n) {
+    if n <= 1 { return 1 }
+    return n * fact(n - 1)
+}
+test("factorial" fact(5) 120)
+
+fn fib(n) {
+    if n <= 1 { return n }
+    return fib(n - 1) + fib(n - 2)
+}
+test("fibonacci" fib(10) 55)
+
+fn gcd(a b) {
+    if b == 0 { return a }
+    return gcd(b a - floor(a / b) * b)
+}
+test("gcd" gcd(48 18) 6)
+
+print("\n[11. Higher-Order]\n")
+
+fn applyTwice(f v) {
+    return f(f(v))
+}
+
+dbl = (x) => x * 2
+test("applyTwice" applyTwice(dbl 3) 12)
+
+fn compose(f g x) { return f(g(x)) }
+inc = (x) => x + 1
+tpl = (x) => x * 3
+test("compose" compose(inc tpl 4) 13)
+
+print("\n[12. Complex Expressions]\n")
+
+chained = trim(upper("  hello  "))
+test("chained" chained "HELLO")
+
+nestedMath = sqrt(abs(pow(-16 2)))
+test("nested math" nestedMath 16)
+
+arith = ((2 + 3) * 4 - 10 / 2)
+test("arithmetic" arith 15)
+
+logical = true && (false || true) && !false
+test("logical" logical true)
+
+print("\n[13. Game State]\n")
+
+snake = {
+    running: false
+    body: [{x: 1 y: 2}]
+    score: 0
+}
+test("snake running" snake.running false)
+test("snake score" snake.score 0)
+
+tower = {
+    gold: 100
+    lives: 20
+    path: [{x: 0 y: 5}]
+}
+test("tower gold" tower.gold 100)
+
+fishTank = {time: 0 fishes: []}
+test("fishTank time" fishTank.time 0)
+
+fw = {autoLaunch: true particles: []}
+test("fireworks auto" fw.autoLaunch true)
+
+print("\n[14. Error Handling]\n")
+
+tryRes = ""
+try {
+    throw "err"
+} catch(e) {
+    tryRes = "caught"
+}
+test("try-catch" tryRes "caught")
+
+called = false
+try { called = true } catch(e) {}
+test("finally-like" called true)
+
+print("\n[15. Reference Semantics]\n")
+
+refArr = [1 2]
+fn modArr(a) { push(a 3) }
+modArr(refArr)
+test("array ref" len(refArr) 3)
+
+refObj = {c: 0}
+fn incObj(o) { o.c = o.c + 1 }
+incObj(refObj)
+incObj(refObj)
+test("object ref" refObj.c 2)
+
+print("\n[16. Edge Cases]\n")
+
+empty = []
+push(empty 1)
+test("empty push" len(empty) 1)
+
+test("abs 0" abs(0) 0)
+test("sqrt 0" sqrt(0) 0)
+floorNeg = floor(-1.5)
+expectedFloor = -2
+test("floor neg" floorNeg expectedFloor)
+
+rv = random()
+assertTrue("random range" rv >= 0 && rv < 1)
+
+bigSum = 0
+for (i = 0; i < 100; i = i + 1) {
+    bigSum = bigSum + i
+}
+test("loop sum" bigSum 4950)
+
+fn deep(n) {
+    if n <= 0 { return 0 }
+    return 1 + deep(n - 1)
+}
+test("deep recursion" deep(100) 100)
+
+print("\n============================================================")
+print("  Results")
+print("============================================================")
+total = passed + failed
+print("  Total: " + total)
+print("  Passed: " + passed)
+print("  Failed: " + failed)
+
+if failed > 0 {
+    print("[FAIL]")
+} else {
+    print("[OK] All tests passed!")
+}

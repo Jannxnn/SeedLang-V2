@@ -1,0 +1,7 @@
+// rangeRev(hi lo) 与 range(lo hi) 元素集合相同，倒序求和应一致（1..10 -> 55）
+// EXPECT: 55
+total = 0
+for i in rangeRev(11 1) {
+  total = total + i
+}
+result = total

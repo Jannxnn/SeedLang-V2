@@ -1,0 +1,6 @@
+// 数组 push/pop 测试：入栈出栈操作与长度变化
+// EXPECT: 5
+arr = [1 2]
+push(arr 3)
+v = pop(arr)
+result = v + len(arr)

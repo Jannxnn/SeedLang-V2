@@ -1,0 +1,7 @@
+// 场景测试 - report format：报告格式化与错误收集
+// EXPECT: "OK:3"
+errors = []
+push(errors "e1")
+push(errors "e2")
+push(errors "e3")
+result = "OK:" + toString(len(errors))

@@ -1,0 +1,127 @@
+// 场景测试 - palindrome problems：回文分割最小切割
+// EXPECT: "OK:4"
+fn minCut(s) {
+    n = len(s)
+    
+    isPalin = []
+    i = 0
+    while i < n {
+        row = []
+        j = 0
+        while j < n {
+            push(row false)
+            j = j + 1
+        }
+        push(isPalin row)
+        i = i + 1
+    }
+    
+    i = n - 1
+    while i >= 0 {
+        j = i
+        while j < n {
+            if charAt(s i) == charAt(s j) {
+                if j - i <= 2 {
+                    isPalin[i][j] = true
+                } else {
+                    isPalin[i][j] = isPalin[i + 1][j - 1]
+                }
+            }
+            j = j + 1
+        }
+        i = i - 1
+    }
+    
+    dp = []
+    i = 0
+    while i <= n {
+        push(dp n)
+        i = i + 1
+    }
+    dp[0] = 0
+    
+    i = 1
+    while i <= n {
+        j = 0
+        while j < i {
+            if isPalin[j][i - 1] {
+                if dp[j] + 1 < dp[i] {
+                    dp[i] = dp[j] + 1
+                }
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    
+    return dp[n] - 1
+}
+
+fn partitionPalindrome(s) {
+    result = []
+    
+    fn isPalindrome(str) {
+        chars = split(str "")
+        reversed = reverse(chars)
+        return str == join(reversed "")
+    }
+    
+    fn backtrack(start path) {
+        if start == len(s) {
+            newPath = []
+            for p in path { push(newPath p) }
+            push(result newPath)
+            return
+        }
+        
+        end = start + 1
+        while end <= len(s) {
+            sub = substring(s start end)
+            if isPalindrome(sub) {
+                push(path sub)
+                backtrack(end path)
+                path = slice(path 0 len(path) - 1)
+            }
+            end = end + 1
+        }
+    }
+    
+    backtrack(0 [])
+    return result
+}
+
+fn countSubstrings(s) {
+    n = len(s)
+    count = 0
+    
+    i = 0
+    while i < n {
+        j = 0
+        while j <= 1 {
+            left = i
+            right = i + j
+            
+            while left >= 0 && right < n && charAt(s left) == charAt(s right) {
+                count = count + 1
+                left = left - 1
+                right = right + 1
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    
+    return count
+}
+
+passed = 0
+
+if minCut("aab") == 1 { passed = passed + 1 }
+
+parts = partitionPalindrome("aab")
+if len(parts) >= 1 { passed = passed + 1 }
+
+if countSubstrings("abc") == 3 { passed = passed + 1 }
+if countSubstrings("aaa") == 6 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

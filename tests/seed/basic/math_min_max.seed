@@ -1,0 +1,3 @@
+// 数学 min/max 测试：最小值与最大值比较函数
+// EXPECT: 13
+result = min(3 8) + max(2 10)

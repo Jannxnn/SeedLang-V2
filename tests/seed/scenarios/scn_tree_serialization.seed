@@ -1,0 +1,79 @@
+// 场景测试 - tree serialization：树的序列化与反序列化
+// EXPECT: "OK:4"
+fn findDuplicateSubtrees(root) {
+    result = []
+    seen = {}
+    
+    fn serialize(node) {
+        if node == null { return "#" }
+        
+        left = serialize(node.left)
+        right = serialize(node.right)
+        
+        key = node.val + "," + left + "," + right
+        
+        if seen[key] == null {
+            seen[key] = 0
+        }
+        seen[key] = seen[key] + 1
+        
+        if seen[key] == 2 {
+            push(result node)
+        }
+        
+        return key
+    }
+    
+    serialize(root)
+    return result
+}
+
+fn serializeTree(root) {
+    if root == null { return "null" }
+    
+    return "{" + 
+        "val:" + toString(root.val) + 
+        ",left:" + serializeTree(root.left) + 
+        ",right:" + serializeTree(root.right) + 
+    "}"
+}
+
+fn deserializeTree(str) {
+    if str == "null" { return null }
+    
+    return { val: 1 left: null right: null }
+}
+
+fn isSameTree(p q) {
+    if p == null && q == null { return true }
+    if p == null || q == null { return false }
+    if p.val != q.val { return false }
+    
+    return isSameTree(p.left q.left) && isSameTree(p.right q.right)
+}
+
+fn isSubtree(s t) {
+    if s == null { return false }
+    
+    if isSameTree(s t) { return true }
+    
+    return isSubtree(s.left t) || isSubtree(s.right t)
+}
+
+passed = 0
+
+tree1 = { val: 1 left: { val: 2 left: null right: null } right: { val: 3 left: null right: null } }
+tree2 = { val: 1 left: { val: 2 left: null right: null } right: { val: 3 left: null right: null } }
+
+if isSameTree(tree1 tree2) { passed = passed + 1 }
+
+tree3 = { val: 1 left: null right: null }
+if isSameTree(tree1 tree3) == false { passed = passed + 1 }
+
+tree4 = { val: 1 left: { val: 2 left: null right: null } right: null }
+if isSubtree(tree1 tree4) == false { passed = passed + 1 }
+
+tree5 = { val: 4 left: null right: null }
+if isSubtree(tree1 tree5) == false { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

@@ -1,0 +1,17 @@
+// 类状态管理测试：实例属性的读写与状态变更追踪
+// EXPECT: 120
+class BankAccount {
+    init(initial) {
+        this.balance = initial
+    }
+    deposit(amount) {
+        this.balance = this.balance + amount
+    }
+    withdraw(amount) {
+        this.balance = this.balance - amount
+    }
+}
+account = BankAccount(100)
+account.deposit(50)
+account.withdraw(30)
+result = account.balance

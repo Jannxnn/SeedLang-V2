@@ -1,0 +1,11 @@
+{
+  "name": "exception_handling",
+  "code": "\nresult = null\ntry {\n    throw \"test error\"\n} catch(e) {\n    result = \"caught: \" + e\n}\nprint(result)\n",
+  "output": [
+    "caught: test error"
+  ],
+  "globals": {
+    "result": "caught: test error"
+  },
+  "timestamp": "2026-04-09T19:19:27.119Z"
+}

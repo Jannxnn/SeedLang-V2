@@ -1,0 +1,13 @@
+// 类方法定义测试：类内部方法的声明与调用
+// EXPECT: 25
+class Point {
+    init(x y) {
+        this.x = x
+        this.y = y
+    }
+    sumSquare() {
+        return this.x * this.x + this.y * this.y
+    }
+}
+p = Point(3 4)
+result = p.sumSquare()

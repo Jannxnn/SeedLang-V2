@@ -1,0 +1,14 @@
+// 场景测试 - binary search not found：目标不存在时的返回值（-1）
+// EXPECT: -1
+fn bs(arr target) {
+    l = 0
+    r = len(arr) - 1
+    while l <= r {
+        m = floor((l + r) / 2)
+        if arr[m] == target { return m }
+        if arr[m] < target { l = m + 1 } else { r = m - 1 }
+    }
+    return -1
+}
+arr = [1 3 5 7 9]
+result = bs(arr 4)

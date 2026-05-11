@@ -1,0 +1,4 @@
+// 场景测试 - ultimate math string（终极）：数学与字符串混合运算
+// EXPECT: "v=16"
+v = pow(2 4)
+result = "v=" + toString(v)

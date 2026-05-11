@@ -1,0 +1,61 @@
+// 场景测试 - observable pattern：观察者模式（响应式数据流）
+// EXPECT: "OK:4"
+class Observable {
+    init(initialValue) {
+        this.value = initialValue
+        this.subscribers = []
+    }
+    
+    get() {
+        return this.value
+    }
+    
+    set(newValue) {
+        oldValue = this.value
+        this.value = newValue
+        for sub in this.subscribers {
+            sub(newValue oldValue)
+        }
+    }
+    
+    subscribe(callback) {
+        push(this.subscribers callback)
+        return () => {
+            newSubs = []
+            for s in this.subscribers {
+                if s != callback { push(newSubs s) }
+            }
+            this.subscribers = newSubs
+        }
+    }
+    
+    map(mapper) {
+        obs = Observable(mapper(this.value))
+        this.subscribe((newVal oldVal) => {
+            obs.set(mapper(newVal))
+        })
+        return obs
+    }
+}
+
+changes = []
+counter = Observable(0)
+
+unsub = counter.subscribe((newVal oldVal) => {
+    push(changes { from: oldVal to: newVal })
+})
+
+counter.set(1)
+counter.set(2)
+counter.set(3)
+
+doubled = counter.map((x) => x * 2)
+counter.set(4)
+
+passed = 0
+if len(changes) == 4 { passed = passed + 1 }
+if changes[0].to == 1 { passed = passed + 1 }
+if counter.get() == 4 { passed = passed + 1 }
+if doubled.get() == 8 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

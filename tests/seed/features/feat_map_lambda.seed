@@ -1,0 +1,5 @@
+// map 高阶函数测试：lambda 表达式的映射变换功能
+// EXPECT: 12
+arr = [1 2 3]
+out = map(arr (x) => x * 2)
+result = out[0] + out[1] + out[2]

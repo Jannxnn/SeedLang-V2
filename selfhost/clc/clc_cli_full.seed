@@ -1,0 +1,2291 @@
+// selfhost/clc/clc_cli_full.seed - self-hosted CLC (compiler + CLI in one file)
+// SeedLang -> C compiler written in SeedLang
+// No nested functions - flat structure for TS-based CLC compatibility
+
+// ============================================================
+// Phase 1: Tokenizer
+// ============================================================
+
+fn isAlpha(c) {
+  return (c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || c == "_"
+}
+
+fn isDigit(c) {
+  return c >= "0" && c <= "9"
+}
+
+fn isAlphaNum(c) {
+  return isAlpha(c) || isDigit(c)
+}
+
+fn isHexDigit(c) {
+  return isDigit(c) || (c >= "a" && c <= "f") || (c >= "A" && c <= "F")
+}
+
+fn isWhitespace(c) {
+  if c == " " { return true }
+  cp = codePointAt(c 0)
+  if cp == 9 { return true }
+  if cp == 10 { return true }
+  if cp == 13 { return true }
+  return false
+}
+
+fn tokenize(source) {
+  tokens = []
+  i = 0
+  srcLen = len(source)
+
+  while i < srcLen {
+    c = charAt(source i)
+
+    if isWhitespace(c) {
+      i = i + 1
+      continue
+    }
+
+    if c == "/" && i + 1 < srcLen && charAt(source i + 1) == "/" {
+      while i < srcLen {
+        ch = codePointAt(charAt(source i) 0)
+        if ch == 10 { break }
+        i = i + 1
+      }
+      continue
+    }
+
+    if c == "/" && i + 1 < srcLen && charAt(source i + 1) == "*" {
+      i = i + 2
+      while i < srcLen - 1 {
+        if charAt(source i) == "*" && charAt(source i + 1) == "/" {
+          i = i + 2
+          break
+        }
+        i = i + 1
+      }
+      continue
+    }
+
+    if c == "\"" {
+      i = i + 1
+      start = i
+      while i < srcLen && charAt(source i) != "\"" {
+        if charAt(source i) == "\\" { i = i + 1 }
+        i = i + 1
+      }
+      strVal = substring(source start i)
+      push(tokens { type: "STRING" value: strVal })
+      i = i + 1
+      continue
+    }
+
+    if isDigit(c) {
+      if c == "0" && i + 1 < srcLen {
+        next = charAt(source i + 1)
+        if next == "b" || next == "B" {
+          i = i + 2
+          start = i
+          while i < srcLen && charAt(source i) >= "0" && charAt(source i) <= "1" { i = i + 1 }
+          digits = substring(source start i)
+          numVal = 0
+          j = 0
+          while j < len(digits) {
+            numVal = numVal * 2 + (codePointAt(charAt(digits j) 0) - 48)
+            j = j + 1
+          }
+          push(tokens { type: "NUMBER" value: toString(numVal) })
+          continue
+        }
+        if next == "o" || next == "O" {
+          i = i + 2
+          start = i
+          while i < srcLen && charAt(source i) >= "0" && charAt(source i) <= "7" { i = i + 1 }
+          digits = substring(source start i)
+          numVal = 0
+          j = 0
+          while j < len(digits) {
+            numVal = numVal * 8 + (codePointAt(charAt(digits j) 0) - 48)
+            j = j + 1
+          }
+          push(tokens { type: "NUMBER" value: toString(numVal) })
+          continue
+        }
+        if next == "x" || next == "X" {
+          i = i + 2
+          start = i
+          while i < srcLen && isHexDigit(charAt(source i)) { i = i + 1 }
+          digits = substring(source start i)
+          numVal = 0
+          j = 0
+          while j < len(digits) {
+            cv = codePointAt(charAt(digits j) 0)
+            dv = 0
+            if cv >= 48 && cv <= 57 { dv = cv - 48 }
+            else if cv >= 65 && cv <= 70 { dv = cv - 55 }
+            else if cv >= 97 && cv <= 102 { dv = cv - 87 }
+            numVal = numVal * 16 + dv
+            j = j + 1
+          }
+          push(tokens { type: "NUMBER" value: toString(numVal) })
+          continue
+        }
+      }
+      start = i
+      while i < srcLen && isDigit(charAt(source i)) { i = i + 1 }
+      if i < srcLen && charAt(source i) == "." {
+        i = i + 1
+        while i < srcLen && isDigit(charAt(source i)) { i = i + 1 }
+      }
+      push(tokens { type: "NUMBER" value: substring(source start i) })
+      continue
+    }
+
+    if isAlpha(c) {
+      start = i
+      while i < srcLen && isAlphaNum(charAt(source i)) { i = i + 1 }
+      word = substring(source start i)
+      t = mapGet(gKeywordsMap word)
+      if t != null {
+        push(tokens { type: t value: word })
+      } else {
+        push(tokens { type: "IDENT" value: word })
+      }
+      continue
+    }
+
+    if c == "=" && i + 1 < srcLen && charAt(source i + 1) == "=" {
+      push(tokens { type: "EQ" value: "==" })
+      i = i + 2
+      continue
+    }
+    if c == "!" && i + 1 < srcLen && charAt(source i + 1) == "=" {
+      push(tokens { type: "NEQ" value: "!=" })
+      i = i + 2
+      continue
+    }
+    if c == "<" && i + 1 < srcLen && charAt(source i + 1) == "=" {
+      push(tokens { type: "LTE" value: "<=" })
+      i = i + 2
+      continue
+    }
+    if c == ">" && i + 1 < srcLen && charAt(source i + 1) == "=" {
+      push(tokens { type: "GTE" value: ">=" })
+      i = i + 2
+      continue
+    }
+    if c == "&" && i + 1 < srcLen && charAt(source i + 1) == "&" {
+      push(tokens { type: "AND" value: "&&" })
+      i = i + 2
+      continue
+    }
+    if c == "|" && i + 1 < srcLen && charAt(source i + 1) == "|" {
+      push(tokens { type: "OR" value: "||" })
+      i = i + 2
+      continue
+    }
+    if c == "<" && i + 1 < srcLen && charAt(source i + 1) == "<" {
+      push(tokens { type: "LSHIFT" value: "<<" })
+      i = i + 2
+      continue
+    }
+    if c == ">" && i + 1 < srcLen && charAt(source i + 1) == ">" {
+      if i + 2 < srcLen && charAt(source i + 2) == ">" {
+        push(tokens { type: "URSHIFT" value: ">>>" })
+        i = i + 3
+        continue
+      }
+      push(tokens { type: "RSHIFT" value: ">>" })
+      i = i + 2
+      continue
+    }
+    if c == "=" {
+      if i + 1 < srcLen && charAt(source i + 1) == "=" {
+        push(tokens { type: "EQ" value: "==" }) i = i + 2 continue
+      }
+      push(tokens { type: "ASSIGN" value: "=" }) i = i + 1 continue
+    }
+    if c == "+" {
+      if i + 1 < srcLen && charAt(source i + 1) == "=" {
+        push(tokens { type: "PLUS_ASSIGN" value: "+=" }) i = i + 2 continue
+      }
+      push(tokens { type: "PLUS" value: "+" }) i = i + 1 continue
+    }
+    if c == "-" {
+      if i + 1 < srcLen && charAt(source i + 1) == ">" {
+        push(tokens { type: "ARROW" value: "->" }) i = i + 2 continue
+      }
+      if i + 1 < srcLen && charAt(source i + 1) == "=" {
+        push(tokens { type: "MINUS_ASSIGN" value: "-=" }) i = i + 2 continue
+      }
+      push(tokens { type: "MINUS" value: "-" }) i = i + 1 continue
+    }
+    if c == "*" {
+      if i + 1 < srcLen && charAt(source i + 1) == "=" {
+        push(tokens { type: "STAR_ASSIGN" value: "*=" }) i = i + 2 continue
+      }
+      push(tokens { type: "STAR" value: "*" }) i = i + 1 continue
+    }
+    if c == "/" { push(tokens { type: "SLASH" value: "/" }) i = i + 1 continue }
+    if c == "%" {
+      if i + 1 < srcLen && charAt(source i + 1) == "=" {
+        push(tokens { type: "PERCENT_ASSIGN" value: "%=" }) i = i + 2 continue
+      }
+      push(tokens { type: "PERCENT" value: "%" }) i = i + 1 continue
+    }
+    if c == "<" {
+      if i + 1 < srcLen && charAt(source i + 1) == "=" {
+        push(tokens { type: "LTE" value: "<=" }) i = i + 2 continue
+      }
+      if i + 1 < srcLen && charAt(source i + 1) == "<" {
+        push(tokens { type: "LSHIFT" value: "<<" }) i = i + 2 continue
+      }
+      push(tokens { type: "LT" value: "<" }) i = i + 1 continue
+    }
+    if c == ">" {
+      if i + 1 < srcLen && charAt(source i + 1) == "=" {
+        push(tokens { type: "GTE" value: ">=" }) i = i + 2 continue
+      }
+      if i + 1 < srcLen && charAt(source i + 1) == ">" {
+        push(tokens { type: "RSHIFT" value: ">>" }) i = i + 2 continue
+      }
+      push(tokens { type: "GT" value: ">" }) i = i + 1 continue
+    }
+    if c == "!" {
+      if i + 1 < srcLen && charAt(source i + 1) == "=" {
+        push(tokens { type: "NEQ" value: "!=" }) i = i + 2 continue
+      }
+      push(tokens { type: "NOT" value: "!" }) i = i + 1 continue
+    }
+    if c == "&" {
+      if i + 1 < srcLen && charAt(source i + 1) == "&" {
+        push(tokens { type: "AND" value: "&&" }) i = i + 2 continue
+      }
+      push(tokens { type: "BITAND" value: "&" }) i = i + 1 continue
+    }
+    if c == "|" {
+      if i + 1 < srcLen && charAt(source i + 1) == "|" {
+        push(tokens { type: "OR" value: "||" }) i = i + 2 continue
+      }
+      push(tokens { type: "BITOR" value: "|" }) i = i + 1 continue
+    }
+    if c == "^" { push(tokens { type: "BITXOR" value: "^" }) i = i + 1 continue }
+    if c == "~" { push(tokens { type: "BITNOT" value: "~" }) i = i + 1 continue }
+    if c == "(" { push(tokens { type: "LPAREN" value: "(" }) i = i + 1 continue }
+    if c == ")" { push(tokens { type: "RPAREN" value: ")" }) i = i + 1 continue }
+    if c == "{" { push(tokens { type: "LBRACE" value: "{" }) i = i + 1 continue }
+    if c == "}" { push(tokens { type: "RBRACE" value: "}" }) i = i + 1 continue }
+    if c == "[" { push(tokens { type: "LBRACKET" value: "[" }) i = i + 1 continue }
+    if c == "]" { push(tokens { type: "RBRACKET" value: "]" }) i = i + 1 continue }
+    if c == ":" { push(tokens { type: "COLON" value: ":" }) i = i + 1 continue }
+    if c == "." { push(tokens { type: "DOT" value: "." }) i = i + 1 continue }
+    if c == "," { push(tokens { type: "COMMA" value: "," }) i = i + 1 continue }
+    if c == ";" { push(tokens { type: "SEMICOLON" value: ";" }) i = i + 1 continue }
+
+    i = i + 1
+  }
+
+  push(tokens { type: "EOF" value: "" })
+  return tokens
+}
+
+// ============================================================
+// Phase 2: Parser (flat — no nested functions)
+// ============================================================
+
+pTokens = [{ type: "EOF" value: "" }]
+pPos = 0
+
+fn initKeywords() {
+  mapSet(gKeywordsMap "fn" "FN")
+  mapSet(gKeywordsMap "if" "IF")
+  mapSet(gKeywordsMap "else" "ELSE")
+  mapSet(gKeywordsMap "while" "WHILE")
+  mapSet(gKeywordsMap "for" "FOR")
+  mapSet(gKeywordsMap "in" "IN")
+  mapSet(gKeywordsMap "return" "RETURN")
+  mapSet(gKeywordsMap "break" "BREAK")
+  mapSet(gKeywordsMap "continue" "CONTINUE")
+  mapSet(gKeywordsMap "let" "LET")
+  mapSet(gKeywordsMap "class" "CLASS")
+  mapSet(gKeywordsMap "this" "THIS")
+  mapSet(gKeywordsMap "true" "TRUE")
+  mapSet(gKeywordsMap "false" "FALSE")
+  mapSet(gKeywordsMap "null" "NULL")
+  mapSet(gKeywordsMap "and" "AND")
+  mapSet(gKeywordsMap "or" "OR")
+  mapSet(gKeywordsMap "not" "NOT")
+}
+gKeywordsMap = map()
+
+fn pPeek() {
+  return pTokens[pPos]
+}
+
+fn pAdvance() {
+  t = pTokens[pPos]
+  pPos = pPos + 1
+  return t
+}
+
+fn pExpect(tp) {
+  t = pAdvance()
+  if t.type != tp {
+    ctx = ""
+    j = pPos
+    while j < pPos + 3 && j < len(pTokens) {
+      ctx = ctx + pTokens[j].type + "(" + pTokens[j].value + ") "
+      j = j + 1
+    }
+    print("Parse error at pos " + pPos + ": expected " + tp + " got " + t.type + " (" + t.value + ") next: " + ctx)
+    exit(1)
+  }
+  return t
+}
+
+fn pMatch(tp) {
+  if pPeek().type == tp {
+    return pAdvance()
+  }
+  return null
+}
+
+fn parseProgram() {
+  stmts = []
+  while pPeek().type != "EOF" {
+    push(stmts parseStatement())
+  }
+  return { type: "Program" body: stmts }
+}
+
+fn parseStatement() {
+  t = pPeek()
+
+  if t.type == "FN" { return parseFnDef() }
+  if t.type == "CLASS" { return parseClassDef() }
+  if t.type == "IF" { return parseIf() }
+  if t.type == "WHILE" { return parseWhile() }
+  if t.type == "FOR" {
+    if pTokens[pPos + 1].type == "LPAREN" {
+      return parseCFor()
+    }
+    return parseForIn()
+  }
+  if t.type == "RETURN" { return parseReturn() }
+  if t.type == "BREAK" { pAdvance() return { type: "BreakStmt" } }
+  if t.type == "CONTINUE" { pAdvance() return { type: "ContinueStmt" } }
+  if t.type == "LET" {
+    pAdvance()
+    name = pExpect("IDENT").value
+    init = null
+    if pPeek().type == "ASSIGN" {
+      pAdvance()
+      init = parseExpr()
+    }
+    setAdd(gLetVars name)
+    return { type: "LetDecl" name: name init: init }
+  }
+
+  nE = parseExpr()
+  if pPeek().type == "ASSIGN" {
+    pAdvance()
+    val = parseExpr()
+    if nE.type == "Identifier" {
+      return { type: "Assignment" name: nE.name value: val op: "=" }
+    }
+    if nE.type == "Member" {
+      return { type: "MemberAssignment" object: nE.object property: nE.property computed: nE.computed value: val }
+    }
+    return { type: "Assignment" name: "tmp" value: val op: "=" }
+  }
+  if pPeek().type == "PLUS_ASSIGN" || pPeek().type == "MINUS_ASSIGN" || pPeek().type == "STAR_ASSIGN" || pPeek().type == "PERCENT_ASSIGN" {
+    opTok = pAdvance()
+    val = parseExpr()
+    if nE.type == "Identifier" {
+      return { type: "Assignment" name: nE.name value: { type: "BinaryExpr" op: opTok.value.charAt(0) left: nE right: val } op: opTok.value }
+    }
+    return { type: "Assignment" name: "tmp" value: val op: opTok.value }
+  }
+  return { type: "ExprStmt" expr: nE }
+}
+
+fn parseFnDef() {
+  pExpect("FN")
+  name = pExpect("IDENT").value
+  pExpect("LPAREN")
+  params = []
+  while pPeek().type != "RPAREN" {
+    push(params pExpect("IDENT").value)
+    if pPeek().type == "COMMA" { pAdvance() }
+  }
+  pExpect("RPAREN")
+  body = parseBlock()
+  return { type: "FunctionDef" name: name params: params body: body }
+}
+
+fn parseClassDef() {
+  pExpect("CLASS")
+  name = pExpect("IDENT").value
+  superClass = null
+  if pPeek().type == "IDENT" && pPeek().value == "extends" {
+    pAdvance()
+    superClass = pExpect("IDENT").value
+  }
+  pExpect("LBRACE")
+  body = []
+  while pPeek().type != "RBRACE" {
+    if pPeek().type == "IDENT" {
+      methodName = pAdvance().value
+      pExpect("LPAREN")
+      mParams = []
+      while pPeek().type != "RPAREN" {
+        push(mParams pExpect("IDENT").value)
+        if pPeek().type == "COMMA" { pAdvance() }
+      }
+      pExpect("RPAREN")
+      mBody = parseBlock()
+      push(body { type: "ClassMethod" name: methodName params: mParams body: mBody })
+    } else {
+      print("Expected method in class " + name + ", got " + pPeek().type)
+      exit(1)
+    }
+  }
+  pExpect("RBRACE")
+  return { type: "ClassDef" name: name superClass: superClass body: body }
+}
+
+fn parseIf() {
+  pExpect("IF")
+  cond = parseExpr()
+  then = parseBlock()
+  els = null
+  if pPeek().type == "ELSE" {
+    pAdvance()
+    if pPeek().type == "IF" {
+      els = [parseIf()]
+    } else {
+      els = parseBlock()
+    }
+  }
+  return { type: "If" condition: cond then: then alt: els }
+}
+
+fn parseWhile() {
+  pExpect("WHILE")
+  cond = parseExpr()
+  body = parseBlock()
+  return { type: "While" condition: cond body: body }
+}
+
+fn parseForIn() {
+  pExpect("FOR")
+  varName = pExpect("IDENT").value
+  pExpect("IN")
+  iterable = parseExpr()
+  body = parseBlock()
+  return { type: "ForIn" variable: varName iterable: iterable body: body }
+}
+
+fn parseCFor() {
+  pExpect("FOR")
+  pExpect("LPAREN")
+  
+  init = null
+  if pPeek().type == "LET" {
+    init = parseStatement()
+  } else if pPeek().type != "SEMICOLON" {
+    init = parseExpr()
+    if pPeek().type == "ASSIGN" {
+      pAdvance()
+      right = parseExpr()
+      init = { type: "BinaryExpr" op: "=" left: init right: right }
+    }
+  }
+  pExpect("SEMICOLON")
+  
+  cond = null
+  if pPeek().type != "SEMICOLON" {
+    cond = parseExpr()
+  }
+  pExpect("SEMICOLON")
+  
+  update = null
+  if pPeek().type != "RPAREN" {
+    update = parseExpr()
+    if pPeek().type == "ASSIGN" {
+      pAdvance()
+      right = parseExpr()
+      update = { type: "BinaryExpr" op: "=" left: update right: right }
+    }
+  }
+  pExpect("RPAREN")
+  
+  body = parseBlock()
+  return { type: "CFor" init: init cond: cond update: update body: body }
+}
+
+fn parseReturn() {
+  pExpect("RETURN")
+  if pPeek().type == "RBRACE" || pPeek().type == "EOF" {
+    return { type: "Return" value: null }
+  }
+  val = parseExpr()
+  return { type: "Return" value: val }
+}
+
+fn parseBlock() {
+  pExpect("LBRACE")
+  stmts = []
+  while pPeek().type != "RBRACE" {
+    push(stmts parseStatement())
+  }
+  pExpect("RBRACE")
+  return stmts
+}
+
+fn parseExpr() {
+  return parseOr()
+}
+
+fn parseOr() {
+  nL = parseAnd()
+  while pPeek().type == "OR" {
+    nOp = pAdvance().value
+    nR = parseAnd()
+    nL = { type: "BinaryExpr" op: nOp left: nL right: nR }
+  }
+  return nL
+}
+
+fn parseAnd() {
+  nL = parseBitOr()
+  while pPeek().type == "AND" {
+    nOp = pAdvance().value
+    nR = parseBitOr()
+    nL = { type: "BinaryExpr" op: nOp left: nL right: nR }
+  }
+  return nL
+}
+
+fn parseBitOr() {
+  nL = parseBitXor()
+  while pPeek().type == "BITOR" {
+    nOp = pAdvance().value
+    nR = parseBitXor()
+    nL = { type: "BinaryExpr" op: nOp left: nL right: nR }
+  }
+  return nL
+}
+
+fn parseBitXor() {
+  nL = parseBitAnd()
+  while pPeek().type == "BITXOR" {
+    nOp = pAdvance().value
+    nR = parseBitAnd()
+    nL = { type: "BinaryExpr" op: nOp left: nL right: nR }
+  }
+  return nL
+}
+
+fn parseBitAnd() {
+  nL = parseEquality()
+  while pPeek().type == "BITAND" {
+    nOp = pAdvance().value
+    nR = parseEquality()
+    nL = { type: "BinaryExpr" op: nOp left: nL right: nR }
+  }
+  return nL
+}
+
+fn parseEquality() {
+  nL = parseComparison()
+  while pPeek().type == "EQ" || pPeek().type == "NEQ" {
+    nOp = pAdvance().value
+    nR = parseComparison()
+    nL = { type: "BinaryExpr" op: nOp left: nL right: nR }
+  }
+  return nL
+}
+
+fn parseComparison() {
+  nL = parseShift()
+  while pPeek().type == "LT" || pPeek().type == "GT" || pPeek().type == "LTE" || pPeek().type == "GTE" {
+    nOp = pAdvance().value
+    nR = parseShift()
+    nL = { type: "BinaryExpr" op: nOp left: nL right: nR }
+  }
+  return nL
+}
+
+fn parseShift() {
+  nL = parseAdditive()
+  while pPeek().type == "LSHIFT" || pPeek().type == "RSHIFT" || pPeek().type == "URSHIFT" {
+    nOp = pAdvance().value
+    nR = parseAdditive()
+    nL = { type: "BinaryExpr" op: nOp left: nL right: nR }
+  }
+  return nL
+}
+
+fn parseAdditive() {
+  nL = parseMultiplicative()
+  while pPeek().type == "PLUS" || pPeek().type == "MINUS" {
+    nOp = pAdvance().value
+    nR = parseMultiplicative()
+    nL = { type: "BinaryExpr" op: nOp left: nL right: nR }
+  }
+  return nL
+}
+
+fn parseMultiplicative() {
+  nL = parseUnary()
+  while pPeek().type == "STAR" || pPeek().type == "SLASH" || pPeek().type == "PERCENT" {
+    nOp = pAdvance().value
+    nR = parseUnary()
+    nL = { type: "BinaryExpr" op: nOp left: nL right: nR }
+  }
+  return nL
+}
+
+fn parseUnary() {
+  if pPeek().type == "NOT" {
+    nOp = pAdvance().value
+    nOperand = parseUnary()
+    return { type: "UnaryExpr" op: nOp operand: nOperand }
+  }
+  if pPeek().type == "MINUS" {
+    nOp = pAdvance().value
+    nOperand = parseUnary()
+    return { type: "UnaryExpr" op: nOp operand: nOperand }
+  }
+  if pPeek().type == "BITNOT" {
+    nOp = pAdvance().value
+    nOperand = parseUnary()
+    return { type: "UnaryExpr" op: nOp operand: nOperand }
+  }
+  return parseCall()
+}
+
+fn parseCall() {
+  nExpr = parsePrimary()
+  while true {
+    if pPeek().type == "LPAREN" && (nExpr.type == "Identifier" || nExpr.type == "Member") {
+      pAdvance()
+      callArgs = []
+      while pPeek().type != "RPAREN" {
+        push(callArgs parseExpr())
+        if pPeek().type == "COMMA" { pAdvance() }
+      }
+      pExpect("RPAREN")
+      nExpr = { type: "Call" callee: nExpr args: callArgs }
+    } else if pPeek().type == "DOT" {
+      pAdvance()
+      prop = pExpect("IDENT").value
+      nExpr = { type: "Member" object: nExpr property: prop computed: false }
+    } else if pPeek().type == "LBRACKET" {
+      pAdvance()
+      index = parseExpr()
+      pExpect("RBRACKET")
+      nExpr = { type: "Member" object: nExpr property: index computed: true }
+    } else {
+      break
+    }
+  }
+  return nExpr
+}
+
+fn parsePrimary() {
+  t = pPeek()
+
+  if t.type == "NUMBER" {
+    pAdvance()
+    return { type: "NumberLiteral" value: t.value }
+  }
+  if t.type == "STRING" {
+    pAdvance()
+    return { type: "StringLiteral" value: t.value }
+  }
+  if t.type == "TRUE" {
+    pAdvance()
+    return { type: "BoolLiteral" value: "true" }
+  }
+  if t.type == "FALSE" {
+    pAdvance()
+    return { type: "BoolLiteral" value: "false" }
+  }
+  if t.type == "NULL" {
+    pAdvance()
+    return { type: "NullLiteral" }
+  }
+  if t.type == "THIS" {
+    pAdvance()
+    return { type: "ThisExpr" }
+  }
+  if t.type == "IDENT" {
+    pAdvance()
+    return { type: "Identifier" name: t.value }
+  }
+  if t.type == "LPAREN" {
+    pAdvance()
+    expr = parseExpr()
+    pExpect("RPAREN")
+    return expr
+  }
+  if t.type == "LBRACKET" {
+    pAdvance()
+    elements = []
+    while pPeek().type != "RBRACKET" {
+      push(elements parseExpr())
+      if pPeek().type == "COMMA" { pAdvance() }
+    }
+    pExpect("RBRACKET")
+    return { type: "ArrayLiteral" elements: elements }
+  }
+  if t.type == "LBRACE" {
+    pAdvance()
+    props = []
+    while pPeek().type != "RBRACE" {
+      key = pExpect("IDENT").value
+      pExpect("COLON")
+      val = parseExpr()
+      push(props { key: key value: val })
+      if pPeek().type == "COMMA" { pAdvance() }
+    }
+    pExpect("RBRACE")
+    return { type: "ObjectLiteral" properties: props }
+  }
+
+  print("Parse error: unexpected token " + t.type + " (" + t.value + ")")
+  return { type: "NullLiteral" }
+}
+
+// ============================================================
+// Phase 3: C Code Generator — SlValue unified (with INT fast path in runtime)
+
+fn escapeCStr(s) {
+  r = ""
+  j = 0
+  while j < len(s) {
+    c = charAt(s j)
+    if c == "\\" { r = r + "\\\\" }
+    else if c == "\"" { r = r + "\\\"" }
+    else if c == "\n" { r = r + "\\n" }
+    else if c == "\t" { r = r + "\\t" }
+    else if c == "\r" { r = r + "\\r" }
+    else if c == "\0" { r = r + "\\0" }
+    else { r = r + c }
+    j = j + 1
+  }
+  return r
+}
+// ============================================================
+
+fn strBuilder() {
+  return { parts: [] }
+}
+
+fn sbAdd(sb s) {
+  push(sb.parts s)
+  return sb
+}
+
+fn sbBuild(sb) {
+  return join(sb.parts "")
+}
+
+gFuncReturns = map()
+gUserFuncs = set()
+gDeclaredVars = set()
+gMemoFuncs = set()
+gIntVars = set()
+gLetVars = set()
+gParamVars = set()
+gIntParamVars = set()
+gHoistedArrPtrs = map()
+gGlobalVars = set()
+gIntArrays = set()
+
+fn arrPtr(name) {
+  if setHas(gIntArrays name) {
+    hoisted = mapGet(gHoistedArrPtrs name)
+    if hoisted != null && hoisted != "" { return hoisted }
+    return name + ".aval"
+  }
+  return name
+}
+
+fn isArrHoisted(name) {
+  hoisted = mapGet(gHoistedArrPtrs name)
+  if hoisted != null && hoisted != "" { return true }
+  return false
+}
+
+fn isIntExpr(expr) {
+  if expr.type == "NumberLiteral" {
+    return !includes(expr.value ".")
+  }
+  if expr.type == "Identifier" {
+    return setHas(gIntVars expr.name)
+  }
+  if expr.type == "Member" && expr.computed {
+    if expr.object.type == "Identifier" && setHas(gIntArrays expr.object.name) { return true }
+  }
+  if expr.type == "BinaryExpr" {
+    if expr.op == "+" || expr.op == "-" || expr.op == "*" || expr.op == "/" || expr.op == "%" {
+      return isIntExpr(expr.left) && isIntExpr(expr.right)
+    }
+    return false
+  }
+  if expr.type == "UnaryExpr" && expr.op == "-" {
+    return isIntExpr(expr.operand)
+  }
+  return false
+}
+
+fn inferIntVarsFromStmts(stmts) {
+  found = set()
+  for s in stmts {
+    if s.type == "Assignment" {
+      if isIntExpr(s.value) { setAdd(found s.name) }
+    }
+    if s.type == "LetDecl" {
+      if s.init != null && isIntExpr(s.init) { setAdd(found s.name) }
+    }
+    if s.type == "If" {
+      sub = inferIntVarsFromStmts(s.then)
+      for k in setToArray(sub) { setAdd(found k) }
+      if s.alt != null {
+        sub = inferIntVarsFromStmts(s.alt)
+        for k in setToArray(sub) { setAdd(found k) }
+      }
+    }
+    if s.type == "While" {
+      sub = inferIntVarsFromStmts(s.body)
+      for k in setToArray(sub) { setAdd(found k) }
+    }
+    if s.type == "ForIn" {
+      sub = inferIntVarsFromStmts(s.body)
+      for k in setToArray(sub) { setAdd(found k) }
+    }
+    if s.type == "CFor" {
+      if s.init != null && s.init.type == "LetDecl" {
+        if s.init.init != null && isIntExpr(s.init.init) { setAdd(found s.init.name) }
+      }
+      sub = inferIntVarsFromStmts(s.body)
+      for k in setToArray(sub) { setAdd(found k) }
+    }
+  }
+  return found
+}
+
+fn inferIntTypes(ast) {
+  gIntArrays = set()
+  for stmt in ast.body {
+    if stmt.type == "Assignment" && isIntArrayInit(stmt.value) {
+      setAdd(gIntArrays stmt.name)
+    }
+  }
+  iter2 = 0
+  while iter2 < 50 {
+    prev2 = len(setToArray(gIntArrays))
+    for stmt in ast.body {
+      if stmt.type == "FunctionDef" {
+        inferIntArraysFromStmts(stmt.body)
+      }
+      if stmt.type == "ClassDef" {
+        for m in stmt.body {
+          inferIntArraysFromStmts(m.body)
+        }
+      }
+    }
+    if len(setToArray(gIntArrays)) == prev2 { break }
+    iter2 = iter2 + 1
+  }
+  gIntVars = set()
+  iter = 0
+  while iter < 100 {
+    prevCount = len(setToArray(gIntVars))
+    for stmt in ast.body {
+      if stmt.type == "FunctionDef" {
+        vars = inferIntVarsFromStmts(stmt.body)
+        for v in setToArray(vars) {
+          setAdd(gIntVars v)
+        }
+      }
+      if stmt.type == "ClassDef" {
+        for m in stmt.body {
+          vars = inferIntVarsFromStmts(m.body)
+          for v in setToArray(vars) {
+            setAdd(gIntVars v)
+          }
+        }
+      }
+      if stmt.type == "Assignment" {
+        if isIntExpr(stmt.value) { setAdd(gIntVars stmt.name) }
+      }
+    }
+    if len(setToArray(gIntVars)) == prevCount { break }
+    iter = iter + 1
+  }
+}
+
+fn isIntArrayInit(expr) {
+  if expr.type == "ArrayLiteral" { return true }
+  if expr.type == "Call" && expr.callee.type == "Identifier" && expr.callee.name == "withCapacity" { return true }
+  return false
+}
+
+fn collectIntArraysInStmts(stmts) {
+  found = []
+  for s in stmts {
+    if s.type == "MemberAssignment" && s.computed {
+      if s.object.type == "Identifier" && setHas(gIntArrays s.object.name) {
+        if !includes(found s.object.name) { push(found s.object.name) }
+      }
+    }
+    if s.type == "ExprStmt" && s.expr.type == "Call" {
+      for arg in s.expr.args {
+        if arg.type == "Member" && arg.computed && arg.object.type == "Identifier" && setHas(gIntArrays arg.object.name) {
+          if !includes(found arg.object.name) { push(found arg.object.name) }
+        }
+      }
+      if s.expr.callee.type == "Member" && s.expr.callee.computed && s.expr.callee.object.type == "Identifier" && setHas(gIntArrays s.expr.callee.object.name) {
+        if !includes(found s.expr.callee.object.name) { push(found s.expr.callee.object.name) }
+      }
+    }
+    if s.type == "If" {
+      collectIntArraysFromExpr(s.condition found)
+      sub = collectIntArraysInStmts(s.then)
+      for n in sub { if !includes(found n) { push(found n) } }
+      if s.alt != null {
+        sub = collectIntArraysInStmts(s.alt)
+        for n in sub { if !includes(found n) { push(found n) } }
+      }
+    }
+    if s.type == "While" {
+      collectIntArraysFromExpr(s.condition found)
+      sub = collectIntArraysInStmts(s.body)
+      for n in sub { if !includes(found n) { push(found n) } }
+    }
+    if s.type == "Assignment" {
+      collectIntArraysFromExpr(s.value found)
+    }
+    if s.type == "LetDecl" && s.init != null {
+      collectIntArraysFromExpr(s.init found)
+    }
+  }
+  return found
+}
+
+fn collectIntArraysFromExpr(expr found) {
+  if expr.type == "Member" && expr.computed && expr.object.type == "Identifier" && setHas(gIntArrays expr.object.name) {
+    if !includes(found expr.object.name) { push(found expr.object.name) }
+  }
+  if expr.type == "BinaryExpr" {
+    collectIntArraysFromExpr(expr.left found)
+    collectIntArraysFromExpr(expr.right found)
+  }
+  if expr.type == "UnaryExpr" {
+    collectIntArraysFromExpr(expr.operand found)
+  }
+  if expr.type == "Call" {
+    for arg in expr.args {
+      collectIntArraysFromExpr(arg found)
+    }
+  }
+}
+
+fn inferIntArraysFromStmts(stmts) {
+  for s in stmts {
+    if s.type == "ExprStmt" && s.expr.type == "Call" {
+      name = ""
+      if s.expr.callee.type == "Identifier" { name = s.expr.callee.name }
+      if name == "push" && len(s.expr.args) >= 2 {
+        arrName = s.expr.args[0]
+        if arrName.type == "Identifier" && isIntExpr(s.expr.args[1]) {
+          setAdd(gIntArrays arrName.name)
+        }
+      }
+    }
+    if s.type == "MemberAssignment" && s.computed {
+      if s.object.type == "Identifier" && isIntExpr(s.value) {
+        setAdd(gIntArrays s.object.name)
+      }
+    }
+    if s.type == "If" {
+      inferIntArraysFromStmts(s.then)
+      if s.alt != null { inferIntArraysFromStmts(s.alt) }
+    }
+    if s.type == "While" {
+      inferIntArraysFromStmts(s.body)
+    }
+    if s.type == "ForIn" {
+      inferIntArraysFromStmts(s.body)
+    }
+  }
+}
+
+fn gCIntExpr(expr) {
+  if expr.type == "NumberLiteral" {
+    if includes(expr.value ".") { return null }
+    return expr.value
+  }
+  if expr.type == "Identifier" {
+    if setHas(gParamVars expr.name) { return null }
+    if setHas(gIntVars expr.name) { return expr.name }
+    return null
+  }
+  if expr.type == "BinaryExpr" {
+    if expr.op == "+" || expr.op == "-" || expr.op == "*" || expr.op == "/" || expr.op == "%" {
+      l = gCIntExpr(expr.left)
+      r = gCIntExpr(expr.right)
+      if l != null && r != null { return "(" + l + ") " + expr.op + " (" + r + ")" }
+    }
+    if expr.op == "==" || expr.op == "!=" || expr.op == "<" || expr.op == ">" || expr.op == "<=" || expr.op == ">=" {
+      l = gCIntExpr(expr.left)
+      r = gCIntExpr(expr.right)
+      if l != null && r != null { return "((" + l + ") " + expr.op + " (" + r + "))" }
+    }
+    if expr.op == "&&" || expr.op == "and" || expr.op == "||" || expr.op == "or" {
+      l = gCIntExpr(expr.left)
+      r = gCIntExpr(expr.right)
+      if l != null && r != null { return "((" + l + ") " + expr.op + " (" + r + "))" }
+    }
+    if expr.op == "<<" || expr.op == ">>" || expr.op == "&" || expr.op == "|" || expr.op == "^" {
+      l = gCIntExpr(expr.left)
+      r = gCIntExpr(expr.right)
+      if l != null && r != null { return "(" + l + ") " + expr.op + " (" + r + ")" }
+    }
+    return null
+  }
+  if expr.type == "UnaryExpr" && expr.op == "-" {
+    o = gCIntExpr(expr.operand)
+    if o != null { return "-(" + o + ")" }
+    return null
+  }
+  if expr.type == "Member" && expr.computed {
+    if expr.object.type == "Identifier" && setHas(gIntArrays expr.object.name) {
+      ap = arrPtr(expr.object.name)
+      idx = gCIntExpr(expr.property)
+      if isArrHoisted(expr.object.name) {
+        if idx != null { return ap + "[" + idx + "]" }
+        return ap + "[sl_to_int(" + gCExpr(expr.property) + ")]"
+      }
+      if idx != null { return ap + "->i64[" + idx + "]" }
+      return ap + "->i64[sl_to_int(" + gCExpr(expr.property) + ")]"
+    }
+  }
+  return null
+}
+
+fn gCExpr(expr) {
+  if expr.type == "NumberLiteral" {
+    v = expr.value
+    if includes(v ".") { return "sl_dbl(" + v + ")" }
+    return "sl_int(" + v + ")"
+  }
+  if expr.type == "StringLiteral" { return "sl_str(\"" + escapeCStr(expr.value) + "\")" }
+  if expr.type == "BoolLiteral" {
+    if expr.value == "true" { return "sl_bool(1)" }
+    return "sl_bool(0)"
+  }
+  if expr.type == "NullLiteral" { return "sl_null()" }
+  if expr.type == "ThisExpr" { return "__self" }
+  if expr.type == "Identifier" {
+    if setHas(gParamVars expr.name) { return expr.name }
+    if setHas(gIntVars expr.name) { return "sl_int(" + expr.name + ")" }
+    return expr.name
+  }
+  if expr.type == "BinaryExpr" {
+    lInt = gCIntExpr(expr.left)
+    rInt = gCIntExpr(expr.right)
+    if expr.op == "+" || expr.op == "-" || expr.op == "*" || expr.op == "/" || expr.op == "%" {
+      if lInt != null && rInt != null {
+        return "sl_int((" + lInt + ") " + expr.op + " (" + rInt + "))"
+      }
+    }
+    l = gCExpr(expr.left)
+    r = gCExpr(expr.right)
+    if expr.op == "+" { return "sl_v_add(" + l + ", " + r + ")" }
+    if expr.op == "-" { return "sl_v_sub(" + l + ", " + r + ")" }
+    if expr.op == "*" { return "sl_v_mul(" + l + ", " + r + ")" }
+    if expr.op == "/" { return "sl_v_div(" + l + ", " + r + ")" }
+    if expr.op == "%" { return "sl_v_mod(" + l + ", " + r + ")" }
+    if expr.op == "==" {
+      if lInt != null && rInt != null { return "sl_bool((" + lInt + ") == (" + rInt + "))" }
+      return "sl_v_eq(" + l + ", " + r + ")"
+    }
+    if expr.op == "!=" {
+      if lInt != null && rInt != null { return "sl_bool((" + lInt + ") != (" + rInt + "))" }
+      return "sl_v_ne(" + l + ", " + r + ")"
+    }
+    if expr.op == "<" {
+      if lInt != null && rInt != null { return "sl_bool((" + lInt + ") < (" + rInt + "))" }
+      return "sl_v_lt(" + l + ", " + r + ")"
+    }
+    if expr.op == ">" {
+      if lInt != null && rInt != null { return "sl_bool((" + lInt + ") > (" + rInt + "))" }
+      return "sl_v_gt(" + l + ", " + r + ")"
+    }
+    if expr.op == "<=" {
+      if lInt != null && rInt != null { return "sl_bool((" + lInt + ") <= (" + rInt + "))" }
+      return "sl_v_le(" + l + ", " + r + ")"
+    }
+    if expr.op == ">=" {
+      if lInt != null && rInt != null { return "sl_bool((" + lInt + ") >= (" + rInt + "))" }
+      return "sl_v_ge(" + l + ", " + r + ")"
+    }
+    if expr.op == "&&" || expr.op == "and" {
+      if lInt != null && rInt != null { return "sl_bool((" + lInt + ") && (" + rInt + "))" }
+      return "sl_v_and(" + l + ", " + r + ")"
+    }
+    if expr.op == "||" || expr.op == "or" {
+      if lInt != null && rInt != null { return "sl_bool((" + lInt + ") || (" + rInt + "))" }
+      return "sl_v_or(" + l + ", " + r + ")"
+    }
+    if expr.op == "<<" {
+      if lInt != null && rInt != null { return "sl_int((" + lInt + ") << (" + rInt + "))" }
+      return "sl_v_shl(" + l + ", " + r + ")"
+    }
+    if expr.op == ">>" {
+      if lInt != null && rInt != null { return "sl_int((" + lInt + ") >> (" + rInt + "))" }
+      return "sl_v_shr(" + l + ", " + r + ")"
+    }
+    if expr.op == ">>>" {
+      if lInt != null && rInt != null { return "sl_int((unsigned long long)(" + lInt + ") >> (" + rInt + "))" }
+      return "sl_v_ushr(" + l + ", " + r + ")"
+    }
+    if expr.op == "&" {
+      if lInt != null && rInt != null { return "sl_int((" + lInt + ") & (" + rInt + "))" }
+      return "sl_v_bitAnd(" + l + ", " + r + ")"
+    }
+    if expr.op == "|" {
+      if lInt != null && rInt != null { return "sl_int((" + lInt + ") | (" + rInt + "))" }
+      return "sl_v_bitOr(" + l + ", " + r + ")"
+    }
+    if expr.op == "^" {
+      if lInt != null && rInt != null { return "sl_int((" + lInt + ") ^ (" + rInt + "))" }
+      return "sl_v_bitXor(" + l + ", " + r + ")"
+    }
+    if expr.op == "=" { return l + " = " + r }
+    return "sl_int(0)"
+  }
+  if expr.type == "UnaryExpr" {
+    iOp = gCIntExpr(expr.operand)
+    if expr.op == "-" && iOp != null {
+      return "sl_int(-(" + iOp + "))"
+    }
+    o = gCExpr(expr.operand)
+    if expr.op == "!" || expr.op == "not" { return "sl_v_not(" + o + ")" }
+    if expr.op == "~" { return "sl_v_bitNot(" + o + ")" }
+    if expr.op == "-" { return "sl_v_neg(" + o + ")" }
+    return o
+  }
+  if expr.type == "Call" {
+    return gCCall(expr)
+  }
+  if expr.type == "ArrayLiteral" {
+    items = []
+    for el in expr.elements {
+      push(items gCExpr(el))
+    }
+    arr = "sl_v_arr_new()"
+    for item in items {
+      arr = "sl_v_push(" + arr + ", " + item + ")"
+    }
+    return arr
+  }
+  if expr.type == "ObjectLiteral" {
+    obj = "sl_v_map_new()"
+    for p in expr.properties {
+      obj = "sl_v_mapSet(" + obj + ", sl_str(\"" + p.key + "\"), " + gCExpr(p.value) + ")"
+    }
+    return obj
+  }
+  if expr.type == "Member" {
+    if expr.object.type == "Identifier" && expr.object.name == "win32" {
+      return gWin32Const(expr.property)
+    }
+    obj = gCExpr(expr.object)
+    if expr.computed {
+      if expr.object.type == "Identifier" && setHas(gIntArrays expr.object.name) {
+        ap = arrPtr(expr.object.name)
+        idx = gCIntExpr(expr.property)
+        if isArrHoisted(expr.object.name) {
+          if idx != null { return "sl_int(" + ap + "[" + idx + "])" }
+          return "sl_int(" + ap + "[sl_to_int(" + gCExpr(expr.property) + ")])"
+        }
+        if idx != null { return "sl_int(" + ap + "->i64[" + idx + "])" }
+        return "sl_int(" + ap + "->i64[sl_to_int(" + gCExpr(expr.property) + ")])"
+      }
+      return "sl_v_index(" + obj + ", " + gCExpr(expr.property) + ")"
+    }
+    prop = expr.property
+    return "sl_v_member(" + obj + ", \"" + prop + "\")"
+  }
+  return "sl_null()"
+}
+
+fn gWin32Const(prop) {
+  if prop == "VK_SPACE" { return "sl_int(SL_VK_SPACE)" }
+  if prop == "VK_LEFT" { return "sl_int(SL_VK_LEFT)" }
+  if prop == "VK_RIGHT" { return "sl_int(SL_VK_RIGHT)" }
+  if prop == "VK_UP" { return "sl_int(SL_VK_UP)" }
+  if prop == "VK_DOWN" { return "sl_int(SL_VK_DOWN)" }
+  if prop == "VK_1" { return "sl_int(SL_VK_1)" }
+  if prop == "VK_2" { return "sl_int(SL_VK_2)" }
+  if prop == "VK_3" { return "sl_int(SL_VK_3)" }
+  if prop == "VK_ESCAPE" { return "sl_int(SL_VK_ESCAPE)" }
+  if prop == "VK_RETURN" { return "sl_int(SL_VK_RETURN)" }
+  print("Unknown win32 constant: " + prop)
+  return "sl_int(0)"
+}
+
+fn gWin32Call(prop cArgs) {
+  intArgs = []
+  for a in cArgs {
+    push(intArgs "sl_to_int(" + a + ")")
+  }
+  if prop == "clear" { return "sl_win32_clear(" + intArgs[0] + ")" }
+  if prop == "fillRect" { return "sl_win32_fill_rect(" + intArgs[0] + ", " + intArgs[1] + ", " + intArgs[2] + ", " + intArgs[3] + ", " + intArgs[4] + ")" }
+  if prop == "fillCircle" { return "sl_win32_fill_circle(" + intArgs[0] + ", " + intArgs[1] + ", " + intArgs[2] + ", " + intArgs[3] + ")" }
+  if prop == "setPixel" { return "sl_win32_set_pixel_unsafe(" + intArgs[0] + ", " + intArgs[1] + ", " + intArgs[2] + ")" }
+  if prop == "setPixelUnsafe" { return "sl_win32_set_pixel_unsafe(" + intArgs[0] + ", " + intArgs[1] + ", " + intArgs[2] + ")" }
+  if prop == "envInt" { return "sl_int(sl_win32_env_int(" + cArgs[0] + ".sval, " + intArgs[1] + "))" }
+  if prop == "isKeyDown" { return "sl_int(sl_win32_is_key_down(" + intArgs[0] + "))" }
+  if prop == "pollEvents" { return "sl_int(sl_win32_poll_events())" }
+  if prop == "present" { return "sl_win32_present()" }
+  if prop == "perfMillis" { return "sl_int(sl_win32_perf_millis())" }
+  if prop == "setWindowTitleStats" { return "sl_win32_set_window_title_stats(" + intArgs[0] + ", " + intArgs[1] + ", " + intArgs[2] + ", " + intArgs[3] + ", " + intArgs[4] + ")" }
+  if prop == "width" { return "sl_int(sl_win32_fb_w)" }
+  if prop == "height" { return "sl_int(sl_win32_fb_h)" }
+  print("Unknown win32 call: " + prop)
+  return "sl_null()"
+}
+
+fn gCCall(expr) {
+  if expr.callee.type == "Identifier" {
+    name = expr.callee.name
+    cArgs = []
+    for a in expr.args {
+      push(cArgs gCExpr(a))
+    }
+
+    if name == "print" {
+      if len(cArgs) == 0 { return "sl_null()" }
+      return "sl_v_print(" + cArgs[0] + ")"
+    }
+    if name == "len" { return "sl_v_len(" + cArgs[0] + ")" }
+    if name == "push" {
+      if len(expr.args) >= 2 && expr.args[0].type == "Identifier" && setHas(gIntArrays expr.args[0].name) {
+        ap = arrPtr(expr.args[0].name)
+        ival = gCIntExpr(expr.args[1])
+        if ival != null { return "(sl_arr_push_i64(" + ap + ", " + ival + "), sl_int(0))" }
+        return "(sl_arr_push_i64(" + ap + ", sl_to_int(" + cArgs[1] + ")), sl_int(0))"
+      }
+      return "sl_v_push(" + cArgs[0] + ", " + cArgs[1] + ")"
+    }
+    if name == "reserve" {
+      if len(expr.args) >= 2 && expr.args[0].type == "Identifier" && setHas(gIntArrays expr.args[0].name) {
+        an = expr.args[0].name
+        ap = an + ".aval"
+        return "(sl_arr_reserve(" + ap + ", (int)sl_to_int(" + cArgs[1] + ")), sl_int(0))"
+      }
+      return "sl_int(0)"
+    }
+    if name == "withCapacity" {
+      if len(cArgs) >= 1 {
+        return "sl_v_arr_new_i32((int)(sl_to_int(" + cArgs[0] + ") > 4LL ? sl_to_int(" + cArgs[0] + ") : 4LL))"
+      }
+      return "sl_v_arr_new_i32(4)"
+    }
+    if name == "charAt" { return "sl_v_charAt(" + cArgs[0] + ", " + cArgs[1] + ")" }
+    if name == "substring" { return "sl_v_substring(" + cArgs[0] + ", " + cArgs[1] + ", " + cArgs[2] + ")" }
+    if name == "includes" { return "sl_v_includes(" + cArgs[0] + ", " + cArgs[1] + ")" }
+    if name == "codePointAt" { return "sl_v_codePointAt(" + cArgs[0] + ", " + cArgs[1] + ")" }
+    if name == "upper" { return "sl_v_upper(" + cArgs[0] + ")" }
+    if name == "lower" { return "sl_v_lower(" + cArgs[0] + ")" }
+    if name == "trim" { return "sl_v_trim(" + cArgs[0] + ")" }
+    if name == "split" { return "sl_v_split(" + cArgs[0] + ", " + cArgs[1] + ")" }
+    if name == "join" { return "sl_v_join(" + cArgs[0] + ", " + cArgs[1] + ")" }
+    if name == "toString" { return "sl_v_toString(" + cArgs[0] + ")" }
+    if name == "toInt" { return "sl_int(sl_to_int(" + cArgs[0] + "))" }
+    if name == "toFloat" { return "sl_dbl(sl_to_dbl(" + cArgs[0] + "))" }
+    if name == "abs" { return "sl_int(llabs(sl_to_int(" + cArgs[0] + ")))" }
+    if name == "sqrt" { return "sl_dbl(sqrt(sl_to_dbl(" + cArgs[0] + ")))" }
+    if name == "floor" { return "sl_dbl(floor(sl_to_dbl(" + cArgs[0] + ")))" }
+    if name == "ceil" { return "sl_dbl(ceil(sl_to_dbl(" + cArgs[0] + ")))" }
+    if name == "map" { return "sl_v_map_new()" }
+    if name == "set" { return "sl_v_set_new()" }
+    if name == "mapSet" { return "sl_v_mapSet(" + cArgs[0] + ", " + cArgs[1] + ", " + cArgs[2] + ")" }
+    if name == "mapGet" { return "sl_v_mapGet(" + cArgs[0] + ", " + cArgs[1] + ")" }
+    if name == "mapHas" { return "sl_v_mapHas(" + cArgs[0] + ", " + cArgs[1] + ")" }
+    if name == "mapKeys" { return "sl_v_mapKeys(" + cArgs[0] + ")" }
+    if name == "mapValues" { return "sl_v_mapValues(" + cArgs[0] + ")" }
+    if name == "mapSize" { return "sl_v_mapSize(" + cArgs[0] + ")" }
+    if name == "setAdd" { return "sl_v_setAdd(" + cArgs[0] + ", " + cArgs[1] + ")" }
+    if name == "setHas" { return "sl_v_setHas(" + cArgs[0] + ", " + cArgs[1] + ")" }
+    if name == "setSize" { return "sl_v_setSize(" + cArgs[0] + ")" }
+    if name == "setToArray" { return "sl_v_setToArray(" + cArgs[0] + ")" }
+    if name == "readFile" { return "sl_v_readFile(" + cArgs[0] + ")" }
+    if name == "writeFile" { return "sl_v_writeFile(" + cArgs[0] + ", " + cArgs[1] + ")" }
+    if name == "exit" { return "(exit(sl_to_int(" + cArgs[0] + ")), sl_null())" }
+    if name == "args" { return "sl_v_args(argc, argv)" }
+
+    return name + "(" + join(cArgs ", ") + ")"
+  }
+
+  if expr.callee.type == "Member" {
+    if expr.callee.object.type == "Identifier" && expr.callee.object.name == "win32" {
+      mArgs = []
+      for a in expr.args {
+        push(mArgs gCExpr(a))
+      }
+      return gWin32Call(expr.callee.property mArgs)
+    }
+    obj = gCExpr(expr.callee.object)
+    prop = expr.callee.property
+    mArgs = []
+    for a in expr.args {
+      push(mArgs gCExpr(a))
+    }
+
+    if prop == "push" {
+      if expr.callee.object.type == "Identifier" && setHas(gIntArrays expr.callee.object.name) {
+        ap = arrPtr(expr.callee.object.name)
+        ival = gCIntExpr(expr.args[0])
+        if ival != null { return "(sl_arr_push_i64(" + ap + ", " + ival + "), sl_int(0))" }
+        return "(sl_arr_push_i64(" + ap + ", sl_to_int(" + mArgs[0] + ")), sl_int(0))"
+      }
+      return "sl_v_push(" + obj + ", " + mArgs[0] + ")"
+    }
+    if prop == "length" { return "sl_v_len(" + obj + ")" }
+    if prop == "set" { return "sl_v_mapSet(" + obj + ", " + mArgs[0] + ", " + mArgs[1] + ")" }
+    if prop == "get" { return "sl_v_mapGet(" + obj + ", " + mArgs[0] + ")" }
+    if prop == "has" { return "sl_v_mapHas(" + obj + ", " + mArgs[0] + ")" }
+    if prop == "keys" { return "sl_v_mapKeys(" + obj + ")" }
+    if prop == "values" { return "sl_v_mapValues(" + obj + ")" }
+    if prop == "size" { return "sl_v_mapSize(" + obj + ")" }
+    if prop == "add" { return "sl_v_setAdd(" + obj + ", " + mArgs[0] + ")" }
+    if prop == "toArray" { return "sl_v_setToArray(" + obj + ")" }
+    if prop == "join" { return "sl_v_join(" + obj + ", " + mArgs[0] + ")" }
+    if prop == "includes" { return "sl_v_includes(" + obj + ", " + mArgs[0] + ")" }
+    if prop == "charAt" { return "sl_v_charAt(" + obj + ", " + mArgs[0] + ")" }
+    if prop == "substring" { return "sl_v_substring(" + obj + ", " + mArgs[0] + ", " + mArgs[1] + ")" }
+    if prop == "split" { return "sl_v_split(" + obj + ", " + mArgs[0] + ")" }
+    if prop == "upper" { return "sl_v_upper(" + obj + ")" }
+    if prop == "lower" { return "sl_v_lower(" + obj + ")" }
+    if prop == "trim" { return "sl_v_trim(" + obj + ")" }
+
+    allArgsStr = obj
+    for a in mArgs {
+      allArgsStr = allArgsStr + ", " + a
+    }
+    suffix = ""
+    if len(mArgs) > 0 {
+      suffix = ", " + join(mArgs ", ")
+    }
+    return "sl_v_call_method(" + obj + ", sl_str(\"" + prop + "\")" + suffix + ")"
+  }
+
+  return "sl_null()"
+}
+
+fn gCStmt(stmt indent) {
+  pad = ""
+  i = 0
+  while i < indent { pad = pad + "  " i = i + 1 }
+
+  if stmt.type == "ExprStmt" {
+    return pad + gCExpr(stmt.expr) + ";\n"
+  }
+  if stmt.type == "Assignment" {
+    if stmt.op != null && stmt.op != "=" {
+      if setHas(gIntVars stmt.name) && !setHas(gParamVars stmt.name) {
+        iv = gCIntExpr(stmt.value)
+        if iv != null { return pad + stmt.name + " " + stmt.op + " " + iv + ";\n" }
+        return pad + stmt.name + " " + stmt.op + " sl_to_int(" + gCExpr(stmt.value) + ");\n"
+      }
+      opFn = ""
+      if stmt.op == "+=" { opFn = "sl_v_add" }
+      else if stmt.op == "-=" { opFn = "sl_v_sub" }
+      else if stmt.op == "*=" { opFn = "sl_v_mul" }
+      else if stmt.op == "%=" { opFn = "sl_v_mod" }
+      else { opFn = "sl_v_add" }
+      return pad + stmt.name + " = " + opFn + "(" + stmt.name + ", " + gCExpr(stmt.value) + ");\n"
+    }
+    if setHas(gIntVars stmt.name) && !setHas(gParamVars stmt.name) {
+      iv = gCIntExpr(stmt.value)
+      if iv != null { return pad + stmt.name + " = " + iv + ";\n" }
+      return pad + stmt.name + " = sl_to_int(" + gCExpr(stmt.value) + ");\n"
+    }
+    if setHas(gIntArrays stmt.name) && stmt.value.type == "ArrayLiteral" {
+      cap = len(stmt.value.elements)
+      if cap < 4 { cap = 4 }
+      code = pad + stmt.name + " = sl_v_arr_new_i64(" + cap + ");\n"
+      for el in stmt.value.elements {
+        ival = gCIntExpr(el)
+        if ival != null {
+          code = code + pad + "sl_arr_push_i64(" + arrPtr(stmt.name) + ", " + ival + ");\n"
+        } else {
+          code = code + pad + "sl_arr_push_i64(" + arrPtr(stmt.name) + ", sl_to_int(" + gCExpr(el) + "));\n"
+        }
+      }
+      return code
+    }
+    if setHas(gIntArrays stmt.name) && stmt.value.type == "Call" && stmt.value.callee.type == "Identifier" && stmt.value.callee.name == "withCapacity" && len(stmt.value.args) >= 1 {
+      a0 = gCExpr(stmt.value.args[0])
+      return pad + stmt.name + " = sl_v_arr_new_i32((int)(sl_to_int(" + a0 + ") > 4LL ? sl_to_int(" + a0 + ") : 4LL));\n"
+    }
+    return pad + stmt.name + " = " + gCExpr(stmt.value) + ";\n"
+  }
+  if stmt.type == "MemberAssignment" {
+    val = gCExpr(stmt.value)
+    if stmt.computed {
+      if stmt.object.type == "Identifier" && setHas(gIntArrays stmt.object.name) {
+        ap = arrPtr(stmt.object.name)
+        ival = gCIntExpr(stmt.value)
+        idx = gCIntExpr(stmt.property)
+        if isArrHoisted(stmt.object.name) {
+          if ival != null && idx != null {
+            return pad + ap + "[" + idx + "] = " + ival + ";\n"
+          }
+          if idx != null {
+            return pad + ap + "[" + idx + "] = sl_to_int(" + val + ");\n"
+          }
+          return pad + ap + "[sl_to_int(" + gCExpr(stmt.property) + ")] = sl_to_int(" + val + ");\n"
+        }
+        if ival != null && idx != null {
+          return pad + ap + "->i64[" + idx + "] = " + ival + ";\n"
+        }
+        if idx != null {
+          return pad + ap + "->i64[" + idx + "] = sl_to_int(" + val + ");\n"
+        }
+        return pad + ap + "->i64[sl_to_int(" + gCExpr(stmt.property) + ")] = sl_to_int(" + val + ");\n"
+      }
+      return pad + "sl_v_set_index(" + gCExpr(stmt.object) + ", " + gCExpr(stmt.property) + ", " + val + ");\n"
+    }
+    return pad + "sl_v_set_member(" + gCExpr(stmt.object) + ", \"" + stmt.property + "\", " + val + ");\n"
+  }
+  if stmt.type == "If" {
+    nI = indent + 1
+    condInt = gCIntExpr(stmt.condition)
+    if condInt != null {
+      code = pad + "if (" + condInt + ") {\n"
+    } else {
+      code = pad + "if (sl_to_bool(" + gCExpr(stmt.condition) + ")) {\n"
+    }
+    thenArr = stmt.then
+    for s in thenArr {
+      code = code + gCStmt(s nI)
+    }
+    if stmt.alt != null {
+      code = code + pad + "} else {\n"
+      altArr = stmt.alt
+      for s in altArr {
+        code = code + gCStmt(s nI)
+      }
+    }
+    code = code + pad + "}\n"
+    return code
+  }
+  if stmt.type == "While" {
+    nI = indent + 1
+    condInt = gCIntExpr(stmt.condition)
+    intArrs = collectIntArraysInStmts(stmt.body)
+    hoistCode = ""
+    savedHoisted = map()
+    hoistedNames = []
+    needBlock = false
+    for arrName in intArrs {
+      if !isArrHoisted(arrName) { needBlock = true }
+    }
+    if needBlock {
+      hoistCode = pad + "{\n"
+      for arrName in intArrs {
+        if isArrHoisted(arrName) { continue }
+        ptrName = arrName + "_d"
+        hoistCode = hoistCode + pad + "  long long * __restrict " + ptrName + " = " + arrName + ".aval->i64;\n"
+        mapSet(savedHoisted arrName mapGet(gHoistedArrPtrs arrName))
+        mapSet(gHoistedArrPtrs arrName ptrName)
+        push(hoistedNames arrName)
+      }
+    }
+    if condInt != null {
+      code = hoistCode + pad + "while (" + condInt + ") {\n"
+    } else {
+      code = hoistCode + pad + "while (sl_to_bool(" + gCExpr(stmt.condition) + ")) {\n"
+    }
+    bodyArr = stmt.body
+    for s in bodyArr {
+      code = code + gCStmt(s nI)
+    }
+    code = code + pad + "}\n"
+    if needBlock {
+      code = code + pad + "}\n"
+      for arrName in hoistedNames {
+        oldVal = mapGet(savedHoisted arrName)
+        if oldVal != null {
+          mapSet(gHoistedArrPtrs arrName oldVal)
+        } else {
+          mapSet(gHoistedArrPtrs arrName "")
+        }
+      }
+    }
+    return code
+  }
+  if stmt.type == "ForIn" {
+    arr = stmt.variable + "_iter_arr"
+    idx = stmt.variable + "_iter_i"
+    nI = indent + 2
+    code = pad + "{\n"
+    code = code + pad + "  SlValue " + arr + " = " + gCExpr(stmt.iterable) + ";\n"
+    code = code + pad + "  for (long long " + idx + " = 0; " + idx + " < sl_to_int(sl_v_len(" + arr + ")); " + idx + "++) {\n"
+    code = code + pad + "    SlValue " + stmt.variable + " = sl_v_index(" + arr + ", sl_int(" + idx + "));\n"
+    bodyArr = stmt.body
+    for s in bodyArr {
+      code = code + gCStmt(s nI)
+    }
+    code = code + pad + "  }\n"
+    code = code + pad + "}\n"
+    return code
+  }
+  if stmt.type == "CFor" {
+    initCode = ""
+    if stmt.init != null {
+      if stmt.init.type == "LetDecl" {
+        initKind = "SlValue"
+        if setHas(gIntVars stmt.init.name) { initKind = "long long" }
+        initVal = ""
+        if stmt.init.init != null {
+          iv2 = gCIntExpr(stmt.init.init)
+          if iv2 != null { initVal = " = " + iv2 } else { initVal = " = " + gCExpr(stmt.init.init) }
+        }
+        initCode = initKind + " " + stmt.init.name + initVal
+      } else if stmt.init.type == "Assignment" {
+        initCode = stmt.init.left.name + " = " + gCExpr(stmt.init.right)
+      } else {
+        initCode = gCExpr(stmt.init)
+      }
+    }
+    condCode = "1"
+    if stmt.cond != null { condCode = "sl_to_bool(" + gCExpr(stmt.cond) + ")" }
+    updateCode = ""
+    if stmt.update != null { updateCode = gCExpr(stmt.update) }
+    nI = indent + 2
+    code = pad + "for (" + initCode + "; " + condCode + "; " + updateCode + ") {\n"
+    bodyArr = stmt.body
+    for s in bodyArr {
+      code = code + gCStmt(s nI)
+    }
+    code = code + pad + "}\n"
+    return code
+  }
+  if stmt.type == "Return" {
+    if stmt.value == null { return pad + "return sl_null();\n" }
+    iv = gCIntExpr(stmt.value)
+    if iv != null { return pad + "return sl_int(" + iv + ");\n" }
+    return pad + "return " + gCExpr(stmt.value) + ";\n"
+  }
+  if stmt.type == "BreakStmt" { return pad + "break;\n" }
+  if stmt.type == "ContinueStmt" { return pad + "continue;\n" }
+  if stmt.type == "LetDecl" {
+    initCode = ""
+    if stmt.init != null {
+      if setHas(gIntVars stmt.name) {
+        iv = gCIntExpr(stmt.init)
+        if iv != null {
+          initCode = " = " + iv
+        } else {
+          initCode = " = sl_to_int(" + gCExpr(stmt.init) + ")"
+        }
+      } else if setHas(gIntArrays stmt.name) && stmt.init.type == "ArrayLiteral" {
+        cap = len(stmt.init.elements)
+        if cap < 4 { cap = 4 }
+        code = pad + "SlValue " + stmt.name + " = sl_v_arr_new_i64(" + cap + ");\n"
+        for el in stmt.init.elements {
+          ival = gCIntExpr(el)
+          if ival != null {
+            code = code + pad + "sl_arr_push_i64(" + arrPtr(stmt.name) + ", " + ival + ");\n"
+          } else {
+            code = code + pad + "sl_arr_push_i64(" + arrPtr(stmt.name) + ", sl_to_int(" + gCExpr(el) + "));\n"
+          }
+        }
+        return code
+      } else if setHas(gIntArrays stmt.name) && stmt.init.type == "Call" && stmt.init.callee.type == "Identifier" && stmt.init.callee.name == "withCapacity" && len(stmt.init.args) >= 1 {
+        a0 = gCExpr(stmt.init.args[0])
+        return pad + "SlValue " + stmt.name + " = sl_v_arr_new_i32((int)(sl_to_int(" + a0 + ") > 4LL ? sl_to_int(" + a0 + ") : 4LL));\n"
+      } else {
+        initCode = " = " + gCExpr(stmt.init)
+      }
+    }
+    if setHas(gIntVars stmt.name) {
+      return pad + "long long " + stmt.name + initCode + ";\n"
+    } else {
+      return pad + "SlValue " + stmt.name + initCode + ";\n"
+    }
+  }
+  if stmt.type == "ClassDef" {
+    return gCompileClass(stmt)
+  }
+  if stmt.type == "FunctionDef" {
+    return gCompileFunc(stmt)
+  }
+  return pad + "/* unknown stmt: " + stmt.type + " */\n"
+}
+
+fn gCollectVars(stmts vars) {
+  for s in stmts {
+    if s.type == "Assignment" {
+      if !setHas(gLetVars s.name) && !setHas(gDeclaredVars s.name) && !setHas(gGlobalVars s.name) && !setHas(gParamVars s.name) {
+        setAdd(vars s.name)
+      }
+    }
+    if s.type == "LetDecl" {
+      setAdd(gDeclaredVars s.name)
+    }
+    if s.type == "If" {
+      gCollectVars(s.then vars)
+      if s.alt != null {
+        gCollectVars(s.alt vars)
+      }
+    }
+    if s.type == "While" {
+      gCollectVars(s.body vars)
+    }
+    if s.type == "ForIn" {
+      setAdd(vars s.variable)
+      gCollectVars(s.body vars)
+    }
+    if s.type == "CFor" {
+      if s.init != null {
+        if s.init.type == "LetDecl" {
+          setAdd(gDeclaredVars s.init.name)
+        } else if s.init.type == "Assignment" {
+          if !setHas(gLetVars s.init.left.name) && !setHas(gDeclaredVars s.init.left.name) && !setHas(gGlobalVars s.init.left.name) && !setHas(gParamVars s.init.left.name) {
+            setAdd(vars s.init.left.name)
+          }
+        }
+      }
+      gCollectVars(s.body vars)
+    }
+    if s.type == "ClassDef" {
+      for m in s.body {
+        gCollectVars(m.body vars)
+      }
+    }
+  }
+}
+
+// ============================================================
+// Purity & Recursion Detection for Auto-Memoization
+// ============================================================
+
+fn hasSideEffectCall(expr) {
+  if expr.type != "Call" { return false }
+  if expr.callee.type != "Identifier" { return false }
+  name = expr.callee.name
+  if name == "print" || name == "readFile" || name == "writeFile" || name == "exit" || name == "args" {
+    return true
+  }
+  for a in expr.args {
+    if hasSideEffectCall(a) { return true }
+  }
+  return false
+}
+
+fn hasSideEffectStmt(stmts) {
+  for s in stmts {
+    if s.type == "ExprStmt" {
+      if hasSideEffectCall(s.expr) { return true }
+    }
+    if s.type == "Assignment" {
+      if hasSideEffectCall(s.value) { return true }
+    }
+    if s.type == "If" {
+      if hasSideEffectCall(s.condition) { return true }
+      if hasSideEffectStmt(s.then) { return true }
+      if s.alt != null {
+        if hasSideEffectStmt(s.alt) { return true }
+      }
+    }
+    if s.type == "While" {
+      if hasSideEffectCall(s.condition) { return true }
+      if hasSideEffectStmt(s.body) { return true }
+    }
+    if s.type == "ForIn" {
+      if hasSideEffectCall(s.iterable) { return true }
+      if hasSideEffectStmt(s.body) { return true }
+    }
+    if s.type == "CFor" {
+      if s.cond != null && hasSideEffectCall(s.cond) { return true }
+      if s.update != null && hasSideEffectCall(s.update) { return true }
+      if hasSideEffectStmt(s.body) { return true }
+    }
+    if s.type == "Return" {
+      if s.value != null {
+        if hasSideEffectCall(s.value) { return true }
+      }
+    }
+    if s.type == "ClassDef" {
+      for m in s.body {
+        if hasSideEffectStmt(m.body) { return true }
+      }
+    }
+  }
+  return false
+}
+
+fn hasCallTo(expr funcName) {
+  if expr.type == "Call" && expr.callee.type == "Identifier" {
+    if expr.callee.name == funcName { return true }
+  }
+  if expr.type == "Call" {
+    for a in expr.args {
+      if hasCallTo(a funcName) { return true }
+    }
+    return false
+  }
+  if expr.type == "BinaryExpr" {
+    if hasCallTo(expr.left funcName) { return true }
+    if hasCallTo(expr.right funcName) { return true }
+    return false
+  }
+  if expr.type == "UnaryExpr" {
+    return hasCallTo(expr.operand funcName)
+  }
+  if expr.type == "Member" {
+    if hasCallTo(expr.object funcName) { return true }
+    return false
+  }
+  if expr.type == "ArrayLiteral" {
+    for el in expr.elements {
+      if hasCallTo(el funcName) { return true }
+    }
+    return false
+  }
+  if expr.type == "ObjectLiteral" {
+    for p in expr.properties {
+      if hasCallTo(p.value funcName) { return true }
+    }
+    return false
+  }
+  return false
+}
+
+fn hasRecursiveCall(stmts funcName) {
+  for s in stmts {
+    if s.type == "ExprStmt" {
+      if hasCallTo(s.expr funcName) { return true }
+    }
+    if s.type == "Assignment" {
+      if hasCallTo(s.value funcName) { return true }
+    }
+    if s.type == "If" {
+      if hasCallTo(s.condition funcName) { return true }
+      if hasRecursiveCall(s.then funcName) { return true }
+      if s.alt != null {
+        if hasRecursiveCall(s.alt funcName) { return true }
+      }
+    }
+    if s.type == "While" {
+      if hasCallTo(s.condition funcName) { return true }
+      if hasRecursiveCall(s.body funcName) { return true }
+    }
+    if s.type == "ForIn" {
+      if hasCallTo(s.iterable funcName) { return true }
+      if hasRecursiveCall(s.body funcName) { return true }
+    }
+    if s.type == "CFor" {
+      if s.cond != null && hasCallTo(s.cond funcName) { return true }
+      if s.update != null && hasCallTo(s.update funcName) { return true }
+      if hasRecursiveCall(s.body funcName) { return true }
+    }
+    if s.type == "Return" {
+      if s.value != null {
+        if hasCallTo(s.value funcName) { return true }
+      }
+    }
+    if s.type == "ClassDef" {
+      for m in s.body {
+        if hasRecursiveCall(m.body funcName) { return true }
+      }
+    }
+  }
+  return false
+}
+
+fn markMemoFuncs(ast) {
+  gMemoFuncs = set()
+  for stmt in ast.body {
+    if stmt.type == "FunctionDef" {
+      if stmt.name == "main" { continue }
+      if len(stmt.params) == 0 { continue }
+      if !hasSideEffectStmt(stmt.body) {
+        if hasRecursiveCall(stmt.body stmt.name) {
+          setAdd(gMemoFuncs stmt.name)
+        }
+      }
+    }
+  }
+}
+
+fn genMemoWrapper(funcNode) {
+  name = funcNode.name
+  implName = name + "_memo_impl"
+  params = funcNode.params
+
+  if len(params) == 0 {
+    return gCompileFunc(funcNode)
+  }
+
+  allInt = true
+  for p in params {
+    if !setHas(gIntVars p) {
+      allInt = false
+    }
+  }
+  if !allInt {
+    return gCompileFunc(funcNode)
+  }
+
+  implFuncNode = { type: funcNode.type name: implName params: params body: funcNode.body }
+  implCode = gCompileFunc(implFuncNode)
+  implCode = "static " + implCode
+
+  paramDecls = []
+  for p in params {
+    push(paramDecls "SlValue " + p)
+  }
+
+  wrapperHeader = "SlValue " + name + "(" + join(paramDecls ", ") + ")"
+  if len(params) == 0 {
+    wrapperHeader = "SlValue " + name + "(void)"
+  }
+
+  cacheVar = name + "_cache"
+  keyVar = name + "_key"
+
+  keyFormat = ""
+  keyFmtArgs = ""
+  for p in params {
+    if keyFormat != "" { keyFormat = keyFormat + "_" }
+    keyFormat = keyFormat + "%lld"
+    if keyFmtArgs != "" { keyFmtArgs = keyFmtArgs + ", " }
+    keyFmtArgs = keyFmtArgs + "sl_to_int(" + p + ")"
+  }
+
+  implCallArgs = ""
+  for p in params {
+    if implCallArgs != "" { implCallArgs = implCallArgs + ", " }
+    implCallArgs = implCallArgs + p
+  }
+
+  wrapperCode = wrapperHeader + " {\n"
+  wrapperCode = wrapperCode + "  static SlMap* " + cacheVar + " = NULL;\n"
+  wrapperCode = wrapperCode + "  if (!" + cacheVar + ") " + cacheVar + " = sl_map_new(64);\n"
+  wrapperCode = wrapperCode + "  char " + keyVar + "[128];\n"
+  wrapperCode = wrapperCode + "  snprintf(" + keyVar + ", sizeof(" + keyVar + "), \"" + keyFormat + "\", " + keyFmtArgs + ");\n"
+  wrapperCode = wrapperCode + "  SlValue " + name + "_cached = sl_map_get(" + cacheVar + ", " + keyVar + ", sl_null());\n"
+  wrapperCode = wrapperCode + "  if (" + name + "_cached.type != SL_NULL) return " + name + "_cached;\n"
+  wrapperCode = wrapperCode + "  SlValue " + name + "_result = " + implName + "(" + implCallArgs + ");\n"
+  wrapperCode = wrapperCode + "  sl_map_set(" + cacheVar + ", strdup(" + keyVar + "), " + name + "_result);\n"
+  wrapperCode = wrapperCode + "  return " + name + "_result;\n"
+  wrapperCode = wrapperCode + "}\n\n"
+
+  return implCode + wrapperCode
+}
+
+fn gCompileClass(cNode) {
+  name = cNode.name
+  code = ""
+  savedDeclared = set()
+  for k in setToArray(gDeclaredVars) { setAdd(savedDeclared k) }
+
+  savedParamVars = gParamVars
+  gParamVars = set()
+  setAdd(gParamVars "__self")
+
+  if cNode.superClass != null {
+    code = code + "SlValue " + name + "_super(SlValue __self) {\n"
+    code = code + "  return " + cNode.superClass + "();\n"
+    code = code + "}\n\n"
+  }
+
+  bodyVars = set()
+  for m in cNode.body {
+    savedP = gParamVars
+    gParamVars = set()
+    setAdd(gParamVars "__self")
+    for p in m.params {
+      setAdd(gParamVars p)
+    }
+    gCollectVars(m.body bodyVars)
+    gParamVars = savedP
+  }
+  for k in setToArray(bodyVars) {
+    setAdd(gDeclaredVars k)
+  }
+
+  constructorParams = []
+  for m in cNode.body {
+    if m.name == "init" {
+      constructorParams = m.params
+    }
+  }
+
+  paramDecls = []
+  for p in constructorParams {
+    push(paramDecls "SlValue " + p)
+  }
+  header = "SlValue " + name + "(" + join(paramDecls ", ") + ")"
+  if len(constructorParams) == 0 {
+    header = "SlValue " + name + "(void)"
+  }
+
+  code = code + header + " {\n"
+  code = code + "  SlValue __self = sl_v_map_new();\n"
+
+  if cNode.superClass != null {
+    code = code + "  SlValue __super = " + cNode.superClass + "();\n"
+  }
+
+  for k in setToArray(bodyVars) {
+    if setHas(gIntVars k) {
+      code = code + "  long long " + k + ";\n"
+    } else {
+      code = code + "  SlValue " + k + ";\n"
+    }
+  }
+
+  for m in cNode.body {
+    if m.name != "init" {
+      code = code + "  sl_v_mapSet(__self, sl_str(\"" + m.name + "\"), sl_v_closure_" + name + "_" + m.name + ");\n"
+    }
+  }
+
+  for m in cNode.body {
+    if m.name == "init" {
+      savedP2 = gParamVars
+      gParamVars = set()
+      setAdd(gParamVars "__self")
+      for p in m.params {
+        setAdd(gParamVars p)
+      }
+      for s in m.body {
+        code = code + gCStmt(s 1)
+      }
+      gParamVars = savedP2
+    }
+  }
+
+  for m in cNode.body {
+    if m.name != "init" {
+      mParamDecls = []
+      push(mParamDecls "SlValue __self")
+      for p in m.params {
+        push(mParamDecls "SlValue " + p)
+      }
+      mHeader = "SlValue sl_v_closure_" + name + "_" + m.name + "(" + join(mParamDecls ", ") + ")"
+
+      savedP3 = gParamVars
+      savedD3 = gDeclaredVars
+      gParamVars = set()
+      gDeclaredVars = set()
+      setAdd(gParamVars "__self")
+      for p in m.params {
+        setAdd(gParamVars p)
+        setAdd(gDeclaredVars p)
+      }
+
+      mLocalVars = set()
+      gCollectVars(m.body mLocalVars)
+      for k2 in setToArray(mLocalVars) {
+        setAdd(gDeclaredVars k2)
+      }
+
+      mVarDecls = ""
+      for k2 in setToArray(mLocalVars) {
+        if setHas(gIntVars k2) {
+          mVarDecls = mVarDecls + "  long long " + k2 + ";\n"
+        } else {
+          mVarDecls = mVarDecls + "  SlValue " + k2 + ";\n"
+        }
+      }
+
+      mBodyCode = ""
+      for s in m.body {
+        mBodyCode = mBodyCode + gCStmt(s 1)
+      }
+
+      code = code + mHeader + " {\n" + mVarDecls + mBodyCode + "}\n\n"
+
+      gParamVars = savedP3
+      gDeclaredVars = savedD3
+    }
+  }
+
+  code = code + "  return __self;\n"
+  code = code + "}\n\n"
+
+  gDeclaredVars = savedDeclared
+  gParamVars = savedParamVars
+
+  return code
+}
+
+fn gCompileFunc(funcNode) {
+  name = funcNode.name
+  params = funcNode.params
+  body = funcNode.body
+
+  paramDecls = []
+  for p in params {
+    push(paramDecls "SlValue " + p)
+  }
+
+  header = "SlValue " + name + "(" + join(paramDecls ", ") + ")"
+  if len(params) == 0 {
+    header = "SlValue " + name + "(void)"
+  }
+
+  savedDeclared = gDeclaredVars
+  gDeclaredVars = set()
+  for p in params {
+    setAdd(gDeclaredVars p)
+  }
+
+  savedParamVars = gParamVars
+  gParamVars = set()
+  gIntParamVars = set()
+  for p in params {
+    setAdd(gParamVars p)
+  }
+
+  localVars = set()
+  gCollectVars(body localVars)
+  for k in setToArray(localVars) {
+    if k == "pTokens" || k == "pPos" || k == "gKeywordsMap" || k == "gFuncReturns" || k == "gUserFuncs" || k == "gDeclaredVars" || k == "gMemoFuncs" || k == "gIntVars" || k == "gLetVars" || k == "gParamVars" || k == "gGlobalVars" {
+      continue
+    }
+    setAdd(gDeclaredVars k)
+  }
+
+  varDecls = ""
+  for k in setToArray(localVars) {
+    if k == "pTokens" || k == "pPos" || k == "gKeywordsMap" || k == "gFuncReturns" || k == "gUserFuncs" || k == "gDeclaredVars" || k == "gMemoFuncs" || k == "gIntVars" || k == "gLetVars" || k == "gParamVars" || k == "gGlobalVars" {
+      continue
+    }
+    if setHas(gIntVars k) {
+      varDecls = varDecls + "  long long " + k + ";\n"
+    } else {
+      varDecls = varDecls + "  SlValue " + k + ";\n"
+    }
+  }
+
+  bodyCode = ""
+  for s in body {
+    bodyCode = bodyCode + gCStmt(s 1)
+  }
+
+  code = header + " {\n" + varDecls + bodyCode + "}\n\n"
+
+  gDeclaredVars = savedDeclared
+  gParamVars = savedParamVars
+  gIntParamVars = set()
+  return code
+}
+
+fn compileToC(source subsystem) {
+  initKeywords()
+  tokens = tokenize(source)
+  pTokens = tokens
+  pPos = 0
+  gLetVars = set()
+  ast = parseProgram()
+
+  markMemoFuncs(ast)
+
+  inferIntTypes(ast)
+
+  gFuncReturns = map()
+  gUserFuncs = set()
+  gDeclaredVars = set()
+  gGlobalVars = set()
+  for stmt in ast.body {
+    if stmt.type == "Assignment" {
+      setAdd(gGlobalVars stmt.name)
+      setAdd(gDeclaredVars stmt.name)
+    }
+    if stmt.type == "LetDecl" {
+      setAdd(gGlobalVars stmt.name)
+      setAdd(gDeclaredVars stmt.name)
+    }
+  }
+
+  code = "#include <stdio.h>\n#include <string.h>\n#include \"sl_runtime.h\"\nvoid exit(int);\nlong long llabs(long long);\ndouble sqrt(double);\ndouble floor(double);\ndouble ceil(double);\n"
+  if subsystem == "windows" {
+    code = code + "#include <windows.h>\n"
+    code = code + "#include \"sl_win32_public.h\"\n"
+  }
+  code = code + "\n"
+  code = code + "#define abs sl_abs\n"
+  code = code + "\n"
+
+  funcNames = []
+  funcArities = map()
+  for stmt in ast.body {
+    if stmt.type == "FunctionDef" {
+      setAdd(gUserFuncs stmt.name)
+      push(funcNames stmt.name)
+      mapSet(funcArities stmt.name len(stmt.params))
+    }
+    if stmt.type == "ClassDef" {
+      setAdd(gUserFuncs stmt.name)
+      push(funcNames stmt.name)
+      mapSet(funcArities stmt.name 0)
+    }
+  }
+
+  for name in funcNames {
+    if name == "main" { continue }
+    arity = mapGet(funcArities name)
+    if arity == 0 {
+      code = code + "SlValue " + name + "(void);\n"
+    } else {
+      params = ""
+      j = 0
+      while j < arity {
+        if j > 0 { params = params + ", " }
+        params = params + "SlValue"
+        j = j + 1
+      }
+      code = code + "SlValue " + name + "(" + params + ");\n"
+    }
+  }
+
+  for name in funcNames {
+    if name == "main" { continue }
+    if setHas(gMemoFuncs name) {
+      arity = mapGet(funcArities name)
+      implName = name + "_memo_impl"
+      if arity == 0 {
+        code = code + "static SlValue " + implName + "(void);\n"
+      } else {
+        params = ""
+        j = 0
+        while j < arity {
+          if j > 0 { params = params + ", " }
+          params = params + "SlValue"
+          j = j + 1
+        }
+        code = code + "static SlValue " + implName + "(" + params + ");\n"
+      }
+    }
+  }
+  code = code + "\n"
+
+  globalVars = set()
+  for stmt in ast.body {
+    if stmt.type == "Assignment" {
+      setAdd(globalVars stmt.name)
+      setAdd(gDeclaredVars stmt.name)
+    }
+  }
+  for k in setToArray(globalVars) {
+    if setHas(gIntVars k) {
+      code = code + "long long " + k + ";\n"
+    } else {
+      code = code + "SlValue " + k + ";\n"
+    }
+  }
+  code = code + "\n"
+
+  mainCode = ""
+  mainBodyStmts = []
+  for stmt in ast.body {
+    if stmt.type == "FunctionDef" {
+      if stmt.name == "main" {
+        for s in stmt.body {
+          push(mainBodyStmts s)
+        }
+      } else {
+        if setHas(gMemoFuncs stmt.name) {
+          code = code + genMemoWrapper(stmt)
+        } else {
+          code = code + gCompileFunc(stmt)
+        }
+      }
+    } else if stmt.type == "ClassDef" {
+      code = code + gCompileClass(stmt)
+    } else {
+      push(mainBodyStmts stmt)
+    }
+  }
+
+  gParamVars = set()
+
+  mainLocalVars = set()
+  gCollectVars(mainBodyStmts mainLocalVars)
+  for k in setToArray(mainLocalVars) {
+    if !setHas(globalVars k) {
+      setAdd(gDeclaredVars k)
+    }
+  }
+
+  mainVarDecls = ""
+  for k in setToArray(mainLocalVars) {
+    if !setHas(globalVars k) {
+      if setHas(gIntVars k) {
+        mainVarDecls = mainVarDecls + "  long long " + k + ";\n"
+      } else {
+        mainVarDecls = mainVarDecls + "  SlValue " + k + ";\n"
+      }
+    }
+  }
+
+  for s in mainBodyStmts {
+    mainCode = mainCode + gCStmt(s 1)
+  }
+
+  if subsystem == "windows" {
+    code = code + "int sl_user_main(int argc, char** argv) {\n"
+    code = code + "  AttachConsole((unsigned long)-1); freopen(\"CONOUT$\", \"w\", stdout); freopen(\"CONOUT$\", \"a\", stderr); setvbuf(stdout, NULL, _IONBF, 0); setvbuf(stderr, NULL, _IONBF, 0);\n"
+  } else {
+    code = code + "int main(int argc, char** argv) {\n"
+  }
+  code = code + mainVarDecls + mainCode
+  code = code + "  return 0;\n}\n"
+
+  return code
+}
+
+// ============================================================
+// CLI Wrapper
+// ============================================================
+
+argsList = args()
+subsystem = "console"
+filteredArgs = []
+i = 0
+while i < len(argsList) {
+  if argsList[i] == "--subsystem" && i + 1 < len(argsList) {
+    subsystem = argsList[i + 1]
+    i = i + 2
+    continue
+  }
+  push(filteredArgs argsList[i])
+  i = i + 1
+}
+if len(filteredArgs) < 2 {
+  print("Usage: clc_cli [--subsystem windows] <input.seed> [output.c]")
+  exit(1)
+}
+sourcePath = filteredArgs[1]
+outputPath = "out.c"
+if len(filteredArgs) >= 3 {
+  outputPath = filteredArgs[2]
+}
+
+source = readFile(sourcePath)
+result = compileToC(source subsystem)
+writeFile(outputPath result)
+print("Compiled " + sourcePath + " -> " + outputPath + " (" + toString(len(source)) + " bytes -> " + toString(len(result)) + " bytes)")

@@ -1,0 +1,1965 @@
+snake = { running: false size: 16 body: [] dir: { x: 1 y: 0 } food: { x: 5 y: 5 type: "normal" } score: 0 parts: [] multiplier: 1 power: null powerTimer: 0 obstacles: [] aiSnake: { body: [] dir: { x: -1 y: 0 } alive: true } timeLimit: 60 timeLeft: 60 combo: 0 comboTimer: 0 cols: 32 rows: 20 }
+
+fn snakeReset() {
+  snake.body = [{ x: 7 y: 8 } { x: 6 y: 8 } { x: 5 y: 8 }]
+  snake.dir = { x: 1 y: 0 }
+  snake.food = { x: 14 y: 9 type: "normal" }
+  snake.score = 0
+  snake.parts = []
+  snake.multiplier = 1
+  snake.power = null
+  snake.powerTimer = 0
+  snake.obstacles = []
+  snake.timeLeft = snake.timeLimit
+  snake.combo = 0
+  snake.comboTimer = 0
+  snake.aiSnake = { body: [{ x: 25 y: 8 } { x: 26 y: 8 } { x: 27 y: 8 }] dir: { x: -1 y: 0 } alive: true }
+  snake.running = true
+  
+  for (i = 0; i < 5; i = i + 1) {
+    snake.obstacles.push({ x: floor(random() * 28) y: floor(random() * 16) })
+  }
+}
+
+fn snakeBurst(x y c) {
+  for (i = 0; i < 22; i = i + 1) {
+    snake.parts.push({ x: x y: y vx: random() * 4 - 2 vy: random() * 4 - 2 life: random() * 20 + 20 c: c })
+  }
+}
+
+fn snakeSpawnFood() {
+  ok = false
+  fx = 0
+  fy = 0
+  ftype = "normal"
+  
+  while !ok {
+    fx = floor(random() * snake.cols)
+    fy = floor(random() * snake.rows)
+    ok = true
+    
+    for (i = 0; i < len(snake.body); i = i + 1) {
+      p = snake.body[i]
+      if p.x == fx && p.y == fy {
+        ok = false
+      }
+    }
+    
+    for (j = 0; j < len(snake.obstacles); j = j + 1) {
+      o = snake.obstacles[j]
+      if o.x == fx && o.y == fy {
+        ok = false
+      }
+    }
+  }
+  
+  rand = random()
+  if rand < 0.1 {
+    ftype = "gold"
+  } else if rand < 0.18 {
+    ftype = "blue"
+  } else if rand < 0.25 {
+    ftype = "red"
+  }
+  
+  snake.food = { x: fx y: fy type: ftype }
+}
+
+fn snakeStep() {
+  if !snake.running {
+    return { win: false hx: 0 hy: 0 }
+  }
+  
+  snake.timeLeft = snake.timeLeft - 0.1
+  
+  if snake.timeLeft <= 0 {
+    snake.running = false
+    return { win: false hx: snake.body[0].x hy: snake.body[0].y }
+  }
+  
+  if snake.comboTimer > 0 {
+    snake.comboTimer = snake.comboTimer - 1
+    if snake.comboTimer <= 0 {
+      snake.combo = 0
+    }
+  }
+  
+  if snake.powerTimer > 0 {
+    snake.powerTimer = snake.powerTimer - 1
+    if snake.powerTimer <= 0 {
+      snake.power = null
+      snake.multiplier = 1
+    }
+  }
+  
+  if snake.aiSnake.alive && random() < 0.15 {
+    aiHead = snake.aiSnake.body[0]
+    food = snake.food
+    
+    bestDir = snake.aiSnake.dir
+    minDist = 999999
+    
+    dirs = [{ x: 1 y: 0 } { x: -1 y: 0 } { x: 0 y: 1 } { x: 0 y: -1 }]
+    
+    for (di = 0; di < 4; di = di + 1) {
+      d = dirs[di]
+      
+      if d.x == -snake.aiSnake.dir.x && d.y == -snake.aiSnake.dir.y {
+        continue
+      }
+      
+      nx = aiHead.x + d.x
+      ny = aiHead.y + d.y
+      
+      if nx < 0 || nx >= snake.cols || ny < 0 || ny >= snake.rows {
+        continue
+      }
+      
+      valid = true
+      for (bi = 1; bi < len(snake.aiSnake.body); bi = bi + 1) {
+        bp = snake.aiSnake.body[bi]
+        if bp.x == nx && bp.y == ny {
+          valid = false
+        }
+      }
+      
+      for (oi = 0; oi < len(snake.obstacles); oi = oi + 1) {
+        ob = snake.obstacles[oi]
+        if ob.x == nx && ob.y == ny {
+          valid = false
+        }
+      }
+      
+      if valid {
+        dist = abs(nx - food.x) + abs(ny - food.y)
+        if dist < minDist {
+          minDist = dist
+          bestDir = d
+        }
+      }
+    }
+    
+    snake.aiSnake.dir = bestDir
+  }
+  
+  if snake.aiSnake.alive {
+    aiHead = { x: snake.aiSnake.body[0].x + snake.aiSnake.dir.x y: snake.aiSnake.body[0].y + snake.aiSnake.dir.y }
+    
+    if aiHead.x < 0 || aiHead.x >= snake.cols || aiHead.y < 0 || aiHead.y >= snake.rows {
+      snake.aiSnake.alive = false
+    } else {
+      valid = true
+      for (abi = 1; abi < len(snake.aiSnake.body); abi = abi + 1) {
+        abp = snake.aiSnake.body[abi]
+        if abp.x == aiHead.x && abp.y == aiHead.y {
+          valid = false
+        }
+      }
+      
+      for (aoi = 0; aoi < len(snake.obstacles); aoi = aoi + 1) {
+        aob = snake.obstacles[aoi]
+        if aob.x == aiHead.x && aob.y == aiHead.y {
+          valid = false
+        }
+      }
+      
+      if !valid {
+        snake.aiSnake.alive = false
+      } else {
+        snake.aiSnake.body.unshift(aiHead)
+        
+        if aiHead.x == snake.food.x && aiHead.y == snake.food.y {
+          snakeSpawnFood()
+        } else {
+          snake.aiSnake.body.pop()
+        }
+      }
+    }
+  }
+  
+  head = { x: snake.body[0].x + snake.dir.x y: snake.body[0].y + snake.dir.y }
+  
+  if snake.power != "blue" {
+    if head.x < 0 || head.y < 0 || head.x >= snake.cols || head.y >= snake.rows {
+      snake.running = false
+      cx = head.x
+      cy = head.y
+      if cx < 0 { cx = 0 }
+      if cx >= snake.cols { cx = snake.cols - 1 }
+      if cy < 0 { cy = 0 }
+      if cy >= snake.rows { cy = snake.rows - 1 }
+      return { win: false hx: cx hy: cy }
+    }
+  } else {
+    if head.x < 0 { head.x = snake.cols - 1 }
+    if head.x >= snake.cols { head.x = 0 }
+    if head.y < 0 { head.y = snake.rows - 1 }
+    if head.y >= snake.rows { head.y = 0 }
+  }
+  
+  for (ci = 0; ci < len(snake.body); ci = ci + 1) {
+    cp = snake.body[ci]
+    if cp.x == head.x && cp.y == head.y {
+      snake.running = false
+      return { win: false hx: head.x hy: head.y }
+    }
+  }
+  
+  if snake.aiSnake.alive {
+    for (aii = 0; aii < len(snake.aiSnake.body); aii = aii + 1) {
+      aip = snake.aiSnake.body[aii]
+      if aip.x == head.x && aip.y == head.y {
+        snake.running = false
+        return { win: false hx: head.x hy: head.y }
+      }
+    }
+  }
+  
+  for (oi2 = 0; oi2 < len(snake.obstacles); oi2 = oi2 + 1) {
+    ob2 = snake.obstacles[oi2]
+    if ob2.x == head.x && ob2.y == head.y {
+      snake.running = false
+      return { win: false hx: head.x hy: head.y }
+    }
+  }
+  
+  snake.body.unshift(head)
+  
+  if head.x == snake.food.x && head.y == snake.food.y {
+    snake.combo = snake.combo + 1
+    snake.comboTimer = 50
+    
+    points = 1 + floor(snake.combo / 3)
+    
+    if snake.food.type == "gold" {
+      points = 2 + floor(snake.combo / 2)
+      snake.multiplier = min(snake.multiplier + 1 5)
+    } else if snake.food.type == "blue" {
+      snake.power = "blue"
+      snake.powerTimer = 100
+    } else if snake.food.type == "red" {
+      snake.power = "red"
+      snake.powerTimer = 50
+    }
+    
+    snake.score = snake.score + points * snake.multiplier
+    snakeSpawnFood()
+    
+    if snake.score >= 15 {
+      snake.running = false
+      return { win: true hx: head.x hy: head.y }
+    }
+  } else {
+    snake.body.pop()
+  }
+  
+  return { win: null hx: 0 hy: 0 }
+}
+
+fn snakeSetDir(x y) {
+  if x != -snake.dir.x || y != -snake.dir.y {
+    snake.dir = { x: x y: y }
+  }
+}
+
+shoot = { running: false player: { x: 260 y: 280 w: 40 h: 20 } bullets: [] enemies: [] items: [] parts: [] kills: 0 lives: 3 missed: 0 power: null powerTimer: 0 combo: 0 comboTimer: 0 wingmen: [] charge: 0 charging: false fireRate: 1 lastShot: 0 }
+
+fn shootReset() {
+  shoot.player = { x: 260 y: 280 w: 40 h: 20 }
+  shoot.bullets = []
+  shoot.enemies = []
+  shoot.items = []
+  shoot.parts = []
+  shoot.kills = 0
+  shoot.lives = 3
+  shoot.missed = 0
+  shoot.power = null
+  shoot.powerTimer = 0
+  shoot.combo = 0
+  shoot.comboTimer = 0
+  shoot.wingmen = []
+  shoot.charge = 0
+  shoot.charging = false
+  shoot.fireRate = 1
+  shoot.lastShot = 0
+  shoot.running = true
+}
+
+fn shootBurst(x y c count) {
+  for (i = 0; i < count; i = i + 1) {
+    shoot.parts.push({ x: x y: y vx: random() * 4 - 2 vy: random() * 4 - 2 life: random() * 20 + 20 c: c })
+  }
+}
+
+fn shootSpawnEnemy() {
+  if random() < 0.03 {
+    type = "normal"
+    if random() < 0.2 { type = "fast" }
+    if random() < 0.1 { type = "big" }
+    
+    shoot.enemies.push({
+      x: random() * 480 + 20
+      y: -20
+      w: type == "big" ? 40 : 20
+      h: type == "big" ? 40 : 20
+      v: type == "fast" ? 3 : 1.5
+      hp: type == "big" ? 3 : 1
+      type: type
+    })
+  }
+}
+
+fn shootSpawnItem() {
+  if random() < 0.005 {
+    types = ["shield" "power" "spread" "wingman"]
+    shoot.items.push({
+      x: random() * 480 + 20
+      y: -15
+      type: types[floor(random() * 4)]
+      v: 1.5
+    })
+  }
+}
+
+fn shootStep() {
+  if !shoot.running {
+    return { gameOver: false victory: false }
+  }
+  
+  if shoot.comboTimer > 0 {
+    shoot.comboTimer = shoot.comboTimer - 1
+    if shoot.comboTimer <= 0 {
+      shoot.combo = 0
+    }
+  }
+  
+  if shoot.powerTimer > 0 {
+    shoot.powerTimer = shoot.powerTimer - 1
+    if shoot.powerTimer <= 0 {
+      shoot.power = null
+      shoot.fireRate = 1
+    }
+  }
+  
+  if shoot.charging {
+    shoot.charge = min(shoot.charge + 2 100)
+  }
+  
+  shootSpawnEnemy()
+  shootSpawnItem()
+  
+  for (i = len(shoot.bullets) - 1; i >= 0; i = i - 1) {
+    b = shoot.bullets[i]
+    b.y = b.y - 8
+    if b.y < -10 {
+      shoot.bullets.splice(i 1)
+    }
+  }
+  
+  for (j = len(shoot.enemies) - 1; j >= 0; j = j - 1) {
+    e = shoot.enemies[j]
+    e.y = e.y + e.v
+    
+    if e.y > 340 {
+      shoot.enemies.splice(j 1)
+      shoot.missed = shoot.missed + 1
+      shoot.combo = 0
+      
+      if shoot.missed >= 10 {
+        shoot.running = false
+        return { gameOver: true victory: false }
+      }
+      continue
+    }
+    
+    for (bi = len(shoot.bullets) - 1; bi >= 0; bi = bi - 1) {
+      bu = shoot.bullets[bi]
+      if abs(bu.x - e.x) < e.w/2 + 3 && abs(bu.y - e.y) < e.h/2 + 3 {
+        e.hp = e.hp - 1
+        shoot.bullets.splice(bi 1)
+        
+        if e.hp <= 0 {
+          shootBurst(e.x e.y "#ff6b8a" 15)
+          shoot.enemies.splice(j 1)
+          shoot.kills = shoot.kills + 1
+          shoot.combo = shoot.combo + 1
+          shoot.comboTimer = 60
+          
+          if shoot.kills >= 30 {
+            shoot.running = false
+            return { gameOver: false victory: true }
+          }
+        }
+        break
+      }
+    }
+  }
+  
+  for (ii = len(shoot.items) - 1; ii >= 0; ii = ii - 1) {
+    it = shoot.items[ii]
+    it.y = it.y + it.v
+    
+    if it.y > 340 {
+      shoot.items.splice(ii 1)
+      continue
+    }
+    
+    if abs(shoot.player.x - it.x) < 30 && abs(shoot.player.y - it.y) < 30 {
+      shoot.items.splice(ii 1)
+      
+      if it.type == "shield" {
+        shoot.lives = min(shoot.lives + 1 5)
+      } else if it.type == "power" {
+        shoot.power = "power"
+        shoot.powerTimer = 300
+        shoot.fireRate = 3
+      } else if it.type == "spread" {
+        shoot.power = "spread"
+        shoot.powerTimer = 200
+      } else if it.type == "wingman" {
+        if len(shoot.wingmen) < 2 {
+          shoot.wingmen.push({ x: shoot.player.x y: shoot.player.y offset: len(shoot.wingmen) == 0 ? -30 : 30 })
+        }
+      }
+      
+      shootBurst(it.x it.y "#22d3a4" 10)
+    }
+  }
+  
+  for (pi = len(shoot.parts) - 1; pi >= 0; pi = pi - 1) {
+    p = shoot.parts[pi]
+    p.x = p.x + p.vx
+    p.y = p.y + p.vy
+    p.vy = p.vy + 0.05
+    p.life = p.life - 1
+    if p.life <= 0 {
+      shoot.parts.splice(pi 1)
+    }
+  }
+  
+  return { gameOver: false victory: false }
+}
+
+fn shootMovePlayer(dx) {
+  shoot.player.x = max(20 min(500 shoot.player.x + dx * 6))
+}
+
+fn shootFire() {
+  if shoot.power == "spread" {
+    for (i = -1; i <= 1; i = i + 1) {
+      shoot.bullets.push({ x: shoot.player.x + i * 10 y: shoot.player.y - 10 vx: i * 2 vy: -8 })
+    }
+  } else {
+    shoot.bullets.push({ x: shoot.player.x y: shoot.player.y - 10 vx: 0 vy: -8 })
+  }
+  
+  for (wi = 0; wi < len(shoot.wingmen); wi = wi + 1) {
+    w = shoot.wingmen[wi]
+    shoot.bullets.push({ x: w.x y: w.y - 10 vx: 0 vy: -8 })
+  }
+}
+
+fn shootReleaseCharge() {
+  if shoot.charge >= 100 {
+    for (i = 0; i < 20; i = i + 1) {
+      shoot.bullets.push({
+        x: shoot.player.x + random() * 40 - 20
+        y: shoot.player.y - 10
+        vx: random() * 2 - 1
+        vy: -10 - random() * 5
+      })
+    }
+    shoot.charge = 0
+  }
+}
+
+breakout = { running: false paddle: { x: 230 w: 60 } ball: { x: 260 y: 200 vx: 3 vy: -3 r: 6 } bricks: [] parts: [] score: 0 lives: 3 level: 1 combo: 0 power: null powerTimer: 0 laserTimer: 0 balls: [] }
+
+fn breakoutReset() {
+  breakout.paddle = { x: 230 w: 60 }
+  breakout.ball = { x: 260 y: 200 vx: 3 vy: -3 r: 6 }
+  breakout.bricks = []
+  breakout.parts = []
+  breakout.score = 0
+  breakout.lives = 3
+  breakout.level = 1
+  breakout.combo = 0
+  breakout.power = null
+  breakout.powerTimer = 0
+  breakout.laserTimer = 0
+  breakout.balls = []
+  breakout.running = true
+  
+  breakoutGenerateLevel()
+}
+
+fn breakoutGenerateLevel() {
+  breakout.bricks = []
+  rows = 4 + breakout.level
+  
+  for (r = 0; r < rows; r = r + 1) {
+    for (c = 0; c < 8; c = c + 1) {
+      hp = 1
+      if r < 2 && random() < 0.3 { hp = 2 }
+      if r == 0 && random() < 0.1 { hp = 3 }
+      
+      breakout.bricks.push({
+        x: 20 + c * 62
+        y: 30 + r * 22
+        w: 58
+        h: 18
+        hp: hp
+        maxHp: hp
+        type: hp == 3 ? "boss" : "normal"
+      })
+    }
+  }
+}
+
+fn breakoutBurst(x y c count) {
+  for (i = 0; i < count; i = i + 1) {
+    breakout.parts.push({ x: x y: y vx: random() * 4 - 2 vy: random() * 4 - 2 life: random() * 20 + 20 c: c })
+  }
+}
+
+fn breakoutStep() {
+  if !breakout.running {
+    return { gameOver: false victory: false }
+  }
+  
+  if breakout.powerTimer > 0 {
+    breakout.powerTimer = breakout.powerTimer - 1
+    if breakout.powerTimer <= 0 {
+      breakout.power = null
+      breakout.paddle.w = 60
+    }
+  }
+  
+  if breakout.laserTimer > 0 {
+    breakout.laserTimer = breakout.laserTimer - 1
+  }
+  
+  ball = breakout.ball
+  ball.x = ball.x + ball.vx
+  ball.y = ball.y + ball.vy
+  
+  if ball.x < ball.r || ball.x > 520 - ball.r {
+    ball.vx = -ball.vx
+    ball.x = max(ball.r min(520 - ball.r ball.x))
+  }
+  if ball.y < ball.r {
+    ball.vy = -ball.vy
+    ball.y = ball.r
+  }
+  
+  if ball.y > 320 {
+    breakout.lives = breakout.lives - 1
+    breakout.combo = 0
+    
+    if breakout.lives <= 0 {
+      breakout.running = false
+      return { gameOver: true victory: false }
+    }
+    
+    ball.x = 260
+    ball.y = 200
+    ball.vx = 3
+    ball.vy = -3
+  }
+  
+  if ball.y > 290 && ball.y < 300 && ball.x > breakout.paddle.x - ball.r && ball.x < breakout.paddle.x + breakout.paddle.w + ball.r {
+    ball.vy = -abs(ball.vy)
+    hitPos = (ball.x - breakout.paddle.x) / breakout.paddle.w
+    ball.vx = (hitPos - 0.5) * 8
+    breakout.combo = breakout.combo + 1
+  }
+  
+  for (i = len(breakout.bricks) - 1; i >= 0; i = i - 1) {
+    br = breakout.bricks[i]
+    
+    if ball.x > br.x - ball.r && ball.x < br.x + br.w + ball.r && ball.y > br.y - ball.r && ball.y < br.y + br.h + ball.r {
+      ball.vy = -ball.vy
+      br.hp = br.hp - 1
+      
+      if br.hp <= 0 {
+        breakoutBurst(br.x + br.w/2 br.y + br.h/2 "#ff6b8a" 10)
+        breakout.bricks.splice(i 1)
+        breakout.score = breakout.score + 10 * breakout.combo
+        
+        if random() < 0.15 {
+          types = ["expand" "multi" "laser"]
+          breakout.power = types[floor(random() * 3)]
+          breakout.powerTimer = 300
+          
+          if breakout.power == "expand" {
+            breakout.paddle.w = 90
+          }
+        }
+      }
+      
+      if len(breakout.bricks) == 0 {
+        breakout.level = breakout.level + 1
+        if breakout.level > 5 {
+          breakout.running = false
+          return { gameOver: false victory: true }
+        }
+        breakoutGenerateLevel()
+      }
+      break
+    }
+  }
+  
+  for (pi = len(breakout.parts) - 1; pi >= 0; pi = pi - 1) {
+    p = breakout.parts[pi]
+    p.x = p.x + p.vx
+    p.y = p.y + p.vy
+    p.vy = p.vy + 0.05
+    p.life = p.life - 1
+    if p.life <= 0 {
+      breakout.parts.splice(pi 1)
+    }
+  }
+  
+  return { gameOver: false victory: false }
+}
+
+fn breakoutMovePaddle(dx) {
+  breakout.paddle.x = max(0 min(520 - breakout.paddle.w breakout.paddle.x + dx * 8))
+}
+
+dodge = { running: false player: { x: 260 y: 280 w: 16 h: 16 } obstacles: [] items: [] parts: [] stars: [] time: 0 level: 1 dodged: 0 score: 0 shield: 0 invincible: false invincibleTimer: 0 dashDir: { x: 0 y: 0 } dashDuration: 0 dashCooldown: 0 slowMotion: false slowMotionTimer: 0 slowMotionCooldown: 0 keys: {} }
+
+fn dodgeReset() {
+  dodge.player = { x: 260 y: 280 w: 16 h: 16 }
+  dodge.obstacles = []
+  dodge.items = []
+  dodge.parts = []
+  dodge.stars = []
+  dodge.time = 0
+  dodge.level = 1
+  dodge.dodged = 0
+  dodge.score = 0
+  dodge.shield = 0
+  dodge.invincible = false
+  dodge.invincibleTimer = 0
+  dodge.dashDir = { x: 0 y: 0 }
+  dodge.dashDuration = 0
+  dodge.dashCooldown = 0
+  dodge.slowMotion = false
+  dodge.slowMotionTimer = 0
+  dodge.slowMotionCooldown = 0
+  dodge.running = true
+  
+  for (i = 0; i < 50; i = i + 1) {
+    dodge.stars.push({ x: random() * 520 y: random() * 320 v: random() * 1 + 0.5 s: random() * 2 + 1 })
+  }
+}
+
+fn dodgeBurst(x y c count) {
+  for (i = 0; i < count; i = i + 1) {
+    dodge.parts.push({ x: x y: y vx: random() * 4 - 2 vy: random() * 4 - 2 life: random() * 20 + 20 c: c })
+  }
+}
+
+fn dodgeStep() {
+  if !dodge.running {
+    return { gameOver: false victory: false }
+  }
+  
+  if dodge.invincibleTimer > 0 {
+    dodge.invincibleTimer = dodge.invincibleTimer - 1
+    if dodge.invincibleTimer <= 0 {
+      dodge.invincible = false
+    }
+  }
+  
+  if dodge.dashCooldown > 0 {
+    dodge.dashCooldown = dodge.dashCooldown - 1
+  }
+  
+  if dodge.dashDuration > 0 {
+    dodge.dashDuration = dodge.dashDuration - 1
+    dodge.player.x = dodge.player.x + dodge.dashDir.x * 15
+    dodge.player.y = dodge.player.y + dodge.dashDir.y * 15
+    if dodge.dashDuration <= 0 {
+      dodge.invincible = false
+    }
+  }
+  
+  if dodge.slowMotionTimer > 0 {
+    dodge.slowMotionTimer = dodge.slowMotionTimer - 1
+    if dodge.slowMotionTimer <= 0 {
+      dodge.slowMotion = false
+    }
+  }
+  
+  if dodge.slowMotionCooldown > 0 {
+    dodge.slowMotionCooldown = dodge.slowMotionCooldown - 1
+  }
+  
+  timeScale = dodge.slowMotion ? 0.3 : 1
+  
+  speed = dodge.dashDuration > 0 ? 0 : (5 + dodge.level * 0.5)
+  
+  if dodge.dashDuration <= 0 {
+    if dodge.keys["ArrowLeft"] || dodge.keys["a"] {
+      dodge.player.x = dodge.player.x - speed
+    }
+    if dodge.keys["ArrowRight"] || dodge.keys["d"] {
+      dodge.player.x = dodge.player.x + speed
+    }
+    if dodge.keys["ArrowUp"] || dodge.keys["w"] {
+      dodge.player.y = dodge.player.y - speed
+    }
+    if dodge.keys["ArrowDown"] || dodge.keys["s"] {
+      dodge.player.y = dodge.player.y + speed
+    }
+  }
+  
+  dodge.player.x = max(10 min(510 dodge.player.x))
+  dodge.player.y = max(10 min(310 dodge.player.y))
+  
+  obsSpeed = (2 + dodge.level * 0.3) * timeScale
+  if random() < 0.02 * timeScale {
+    type = "normal"
+    if random() < 0.15 { type = "fast" }
+    if random() < 0.25 { type = "big" }
+    if random() < 0.3 { type = "zigzag" }
+    
+    size = 16
+    if type == "big" { size = 24 }
+    
+    dodge.obstacles.push({
+      x: random() * 480 + 20
+      y: -size
+      w: size
+      h: size
+      v: type == "fast" ? obsSpeed * 1.8 : obsSpeed
+      angle: 0
+      rotSpeed: random() * 0.2 - 0.1
+      type: type
+      zigzagPhase: 0
+    })
+  }
+  
+  if random() < 0.005 * timeScale {
+    itemType = random() < 0.5 ? "shield" : "invincible"
+    dodge.items.push({
+      x: random() * 480 + 20
+      y: -15
+      type: itemType
+      v: 1.5 * timeScale
+    })
+  }
+  
+  for (i = len(dodge.obstacles) - 1; i >= 0; i = i - 1) {
+    obs = dodge.obstacles[i]
+    obs.y = obs.y + obs.v
+    obs.angle = obs.angle + obs.rotSpeed * timeScale
+    
+    if obs.type == "zigzag" {
+      obs.zigzagPhase = obs.zigzagPhase + 0.1 * timeScale
+      obs.x = obs.x + sin(obs.zigzagPhase) * 2 * timeScale
+    }
+    
+    if obs.y > 340 {
+      dodge.obstacles.splice(i 1)
+      dodge.dodged = dodge.dodged + 1
+      dodge.score = dodge.score + 10 * dodge.level
+      continue
+    }
+    
+    if abs(dodge.player.x - obs.x) < (dodge.player.w + obs.w) / 2 && abs(dodge.player.y - obs.y) < (dodge.player.h + obs.h) / 2 {
+      if dodge.invincible || dodge.dashDuration > 0 {
+        dodge.obstacles.splice(i 1)
+        dodgeBurst(obs.x obs.y "#22d3a4" 20)
+        dodge.score = dodge.score + 25
+        continue
+      } else if dodge.shield > 0 {
+        dodge.shield = dodge.shield - 1
+        dodge.obstacles.splice(i 1)
+        dodgeBurst(obs.x obs.y "#6bc8ff" 20)
+        continue
+      } else {
+        dodge.running = false
+        return { gameOver: true victory: false }
+      }
+    }
+  }
+  
+  for (j = len(dodge.items) - 1; j >= 0; j = j - 1) {
+    item = dodge.items[j]
+    item.y = item.y + item.v
+    
+    if item.y > 340 {
+      dodge.items.splice(j 1)
+      continue
+    }
+    
+    if abs(dodge.player.x - item.x) < 20 && abs(dodge.player.y - item.y) < 20 {
+      dodge.items.splice(j 1)
+      if item.type == "shield" {
+        dodge.shield = dodge.shield + 1
+      } else if item.type == "invincible" {
+        dodge.invincible = true
+        dodge.invincibleTimer = 180
+      }
+      dodgeBurst(item.x item.y "#22d3a4" 15)
+    }
+  }
+  
+  dodge.time = dodge.time + 1/60 * timeScale
+  
+  newLevel = floor(dodge.time / 10) + 1
+  if newLevel != dodge.level {
+    dodge.level = newLevel
+  }
+  
+  if dodge.time >= 60 {
+    dodge.running = false
+    return { gameOver: false victory: true }
+  }
+  
+  for (si = len(dodge.stars) - 1; si >= 0; si = si - 1) {
+    s = dodge.stars[si]
+    s.y = s.y + s.v * timeScale
+    if s.y > 320 {
+      s.y = 0
+      s.x = random() * 520
+    }
+  }
+  
+  for (pi = len(dodge.parts) - 1; pi >= 0; pi = pi - 1) {
+    p = dodge.parts[pi]
+    p.x = p.x + p.vx
+    p.y = p.y + p.vy
+    p.life = p.life - 1
+    if p.life <= 0 {
+      dodge.parts.splice(pi 1)
+    }
+  }
+  
+  return { gameOver: false victory: false }
+}
+
+fn dodgeSetKey(key pressed) {
+  dodge.keys[key] = pressed
+}
+
+fn dodgeDash(dx dy) {
+  if dodge.dashCooldown <= 0 && dodge.dashDuration <= 0 && (dx != 0 || dy != 0) {
+    len = sqrt(dx * dx + dy * dy)
+    dodge.dashDir = { x: dx / len y: dy / len }
+    dodge.dashDuration = 10
+    dodge.dashCooldown = 90
+    dodge.invincible = true
+    dodge.invincibleTimer = 15
+    dodgeBurst(dodge.player.x dodge.player.y "#6bc8ff" 15)
+  }
+}
+
+fn dodgeSlowMotion() {
+  if dodge.slowMotionCooldown <= 0 && !dodge.slowMotion {
+    dodge.slowMotion = true
+    dodge.slowMotionTimer = 180
+    dodge.slowMotionCooldown = 600
+    dodgeBurst(dodge.player.x dodge.player.y "#a86bff" 20)
+  }
+}
+
+bulletHell = { running: false player: { x: 260 y: 280 r: 8 } bullets: [] enemyBullets: [] enemies: [] parts: [] time: 0 wave: 1 score: 0 lives: 3 invincible: false invincibleTimer: 0 }
+
+fn bulletHellReset() {
+  bulletHell.player = { x: 260 y: 280 r: 8 }
+  bulletHell.bullets = []
+  bulletHell.enemyBullets = []
+  bulletHell.enemies = []
+  bulletHell.parts = []
+  bulletHell.time = 0
+  bulletHell.wave = 1
+  bulletHell.score = 0
+  bulletHell.lives = 3
+  bulletHell.invincible = false
+  bulletHell.invincibleTimer = 0
+  bulletHell.running = true
+}
+
+fn bulletHellBurst(x y c count) {
+  for (i = 0; i < count; i = i + 1) {
+    bulletHell.parts.push({ x: x y: y vx: random() * 4 - 2 vy: random() * 4 - 2 life: random() * 20 + 20 c: c })
+  }
+}
+
+fn bulletHellStep() {
+  if !bulletHell.running {
+    return { gameOver: false victory: false }
+  }
+  
+  if bulletHell.invincibleTimer > 0 {
+    bulletHell.invincibleTimer = bulletHell.invincibleTimer - 1
+    if bulletHell.invincibleTimer <= 0 {
+      bulletHell.invincible = false
+    }
+  }
+  
+  bulletHell.time = bulletHell.time + 1/60
+  
+  if random() < 0.02 {
+    bulletHell.enemies.push({
+      x: random() * 480 + 20
+      y: -20
+      type: floor(random() * 3)
+      hp: 3
+      angle: 0
+      fireTimer: floor(random() * 60) + 30
+    })
+  }
+  
+  for (i = len(bulletHell.bullets) - 1; i >= 0; i = i - 1) {
+    b = bulletHell.bullets[i]
+    b.y = b.y - 10
+    if b.y < -10 {
+      bulletHell.bullets.splice(i 1)
+    }
+  }
+  
+  for (j = len(bulletHell.enemyBullets) - 1; j >= 0; j = j - 1) {
+    eb = bulletHell.enemyBullets[j]
+    eb.x = eb.x + eb.vx
+    eb.y = eb.y + eb.vy
+    
+    if eb.x < -10 || eb.x > 530 || eb.y < -10 || eb.y > 330 {
+      bulletHell.enemyBullets.splice(j 1)
+      continue
+    }
+    
+    dx = eb.x - bulletHell.player.x
+    dy = eb.y - bulletHell.player.y
+    dist = sqrt(dx * dx + dy * dy)
+    
+    if dist < bulletHell.player.r + eb.r && !bulletHell.invincible {
+      bulletHell.lives = bulletHell.lives - 1
+      bulletHell.enemyBullets.splice(j 1)
+      bulletHellBurst(bulletHell.player.x bulletHell.player.y "#ff5d73" 20)
+      
+      if bulletHell.lives <= 0 {
+        bulletHell.running = false
+        return { gameOver: true victory: false }
+      }
+      
+      bulletHell.invincible = true
+      bulletHell.invincibleTimer = 120
+    }
+  }
+  
+  for (ei = len(bulletHell.enemies) - 1; ei >= 0; ei = ei - 1) {
+    e = bulletHell.enemies[ei]
+    e.y = e.y + 0.5
+    e.angle = e.angle + 0.02
+    e.fireTimer = e.fireTimer - 1
+    
+    if e.fireTimer <= 0 {
+      e.fireTimer = 60
+      count = 8 + bulletHell.wave * 2
+      
+      for (bi = 0; bi < count; bi = bi + 1) {
+        angle = e.angle + bi * 6.28 / count
+        speed = 2 + bulletHell.wave * 0.2
+        bulletHell.enemyBullets.push({
+          x: e.x
+          y: e.y
+          vx: cos(angle) * speed
+          vy: sin(angle) * speed
+          r: 4
+        })
+      }
+    }
+    
+    if e.y > 340 {
+      bulletHell.enemies.splice(ei 1)
+      continue
+    }
+    
+    for (pbi = len(bulletHell.bullets) - 1; pbi >= 0; pbi = pbi - 1) {
+      pb = bulletHell.bullets[pbi]
+      if abs(pb.x - e.x) < 20 && abs(pb.y - e.y) < 20 {
+        e.hp = e.hp - 1
+        bulletHell.bullets.splice(pbi 1)
+        
+        if e.hp <= 0 {
+          bulletHellBurst(e.x e.y "#ff6b8a" 15)
+          bulletHell.enemies.splice(ei 1)
+          bulletHell.score = bulletHell.score + 100
+          break
+        }
+      }
+    }
+  }
+  
+  if bulletHell.time >= 30 * bulletHell.wave {
+    bulletHell.wave = bulletHell.wave + 1
+    if bulletHell.wave > 10 {
+      bulletHell.running = false
+      return { gameOver: false victory: true }
+    }
+  }
+  
+  for (pi = len(bulletHell.parts) - 1; pi >= 0; pi = pi - 1) {
+    p = bulletHell.parts[pi]
+    p.x = p.x + p.vx
+    p.y = p.y + p.vy
+    p.life = p.life - 1
+    if p.life <= 0 {
+      bulletHell.parts.splice(pi 1)
+    }
+  }
+  
+  return { gameOver: false victory: false }
+}
+
+fn bulletHellMovePlayer(dx dy) {
+  bulletHell.player.x = max(20 min(500 bulletHell.player.x + dx * 5))
+  bulletHell.player.y = max(20 min(300 bulletHell.player.y + dy * 5))
+}
+
+fn bulletHellFire() {
+  bulletHell.bullets.push({ x: bulletHell.player.x y: bulletHell.player.y - 10 })
+}
+
+tetris = { running: false board: [] current: null next: null score: 0 lines: 0 level: 1 gameOver: false dropTimer: 0 parts: [] }
+
+fn tetrisReset() {
+  tetris.board = []
+  for (r = 0; r < 20; r = r + 1) {
+    row = []
+    for (c = 0; c < 10; c = c + 1) {
+      row.push(0)
+    }
+    tetris.board.push(row)
+  }
+  
+  tetris.current = null
+  tetris.next = tetrisRandomPiece()
+  tetris.score = 0
+  tetris.lines = 0
+  tetris.level = 1
+  tetris.gameOver = false
+  tetris.dropTimer = 0
+  tetris.parts = []
+  tetris.running = true
+  
+  tetrisSpawnPiece()
+}
+
+fn tetrisRandomPiece() {
+  types = ["I" "O" "T" "S" "Z" "J" "L"]
+  type = types[floor(random() * 7)]
+  
+  shapes = {
+    I: [[1 1 1 1]]
+    O: [[1 1] [1 1]]
+    T: [[0 1 0] [1 1 1]]
+    S: [[0 1 1] [1 1 0]]
+    Z: [[1 1 0] [0 1 1]]
+    J: [[1 0 0] [1 1 1]]
+    L: [[0 0 1] [1 1 1]]
+  }
+  
+  colors = { I: "#6bc8ff" O: "#ffb86b" T: "#a86bff" S: "#22d3a4" Z: "#ff5d73" J: "#4f7cff" L: "#ff9f43" }
+  
+  return { type: type shape: shapes[type] color: colors[type] x: 3 y: 0 }
+}
+
+fn tetrisSpawnPiece() {
+  tetris.current = tetris.next
+  tetris.next = tetrisRandomPiece()
+  tetris.current.x = floor((10 - len(tetris.current.shape[0])) / 2)
+  tetris.current.y = 0
+  
+  if tetrisCheckCollision(tetris.current.x tetris.current.y tetris.current.shape) {
+    tetris.gameOver = true
+    tetris.running = false
+  }
+}
+
+fn tetrisCheckCollision(x y shape) {
+  for (r = 0; r < len(shape); r = r + 1) {
+    for (c = 0; c < len(shape[r]); c = c + 1) {
+      if shape[r][c] {
+        newX = x + c
+        newY = y + r
+        
+        if newX < 0 || newX >= 10 || newY >= 20 {
+          return true
+        }
+        
+        if newY >= 0 && tetris.board[newY][newX] {
+          return true
+        }
+      }
+    }
+  }
+  return false
+}
+
+fn tetrisMergePiece() {
+  shape = tetris.current.shape
+  for (r = 0; r < len(shape); r = r + 1) {
+    for (c = 0; c < len(shape[r]); c = c + 1) {
+      if shape[r][c] {
+        y = tetris.current.y + r
+        x = tetris.current.x + c
+        if y >= 0 && y < 20 && x >= 0 && x < 10 {
+          tetris.board[y][x] = tetris.current.color
+        }
+      }
+    }
+  }
+}
+
+fn tetrisClearLines() {
+  linesCleared = 0
+  
+  for (r = len(tetris.board) - 1; r >= 0; r = r - 1) {
+    full = true
+    for (c = 0; c < 10; c = c + 1) {
+      if !tetris.board[r][c] {
+        full = false
+      }
+    }
+    
+    if full {
+      tetris.board.splice(r 1)
+      newRow = []
+      for (c = 0; c < 10; c = c + 1) {
+        newRow.push(0)
+      }
+      tetris.board.unshift(newRow)
+      linesCleared = linesCleared + 1
+      r = r + 1
+    }
+  }
+  
+  if linesCleared > 0 {
+    tetris.lines = tetris.lines + linesCleared
+    tetris.score = tetris.score + linesCleared * 100 * tetris.level
+    tetris.level = floor(tetris.lines / 10) + 1
+  }
+}
+
+fn tetrisRotate() {
+  shape = tetris.current.shape
+  newShape = []
+  
+  for (c = 0; c < len(shape[0]); c = c + 1) {
+    newRow = []
+    for (r = len(shape) - 1; r >= 0; r = r - 1) {
+      newRow.push(shape[r][c])
+    }
+    newShape.push(newRow)
+  }
+  
+  if !tetrisCheckCollision(tetris.current.x tetris.current.y newShape) {
+    tetris.current.shape = newShape
+  }
+}
+
+fn tetrisMove(dx) {
+  newX = tetris.current.x + dx
+  if !tetrisCheckCollision(newX tetris.current.y tetris.current.shape) {
+    tetris.current.x = newX
+  }
+}
+
+fn tetrisDrop() {
+  newY = tetris.current.y + 1
+  if !tetrisCheckCollision(tetris.current.x newY tetris.current.shape) {
+    tetris.current.y = newY
+    return true
+  } else {
+    tetrisMergePiece()
+    tetrisClearLines()
+    tetrisSpawnPiece()
+    return false
+  }
+}
+
+fn tetrisHardDrop() {
+  while tetrisDrop() {}
+}
+
+fn tetrisStep() {
+  if !tetris.running {
+    return { gameOver: true }
+  }
+  
+  tetris.dropTimer = tetris.dropTimer + 1
+  dropInterval = max(5 30 - tetris.level * 3)
+  
+  if tetris.dropTimer >= dropInterval {
+    tetris.dropTimer = 0
+    tetrisDrop()
+  }
+  
+  return { gameOver: false }
+}
+
+bossGame = { running: false player: { x: 260 y: 280 r: 10 hp: 100 maxHp: 100 } boss: { x: 260 y: 60 r: 40 hp: 500 maxHp: 500 phase: 1 attackTimer: 0 angle: 0 } bullets: [] enemyBullets: [] parts: [] score: 0 damage: 0 invincible: false invincibleTimer: 0 }
+
+fn bossReset() {
+  bossGame.player = { x: 260 y: 280 r: 10 hp: 100 maxHp: 100 }
+  bossGame.boss = { x: 260 y: 60 r: 40 hp: 500 maxHp: 500 phase: 1 attackTimer: 0 angle: 0 }
+  bossGame.bullets = []
+  bossGame.enemyBullets = []
+  bossGame.parts = []
+  bossGame.score = 0
+  bossGame.damage = 0
+  bossGame.invincible = false
+  bossGame.invincibleTimer = 0
+  bossGame.running = true
+}
+
+fn bossBurst(x y c count) {
+  for (i = 0; i < count; i = i + 1) {
+    bossGame.parts.push({ x: x y: y vx: random() * 4 - 2 vy: random() * 4 - 2 life: random() * 20 + 20 c: c })
+  }
+}
+
+fn bossStep() {
+  if !bossGame.running {
+    return { gameOver: false victory: false }
+  }
+  
+  if bossGame.invincibleTimer > 0 {
+    bossGame.invincibleTimer = bossGame.invincibleTimer - 1
+    if bossGame.invincibleTimer <= 0 {
+      bossGame.invincible = false
+    }
+  }
+  
+  boss = bossGame.boss
+  boss.angle = boss.angle + 0.02
+  boss.attackTimer = boss.attackTimer - 1
+  
+  if boss.attackTimer <= 0 {
+    boss.attackTimer = 30 - boss.phase * 5
+    
+    if boss.phase == 1 {
+      for (i = 0; i < 8; i = i + 1) {
+        angle = boss.angle + i * 6.28 / 8
+        bossGame.enemyBullets.push({
+          x: boss.x
+          y: boss.y
+          vx: cos(angle) * 3
+          vy: sin(angle) * 3
+          r: 5
+        })
+      }
+    } else if boss.phase == 2 {
+      for (i = 0; i < 16; i = i + 1) {
+        angle = boss.angle + i * 6.28 / 16
+        bossGame.enemyBullets.push({
+          x: boss.x
+          y: boss.y
+          vx: cos(angle) * 4
+          vy: sin(angle) * 4
+          r: 4
+        })
+      }
+    } else {
+      for (i = 0; i < 24; i = i + 1) {
+        angle = boss.angle + i * 6.28 / 24
+        speed = 3 + random() * 2
+        bossGame.enemyBullets.push({
+          x: boss.x
+          y: boss.y
+          vx: cos(angle) * speed
+          vy: sin(angle) * speed
+          r: 3
+        })
+      }
+    }
+  }
+  
+  for (i = len(bossGame.bullets) - 1; i >= 0; i = i - 1) {
+    b = bossGame.bullets[i]
+    b.y = b.y - 10
+    
+    if b.y < -10 {
+      bossGame.bullets.splice(i 1)
+      continue
+    }
+    
+    dx = b.x - boss.x
+    dy = b.y - boss.y
+    dist = sqrt(dx * dx + dy * dy)
+    
+    if dist < boss.r {
+      bossGame.bullets.splice(i 1)
+      boss.hp = boss.hp - 5
+      bossGame.damage = bossGame.damage + 5
+      bossBurst(b.x b.y "#ff6b8a" 5)
+      
+      newPhase = 1
+      if boss.hp < boss.maxHp * 0.3 { newPhase = 3 }
+      else if boss.hp < boss.maxHp * 0.6 { newPhase = 2 }
+      
+      if newPhase != boss.phase {
+        boss.phase = newPhase
+        bossBurst(boss.x boss.y "#a86bff" 30)
+      }
+      
+      if boss.hp <= 0 {
+        bossGame.running = false
+        return { gameOver: false victory: true }
+      }
+    }
+  }
+  
+  for (j = len(bossGame.enemyBullets) - 1; j >= 0; j = j - 1) {
+    eb = bossGame.enemyBullets[j]
+    eb.x = eb.x + eb.vx
+    eb.y = eb.y + eb.vy
+    
+    if eb.x < -10 || eb.x > 530 || eb.y < -10 || eb.y > 330 {
+      bossGame.enemyBullets.splice(j 1)
+      continue
+    }
+    
+    dx = eb.x - bossGame.player.x
+    dy = eb.y - bossGame.player.y
+    dist = sqrt(dx * dx + dy * dy)
+    
+    if dist < bossGame.player.r + eb.r && !bossGame.invincible {
+      bossGame.player.hp = bossGame.player.hp - 10
+      bossGame.enemyBullets.splice(j 1)
+      bossBurst(bossGame.player.x bossGame.player.y "#ff5d73" 10)
+      
+      if bossGame.player.hp <= 0 {
+        bossGame.running = false
+        return { gameOver: true victory: false }
+      }
+      
+      bossGame.invincible = true
+      bossGame.invincibleTimer = 60
+    }
+  }
+  
+  for (pi = len(bossGame.parts) - 1; pi >= 0; pi = pi - 1) {
+    p = bossGame.parts[pi]
+    p.x = p.x + p.vx
+    p.y = p.y + p.vy
+    p.life = p.life - 1
+    if p.life <= 0 {
+      bossGame.parts.splice(pi 1)
+    }
+  }
+  
+  return { gameOver: false victory: false }
+}
+
+fn bossMovePlayer(dx dy) {
+  bossGame.player.x = max(20 min(500 bossGame.player.x + dx * 5))
+  bossGame.player.y = max(20 min(300 bossGame.player.y + dy * 5))
+}
+
+fn bossFire() {
+  bossGame.bullets.push({ x: bossGame.player.x y: bossGame.player.y - 10 })
+}
+
+memory = { running: false cards: [] flipped: [] matched: [] locked: false time: 0 timer: null best: null moves: 0 }
+
+fn memoryReset() {
+  memory.cards = []
+  memory.flipped = []
+  memory.matched = []
+  memory.locked = false
+  memory.time = 0
+  memory.moves = 0
+  memory.running = true
+  
+  symbols = ["★" "♦" "♠" "♣" "♥" "●" "▲" "■"]
+  pairs = []
+  
+  for (i = 0; i < 8; i = i + 1) {
+    pairs.push(symbols[i])
+    pairs.push(symbols[i])
+  }
+  
+  for (i = len(pairs) - 1; i > 0; i = i - 1) {
+    j = floor(random() * (i + 1))
+    temp = pairs[i]
+    pairs[i] = pairs[j]
+    pairs[j] = temp
+  }
+  
+  memory.cards = pairs
+}
+
+fn memoryFlipCard(index) {
+  if memory.locked {
+    return { success: false matched: false gameWon: false }
+  }
+  
+  if memory.flipped.len >= 2 {
+    return { success: false matched: false gameWon: false }
+  }
+  
+  for (i = 0; i < len(memory.matched); i = i + 1) {
+    if memory.matched[i] == index {
+      return { success: false matched: false gameWon: false }
+    }
+  }
+  
+  for (j = 0; j < len(memory.flipped); j = j + 1) {
+    if memory.flipped[j] == index {
+      return { success: false matched: false gameWon: false }
+    }
+  }
+  
+  memory.flipped.push(index)
+  
+  if len(memory.flipped) == 2 {
+    memory.moves = memory.moves + 1
+    idx1 = memory.flipped[0]
+    idx2 = memory.flipped[1]
+    
+    if memory.cards[idx1] == memory.cards[idx2] {
+      memory.matched.push(idx1)
+      memory.matched.push(idx2)
+      memory.flipped = []
+      
+      if len(memory.matched) == 16 {
+        memory.running = false
+        return { success: true matched: true gameWon: true }
+      }
+      
+      return { success: true matched: true gameWon: false }
+    } else {
+      return { success: true matched: false gameWon: false needReset: true }
+    }
+  }
+  
+  return { success: true matched: false gameWon: false }
+}
+
+fn memoryResetFlipped() {
+  memory.flipped = []
+}
+
+fn memoryTick() {
+  if memory.running {
+    memory.time = memory.time + 1
+  }
+}
+
+fishTank = { running: false fishes: [] bubbles: [] plants: [] foods: [] time: 0 }
+
+fn initFishTank() {
+  fishTank.running = true
+  fishTank.fishes = []
+  fishTank.bubbles = []
+  fishTank.plants = []
+  fishTank.foods = []
+  fishTank.time = 0
+  
+  for (i = 0; i < 8; i = i + 1) {
+    fishTank.fishes.push({
+      x: random() * 480 + 20
+      y: random() * 200 + 60
+      vx: random() * 1.5 + 0.5
+      vy: random() * 0.5 - 0.25
+      size: random() * 12 + 8
+      color: randomColor()
+      tailPhase: random() * 6.28
+      type: floor(random() * 3)
+    })
+  }
+}
+
+fn randomColor() {
+  colors = ["#ff6b8a" "#ffb86b" "#7dd3fc" "#a86bff" "#22d3a4" "#ff9f43"]
+  return colors[floor(random() * len(colors))]
+}
+
+fn updateFishTank() {
+  if !fishTank.running {
+    return
+  }
+  
+  fishTank.time = fishTank.time + 1
+  
+  for (i = 0; i < len(fishTank.fishes); i = i + 1) {
+    fish = fishTank.fishes[i]
+    fish.x = fish.x + fish.vx
+    fish.y = fish.y + fish.vy + sin(fishTank.time * 0.05 + i) * 0.3
+    fish.tailPhase = fish.tailPhase + 0.15
+    
+    if fish.x > 540 {
+      fish.x = -20
+      fish.y = random() * 200 + 60
+    }
+    
+    if fish.y < 40 {
+      fish.vy = abs(fish.vy)
+    }
+    if fish.y > 280 {
+      fish.vy = -abs(fish.vy)
+    }
+    
+    if random() < 0.005 {
+      fishTank.bubbles.push({
+        x: fish.x
+        y: fish.y
+        r: random() * 4 + 2
+        speed: random() * 0.8 + 0.4
+      })
+    }
+    
+    for (j = 0; j < len(fishTank.foods); j = j + 1) {
+      food = fishTank.foods[j]
+      dx = food.x - fish.x
+      dy = food.y - fish.y
+      dist = sqrt(dx * dx + dy * dy)
+      if dist < fish.size + 5 {
+        fish.size = min(fish.size + 1 25)
+        fishTank.foods.splice(j 1)
+        j = j - 1
+      }
+    }
+  }
+  
+  for (k = 0; k < len(fishTank.bubbles); k = k + 1) {
+    bubble = fishTank.bubbles[k]
+    bubble.y = bubble.y - bubble.speed
+    bubble.x = bubble.x + sin(fishTank.time * 0.1 + k) * 0.2
+    if bubble.y < -10 {
+      fishTank.bubbles.splice(k 1)
+      k = k - 1
+    }
+  }
+  
+  for (m = 0; m < len(fishTank.foods); m = m + 1) {
+    food = fishTank.foods[m]
+    food.y = food.y + 0.5
+    if food.y > 320 {
+      fishTank.foods.splice(m 1)
+      m = m - 1
+    }
+  }
+  
+  if random() < 0.02 {
+    fishTank.bubbles.push({
+      x: random() * 520
+      y: 320
+      r: random() * 5 + 2
+      speed: random() * 1 + 0.5
+    })
+  }
+}
+
+fn addFood(x y) {
+  fishTank.foods.push({ x: x y: y r: 3 color: "#ffb86b" })
+}
+
+fireworks = { running: false particles: [] rockets: [] time: 0 autoLaunch: true }
+
+fn initFireworks() {
+  fireworks.running = true
+  fireworks.particles = []
+  fireworks.rockets = []
+  fireworks.time = 0
+  fireworks.autoLaunch = true
+}
+
+fn launchRocket(x targetY) {
+  fireworks.rockets.push({
+    x: x
+    y: 320
+    targetY: targetY
+    vy: -random() * 3 - 5
+    color: randomColor()
+    trail: []
+  })
+}
+
+fn explodeFirework(x y color) {
+  count = floor(random() * 40) + 30
+  for (i = 0; i < count; i = i + 1) {
+    angle = random() * 6.28
+    speed = random() * 4 + 2
+    fireworks.particles.push({
+      x: x
+      y: y
+      vx: cos(angle) * speed
+      vy: sin(angle) * speed
+      life: random() * 40 + 40
+      maxLife: 80
+      color: color
+      size: random() * 3 + 1
+      type: floor(random() * 3)
+    })
+  }
+  
+  if random() < 0.3 {
+    for (j = 0; j < 15; j = j + 1) {
+      angle = random() * 6.28
+      speed = random() * 2 + 1
+      fireworks.particles.push({
+        x: x
+        y: y
+        vx: cos(angle) * speed
+        vy: sin(angle) * speed
+        life: random() * 30 + 20
+        maxLife: 50
+        color: "#ffffff"
+        size: random() * 2 + 1
+        type: 2
+      })
+    }
+  }
+}
+
+fn updateFireworks() {
+  if !fireworks.running {
+    return
+  }
+  
+  fireworks.time = fireworks.time + 1
+  
+  if fireworks.autoLaunch && random() < 0.03 {
+    launchRocket(random() * 480 + 20 random() * 100 + 60)
+  }
+  
+  for (i = 0; i < len(fireworks.rockets); i = i + 1) {
+    rocket = fireworks.rockets[i]
+    rocket.y = rocket.y + rocket.vy
+    rocket.trail.push({ x: rocket.x y: rocket.y })
+    
+    if len(rocket.trail) > 10 {
+      rocket.trail.shift()
+    }
+    
+    if rocket.y <= rocket.targetY {
+      explodeFirework(rocket.x rocket.y rocket.color)
+      fireworks.rockets.splice(i 1)
+      i = i - 1
+    }
+  }
+  
+  for (j = 0; j < len(fireworks.particles); j = j + 1) {
+    p = fireworks.particles[j]
+    p.x = p.x + p.vx
+    p.y = p.y + p.vy
+    p.vy = p.vy + 0.08
+    p.vx = p.vx * 0.99
+    p.life = p.life - 1
+    
+    if p.life <= 0 {
+      fireworks.particles.splice(j 1)
+      j = j - 1
+    }
+  }
+}
+
+fn manualLaunch(x) {
+  launchRocket(x random() * 80 + 50)
+}
+
+export snake
+export snakeReset
+export snakeBurst
+export snakeSpawnFood
+export snakeStep
+export snakeSetDir
+
+export shoot
+export shootReset
+export shootBurst
+export shootSpawnEnemy
+export shootSpawnItem
+export shootStep
+export shootMovePlayer
+export shootFire
+export shootReleaseCharge
+
+export breakout
+export breakoutReset
+export breakoutGenerateLevel
+export breakoutBurst
+export breakoutStep
+export breakoutMovePaddle
+
+export dodge
+export dodgeReset
+export dodgeBurst
+export dodgeStep
+export dodgeSetKey
+export dodgeDash
+export dodgeSlowMotion
+
+export bulletHell
+export bulletHellReset
+export bulletHellBurst
+export bulletHellStep
+export bulletHellMovePlayer
+export bulletHellFire
+
+export tetris
+export tetrisReset
+export tetrisRandomPiece
+export tetrisSpawnPiece
+export tetrisCheckCollision
+export tetrisMergePiece
+export tetrisClearLines
+export tetrisRotate
+export tetrisMove
+export tetrisDrop
+export tetrisHardDrop
+export tetrisStep
+
+export bossGame
+export bossReset
+export bossBurst
+export bossStep
+export bossMovePlayer
+export bossFire
+
+export memory
+export memoryReset
+export memoryFlipCard
+export memoryResetFlipped
+export memoryTick
+
+export fishTank
+export fireworks
+export initFishTank
+export updateFishTank
+export addFood
+export initFireworks
+export launchRocket
+export explodeFirework
+export updateFireworks
+export manualLaunch
+export randomColor
+
+tower = { running: false wave: 1 gold: 100 lives: 20 kills: 0 towers: [] enemies: [] bullets: [] path: [] gridSize: 40 cols: 18 rows: 10 spawnTimer: 0 enemiesSpawned: 0 enemiesPerWave: 5 }
+
+fn towerInit() {
+  tower.path = [{ x: 0 y: 5 } { x: 4 y: 5 } { x: 4 y: 2 } { x: 8 y: 2 } { x: 8 y: 7 } { x: 12 y: 7 } { x: 12 y: 3 } { x: 17 y: 3 }]
+  tower.towers = []
+  tower.enemies = []
+  tower.bullets = []
+  tower.wave = 1
+  tower.gold = 100
+  tower.lives = 20
+  tower.kills = 0
+  tower.spawnTimer = 0
+  tower.enemiesSpawned = 0
+  tower.enemiesPerWave = 5
+  tower.running = false
+}
+
+fn towerStartWave() {
+  if tower.running {
+    return
+  }
+  tower.running = true
+  tower.spawnTimer = 0
+  tower.enemiesSpawned = 0
+  tower.enemiesPerWave = 5 + tower.wave * 2
+}
+
+fn towerSpawnEnemy() {
+  types = ["normal" "fast" "tank" "boss"]
+  type = types[floor(random() * 4)]
+  
+  hp = 30 + tower.wave * 10
+  speed = 1
+  reward = 10
+  
+  if type == "fast" {
+    hp = 20 + tower.wave * 5
+    speed = 2
+    reward = 15
+  }
+  
+  if type == "tank" {
+    hp = 80 + tower.wave * 20
+    speed = 0.5
+    reward = 25
+  }
+  
+  if type == "boss" {
+    hp = 200 + tower.wave * 50
+    speed = 0.3
+    reward = 50
+  }
+  
+  tower.enemies.push({ x: tower.path[0].x * tower.gridSize y: tower.path[0].y * tower.gridSize hp: hp maxHp: hp speed: speed reward: reward type: type pathIndex: 0 })
+}
+
+fn towerAddTower(gx gy) {
+  if tower.gold < 30 {
+    return false
+  }
+  
+  for (i = 0; i < len(tower.towers); i = i + 1) {
+    t = tower.towers[i]
+    if t.gx == gx && t.gy == gy {
+      return false
+    }
+  }
+  
+  for (i = 0; i < len(tower.path); i = i + 1) {
+    p = tower.path[i]
+    if p.x == gx && p.y == gy {
+      return false
+    }
+  }
+  
+  tower.gold = tower.gold - 30
+  tower.towers.push({ gx: gx gy: gy x: gx * tower.gridSize + tower.gridSize/2 y: gy * tower.gridSize + tower.gridSize/2 range: 120 damage: 10 fireRate: 30 fireCooldown: 0 level: 1 })
+  return true
+}
+
+fn towerUpgradeTower(index) {
+  if index < 0 || index >= len(tower.towers) {
+    return
+  }
+  
+  t = tower.towers[index]
+  cost = t.level * 20
+  
+  if tower.gold < cost {
+    return
+  }
+  
+  tower.gold = tower.gold - cost
+  t.level = t.level + 1
+  t.damage = t.damage + 5
+  t.range = t.range + 10
+  t.fireRate = t.fireRate - 2
+  if t.fireRate < 10 {
+    t.fireRate = 10
+  }
+}
+
+fn towerStep() {
+  if !tower.running {
+    return { wave: tower.wave gold: tower.gold lives: tower.lives kills: tower.kills towerCount: len(tower.towers) enemyCount: len(tower.enemies) gameOver: false victory: false }
+  }
+  
+  tower.spawnTimer = tower.spawnTimer + 1
+  if tower.spawnTimer >= 60 && tower.enemiesSpawned < tower.enemiesPerWave {
+    towerSpawnEnemy()
+    tower.spawnTimer = 0
+    tower.enemiesSpawned = tower.enemiesSpawned + 1
+  }
+  
+  for (i = 0; i < len(tower.enemies); i = i + 1) {
+    e = tower.enemies[i]
+    
+    if e.pathIndex < len(tower.path) - 1 {
+      target = tower.path[e.pathIndex + 1]
+      tx = target.x * tower.gridSize + tower.gridSize/2
+      ty = target.y * tower.gridSize + tower.gridSize/2
+      
+      dx = tx - e.x
+      dy = ty - e.y
+      dist = sqrt(dx*dx + dy*dy)
+      
+      if dist < e.speed * 2 {
+        e.pathIndex = e.pathIndex + 1
+      } else {
+        e.x = e.x + dx / dist * e.speed
+        e.y = e.y + dy / dist * e.speed
+      }
+    } else {
+      tower.lives = tower.lives - 1
+      tower.enemies.splice(i 1)
+      i = i - 1
+      
+      if tower.lives <= 0 {
+        tower.running = false
+        return { wave: tower.wave gold: tower.gold lives: 0 kills: tower.kills towerCount: len(tower.towers) enemyCount: len(tower.enemies) gameOver: true victory: false }
+      }
+    }
+  }
+  
+  for (i = 0; i < len(tower.towers); i = i + 1) {
+    t = tower.towers[i]
+    t.fireCooldown = t.fireCooldown - 1
+    
+    if t.fireCooldown <= 0 {
+      target = null
+      minDist = t.range
+      
+      for (j = 0; j < len(tower.enemies); j = j + 1) {
+        e = tower.enemies[j]
+        dx = e.x - t.x
+        dy = e.y - t.y
+        dist = sqrt(dx*dx + dy*dy)
+        
+        if dist < minDist {
+          minDist = dist
+          target = e
+        }
+      }
+      
+      if target != null {
+        tower.bullets.push({ x: t.x y: t.y targetId: j damage: t.damage speed: 5 })
+        t.fireCooldown = t.fireRate
+      }
+    }
+  }
+  
+  for (i = len(tower.bullets) - 1; i >= 0; i = i - 1) {
+    b = tower.bullets[i]
+    
+    if b.targetId >= len(tower.enemies) {
+      tower.bullets.splice(i 1)
+      continue
+    }
+    
+    target = tower.enemies[b.targetId]
+    dx = target.x - b.x
+    dy = target.y - b.y
+    dist = sqrt(dx*dx + dy*dy)
+    
+    if dist < 10 {
+      target.hp = target.hp - b.damage
+      
+      if target.hp <= 0 {
+        tower.gold = tower.gold + target.reward
+        tower.kills = tower.kills + 1
+        tower.enemies.splice(b.targetId 1)
+      }
+      
+      tower.bullets.splice(i 1)
+    } else {
+      b.x = b.x + dx / dist * b.speed
+      b.y = b.y + dy / dist * b.speed
+    }
+  }
+  
+  if len(tower.enemies) == 0 && tower.enemiesSpawned >= tower.enemiesPerWave {
+    tower.wave = tower.wave + 1
+    tower.gold = tower.gold + 20
+    tower.running = false
+    
+    if tower.wave > 10 {
+      return { wave: tower.wave gold: tower.gold lives: tower.lives kills: tower.kills towerCount: len(tower.towers) enemyCount: 0 gameOver: false victory: true }
+    }
+  }
+  
+  return { wave: tower.wave gold: tower.gold lives: tower.lives kills: tower.kills towerCount: len(tower.towers) enemyCount: len(tower.enemies) gameOver: false victory: false }
+}
+
+export tower
+export towerInit
+export towerStartWave
+export towerSpawnEnemy
+export towerAddTower
+export towerUpgradeTower
+export towerStep

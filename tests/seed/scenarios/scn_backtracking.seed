@@ -1,0 +1,127 @@
+// 场景测试 - backtracking：N 皇后问题等回溯算法经典实现
+// EXPECT: "OK:4"
+fn nQueens(n) {
+    solutions = []
+    
+    fn isSafe(board row col) {
+        i = 0
+        while i < row {
+            if board[i][col] == "Q" { return false }
+            j = 0
+            while j < n {
+                if board[i][j] == "Q" && abs(i - row) == abs(j - col) {
+                    return false
+                }
+                j = j + 1
+            }
+            i = i + 1
+        }
+        return true
+    }
+    
+    fn solve(board row) {
+        if row == n {
+            solution = []
+            for r in board {
+                rowCopy = []
+                for c in r { push(rowCopy c) }
+                push(solution rowCopy)
+            }
+            push(solutions solution)
+            return
+        }
+        
+        col = 0
+        while col < n {
+            if isSafe(board row col) {
+                board[row][col] = "Q"
+                solve(board row + 1)
+                board[row][col] = "."
+            }
+            col = col + 1
+        }
+    }
+    
+    board = []
+    i = 0
+    while i < n {
+        row = []
+        j = 0
+        while j < n {
+            push(row ".")
+            j = j + 1
+        }
+        push(board row)
+        i = i + 1
+    }
+    
+    solve(board 0)
+    return solutions
+}
+
+fn sudokuValid(board) {
+    rows = {}
+    cols = {}
+    boxes = {}
+    
+    i = 0
+    while i < 9 {
+        rows[i] = {}
+        cols[i] = {}
+        boxes[i] = {}
+        i = i + 1
+    }
+    
+    i = 0
+    while i < 9 {
+        j = 0
+        while j < 9 {
+            val = board[i][j]
+            if val != "." {
+                if rows[i][val] != null { return false }
+                rows[i][val] = true
+                
+                if cols[j][val] != null { return false }
+                cols[j][val] = true
+                
+                boxIdx = floor(i / 3) * 3 + floor(j / 3)
+                if boxes[boxIdx][val] != null { return false }
+                boxes[boxIdx][val] = true
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    
+    return true
+}
+
+passed = 0
+
+solutions4 = nQueens(4)
+if len(solutions4) == 2 { passed = passed + 1 }
+
+validBoard = []
+i = 0
+while i < 9 {
+    row = []
+    j = 0
+    while j < 9 {
+        push(row ".")
+        j = j + 1
+    }
+    push(validBoard row)
+    i = i + 1
+}
+validBoard[0][0] = "5"
+validBoard[0][1] = "3"
+
+if sudokuValid(validBoard) { passed = passed + 1 }
+
+validBoard[0][2] = "5"
+if sudokuValid(validBoard) == false { passed = passed + 1 }
+
+solutions1 = nQueens(1)
+if len(solutions1) == 1 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

@@ -1,0 +1,13 @@
+{
+  "maxLineLength": 140,
+  "maxStringLength": 2000,
+  "maxConcatChain": 8,
+  "maxInlineScriptLength": 2000,
+  "ignoreDirs": [
+    ".git",
+    "node_modules",
+    "dist",
+    ".trae",
+    ".vscode"
+  ]
+}

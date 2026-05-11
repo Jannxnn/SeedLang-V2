@@ -1,0 +1,83 @@
+// 场景测试 - combinatorics：排列组合生成算法
+// EXPECT: "OK:4"
+fn generatePermutations(arr) {
+    if len(arr) <= 1 { return [arr] }
+    
+    result = []
+    i = 0
+    while i < len(arr) {
+        current = arr[i]
+        remaining = []
+        j = 0
+        while j < len(arr) {
+            if j != i { push(remaining arr[j]) }
+            j = j + 1
+        }
+        
+        perms = generatePermutations(remaining)
+        for perm in perms {
+            push(result concat([current] perm))
+        }
+        i = i + 1
+    }
+    
+    return result
+}
+
+fn combineHelper(arr k start current result) {
+    if len(current) == k {
+        newCurrent = []
+        for x in current { push(newCurrent x) }
+        push(result newCurrent)
+        return
+    }
+    
+    i = start
+    while i < len(arr) {
+        nextCurrent = []
+        for x in current { push(nextCurrent x) }
+        push(nextCurrent arr[i])
+        combineHelper(arr k i + 1 nextCurrent result)
+        i = i + 1
+    }
+}
+
+fn generateCombinations(arr k) {
+    result = []
+    combineHelper(arr k 0 [] result)
+    return result
+}
+
+fn generatePowerset(arr) {
+    result = [[]]
+    
+    for elem in arr {
+        newSubsets = []
+        for subset in result {
+            newSubset = []
+            for x in subset { push(newSubset x) }
+            push(newSubset elem)
+            push(newSubsets newSubset)
+        }
+        for ns in newSubsets {
+            push(result ns)
+        }
+    }
+    
+    return result
+}
+
+passed = 0
+
+perms = generatePermutations([1 2])
+if len(perms) == 2 { passed = passed + 1 }
+
+combs = generateCombinations([1 2 3] 2)
+if len(combs) == 3 { passed = passed + 1 }
+
+pset = generatePowerset([1 2])
+if len(pset) == 4 { passed = passed + 1 }
+
+if len(generateCombinations([1 2 3 4] 3)) == 4 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

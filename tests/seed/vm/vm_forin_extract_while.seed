@@ -1,0 +1,15 @@
+// 编译器优化：for-in 循环体含 while 循环时提取为独立函数
+// 验证 while 循环在 for-in 提取后仍正确执行
+// EXPECT: 4
+total = 0
+inputs = [1 2 3]
+for n in inputs {
+  s = 0
+  i = 0
+  while i < n {
+    s = s + i
+    i = i + 1
+  }
+  total = total + s
+}
+result = total

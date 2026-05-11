@@ -1,0 +1,5 @@
+// 双参数函数测试：多参数函数的定义与传参调用
+// EXPECT: 17
+fn add(a b) { return a + b }
+fn mul(a b) { return a * b }
+result = add(5 mul(3 4))

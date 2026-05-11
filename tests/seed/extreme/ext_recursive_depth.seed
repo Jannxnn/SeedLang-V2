@@ -1,0 +1,7 @@
+// 递归深度极限测试：最大递归深度与栈溢出处理
+// EXPECT: 30
+fn depth(n) {
+    if n <= 0 { return 0 }
+    return 1 + depth(n - 1)
+}
+result = depth(30)

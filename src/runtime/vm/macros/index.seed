@@ -1,0 +1,3 @@
+import macro "./src/runtime/vm/macros/distributed_fiber.seed"
+import macro "./src/runtime/vm/macros/gpu_dispatch.seed"
+import macro "./src/runtime/vm/macros/task_split.seed"

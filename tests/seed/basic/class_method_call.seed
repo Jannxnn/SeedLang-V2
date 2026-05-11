@@ -1,0 +1,8 @@
+// 类方法调用测试：实例方法调用的 this 绑定与返回值
+// EXPECT: 50
+class Calc {
+    square(x) { return x * x }
+    sumSquares(a b) { return this.square(a) + this.square(b) }
+}
+c = Calc()
+result = c.sumSquares(5 5)

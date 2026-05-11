@@ -1,0 +1,61 @@
+// 场景测试 - either monad：Either 单子的错误处理与链式调用
+// EXPECT: "OK:4"
+class Either {
+    static Left(value) {
+        return { isLeft: true value: value }
+    }
+    
+    static Right(value) {
+        return { isLeft: false value: value }
+    }
+    
+    static map(either mapper) {
+        if either.isLeft { return either }
+        return Either.Right(mapper(either.value))
+    }
+    
+    static flatMap(either mapper) {
+        if either.isLeft { return either }
+        return mapper(either.value)
+    }
+    
+    static getOrElse(either defaultValue) {
+        if either.isLeft { return defaultValue }
+        return either.value
+    }
+    
+    static isRight(either) {
+        return either.isLeft == false
+    }
+    
+    static isLeft(either) {
+        return either.isLeft
+    }
+}
+
+fn safeDivide(a b) {
+    if b == 0 { return Either.Left("Division by zero") }
+    return Either.Right(a / b)
+}
+
+fn safeSqrt(x) {
+    if x < 0 { return Either.Left("Negative number") }
+    return Either.Right(sqrt(x))
+}
+
+passed = 0
+
+r1 = safeDivide(10 2)
+r2 = Either.map(r1 (x) => x * 2)
+if Either.getOrElse(r2 0) == 10 { passed = passed + 1 }
+
+r3 = safeDivide(10 0)
+if Either.isLeft(r3) { passed = passed + 1 }
+
+r4 = safeSqrt(16)
+if Either.getOrElse(r4 0) == 4 { passed = passed + 1 }
+
+r5 = safeSqrt(-1)
+if Either.isLeft(r5) { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

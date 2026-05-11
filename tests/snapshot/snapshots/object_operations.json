@@ -1,0 +1,20 @@
+{
+  "name": "object_operations",
+  "code": "\nconfig = {\n    name: \"test\",\n    version: 1.0,\n    settings: {\n        debug: true,\n        timeout: 30\n    }\n}\nprint(config.name)\nprint(config.version)\nresult = config.settings.debug\n",
+  "output": [
+    "test",
+    "1"
+  ],
+  "globals": {
+    "result": true,
+    "config": {
+      "settings": {
+        "timeout": 30,
+        "debug": true
+      },
+      "version": 1,
+      "name": "test"
+    }
+  },
+  "timestamp": "2026-04-09T19:19:27.101Z"
+}

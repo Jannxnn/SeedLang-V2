@@ -1,0 +1,77 @@
+// 场景测试 - result type：Result 类型（Ok/Error 模式）
+// EXPECT: "OK:4"
+class Result {
+    static Ok(value) {
+        return { ok: true value: value error: null }
+    }
+    
+    static Err(error) {
+        return { ok: false value: null error: error }
+    }
+    
+    static map(result mapper) {
+        if result.ok { return Result.Ok(mapper(result.value)) }
+        return result
+    }
+    
+    static mapError(result mapper) {
+        if result.ok == false { return Result.Err(mapper(result.error)) }
+        return result
+    }
+    
+    static andThen(result mapper) {
+        if result.ok { return mapper(result.value) }
+        return result
+    }
+    
+    static unwrap(result) {
+        if result.ok { return result.value }
+        return null
+    }
+    
+    static unwrapOr(result defaultValue) {
+        if result.ok { return result.value }
+        return defaultValue
+    }
+}
+
+fn parseInt(str) {
+    chars = split(str "")
+    for c in chars {
+        if c < "0" || c > "9" {
+            if c != "-" { return Result.Err("Not a number") }
+        }
+    }
+    return Result.Ok(toInt(str))
+}
+
+fn divide(a b) {
+    if b == 0 { return Result.Err("Division by zero") }
+    return Result.Ok(a / b)
+}
+
+fn compute(a b) {
+    return Result.andThen(
+        parseInt(a)
+        (x) => Result.andThen(
+            parseInt(b)
+            (y) => divide(x y)
+        )
+    )
+}
+
+passed = 0
+
+r1 = compute("10" "2")
+if Result.unwrap(r1) == 5 { passed = passed + 1 }
+
+r2 = compute("10" "0")
+if r2.ok == false { passed = passed + 1 }
+
+r3 = compute("abc" "2")
+if r3.error == "Not a number" { passed = passed + 1 }
+
+r4 = Result.map(Result.Ok(5) (x) => x * 2)
+if Result.unwrap(r4) == 10 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

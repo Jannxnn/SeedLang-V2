@@ -1,0 +1,4 @@
+// 字符串大小写测试：upper/lower 函数的大小写转换
+// EXPECT: "HELLO"
+s = upper("hello")
+result = s

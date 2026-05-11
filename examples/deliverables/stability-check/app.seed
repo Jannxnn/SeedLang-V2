@@ -1,0 +1,19 @@
+// 稳定性交付物 v1：纯 Seed、全整数运算、确定性输出。
+// 场景：多行金额汇总 + 按 13% 四舍五入到元的税额（floor((sub*13+50)/100)，正数即半入）。
+// 验收：npm test -- --quick 已包含本交付物；或 npm run verify:deliverable
+
+rates = [199 49 1200 0 -15]
+sub = 0
+i = 0
+while i < len(rates) {
+    sub = sub + rates[i]
+    i = i + 1
+}
+vat = floor((sub * 13 + 50) / 100)
+grand = sub + vat
+
+print("SEED_DELIVERABLE_STABILITY_V1")
+print("lines:" + str(len(rates)))
+print("subtotal:" + str(sub))
+print("vat:" + str(vat))
+print("grand:" + str(grand))

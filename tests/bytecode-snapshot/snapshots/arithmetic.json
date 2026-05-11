@@ -1,0 +1,37 @@
+{
+  "name": "arithmetic",
+  "source": "\nresult = (1 + 2) * 3 - 4 / 2\nprint(result)\n",
+  "bytecode": {
+    "code": [
+      1,
+      0,
+      11,
+      0,
+      10,
+      1,
+      10,
+      0,
+      63,
+      1,
+      5,
+      255
+    ],
+    "codeDisasm": [
+      "   0 CONST 0",
+      "   2 SET_GLOBAL 0",
+      "   4 GET_GLOBAL 1",
+      "   6 GET_GLOBAL 0",
+      "   8 CALL 1 5",
+      "  11 HALT"
+    ],
+    "consts": [
+      7
+    ],
+    "vars": [
+      "result",
+      "print"
+    ],
+    "funcNames": {}
+  },
+  "version": 1
+}

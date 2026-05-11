@@ -1,0 +1,66 @@
+// 场景测试 - min heap：最小堆数据结构实现
+// EXPECT: "OK:4"
+fn minHeap() {
+    return {
+        heap: []
+        push: (val) => {
+            arr = minHeap.heap
+            push(arr val)
+            i = len(arr) - 1
+            while i > 0 {
+                parent = floor((i - 1) / 2)
+                if arr[parent] <= arr[i] { break }
+                temp = arr[parent]
+                arr[parent] = arr[i]
+                arr[i] = temp
+                i = parent
+            }
+        }
+        pop: () => {
+            arr = minHeap.heap
+            if len(arr) == 0 { return null }
+            result = arr[0]
+            arr[0] = arr[len(arr) - 1]
+            arr = slice(arr 0 len(arr) - 1)
+            minHeap.heap = arr
+            
+            i = 0
+            while true {
+                left = 2 * i + 1
+                right = 2 * i + 2
+                smallest = i
+                
+                if left < len(arr) && arr[left] < arr[smallest] { smallest = left }
+                if right < len(arr) && arr[right] < arr[smallest] { smallest = right }
+                
+                if smallest == i { break }
+                
+                temp = arr[i]
+                arr[i] = arr[smallest]
+                arr[smallest] = temp
+                i = smallest
+            }
+            
+            return result
+        }
+        peek: () => {
+            if len(minHeap.heap) == 0 { return null }
+            return minHeap.heap[0]
+        }
+        size: () => len(minHeap.heap)
+    }
+}
+
+heap = minHeap()
+heap.push(5)
+heap.push(3)
+heap.push(7)
+heap.push(1)
+
+passed = 0
+if heap.peek() == 1 { passed = passed + 1 }
+if heap.pop() == 1 { passed = passed + 1 }
+if heap.pop() == 3 { passed = passed + 1 }
+if heap.size() == 2 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

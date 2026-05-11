@@ -1,0 +1,44 @@
+// EXPECT: "OK:4"
+fn reverseString(s) {
+    chars = split(s "")
+    reversed = reverse(chars)
+    return join(reversed "")
+}
+
+fn isPalindrome(s) {
+    normalized = lower(s)
+    return normalized == reverseString(normalized)
+}
+
+fn countChars(s) {
+    counts = {}
+    chars = split(s "")
+    for c in chars {
+        if counts[c] == null { counts[c] = 0 }
+        counts[c] = counts[c] + 1
+    }
+    return counts
+}
+
+fn anagramCheck(s1 s2) {
+    c1 = countChars(s1)
+    c2 = countChars(s2)
+    
+    for k in keys(c1) {
+        if c1[k] != c2[k] { return false }
+    }
+    for k in keys(c2) {
+        if c1[k] != c2[k] { return false }
+    }
+    return true
+}
+
+passed = 0
+if reverseString("hello") == "olleh" { passed = passed + 1 }
+if isPalindrome("racecar") { passed = passed + 1 }
+
+counts = countChars("aabbc")
+if counts.a == 2 { passed = passed + 1 }
+if anagramCheck("listen" "silent") { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

@@ -1,0 +1,21 @@
+// 场景测试 - recursive patterns：递归模式（尾递归/互递归/记忆化）
+// EXPECT: 34
+fn fib(n) {
+    if n <= 1 { return n }
+    return fib(n - 1) + fib(n - 2)
+}
+
+fn sumTo(n) {
+    if n <= 0 { return 0 }
+    return n + sumTo(n - 1)
+}
+
+fn gcd(a b) {
+    if b == 0 { return a }
+    return gcd(b a % b)
+}
+
+f = fib(7)
+s = sumTo(5)
+g = gcd(48 18)
+result = f + s + g

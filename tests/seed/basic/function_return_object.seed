@@ -1,0 +1,7 @@
+// 函数返回对象测试：函数构造并返回对象字面量
+// EXPECT: 9
+fn makePoint(x y) {
+    return { x: x y: y }
+}
+p = makePoint(4 5)
+result = p.x + p.y

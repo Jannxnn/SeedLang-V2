@@ -1,0 +1,84 @@
+// 场景测试 - palindrome dp：最长回文子序列动态规划
+// EXPECT: "OK:4"
+fn longestPalindromeSubseq(s) {
+    n = len(s)
+    
+    dp = []
+    i = 0
+    while i < n {
+        row = []
+        j = 0
+        while j < n {
+            push(row 0)
+            j = j + 1
+        }
+        push(dp row)
+        i = i + 1
+    }
+    
+    i = 0
+    while i < n {
+        dp[i][i] = 1
+        i = i + 1
+    }
+    
+    len = 2
+    while len <= n {
+        i = 0
+        while i <= n - len {
+            j = i + len - 1
+            
+            if charAt(s i) == charAt(s j) {
+                dp[i][j] = dp[i + 1][j - 1] + 2
+            } else {
+                dp[i][j] = max(dp[i + 1][j] dp[i][j - 1])
+            }
+            i = i + 1
+        }
+        len = len + 1
+    }
+    
+    return dp[0][n - 1]
+}
+
+fn longestPalindrome(s) {
+    if len(s) == 0 { return "" }
+    
+    start = 0
+    maxLen = 1
+    
+    i = 0
+    while i < len(s) {
+        len1 = expandAroundCenter(s i i)
+        len2 = expandAroundCenter(s i i + 1)
+        
+        currentLen = max(len1 len2)
+        
+        if currentLen > maxLen {
+            maxLen = currentLen
+            start = i - floor((currentLen - 1) / 2)
+        }
+        
+        i = i + 1
+    }
+    
+    return substring(s start start + maxLen)
+}
+
+fn expandAroundCenter(s left right) {
+    while left >= 0 && right < len(s) && charAt(s left) == charAt(s right) {
+        left = left - 1
+        right = right + 1
+    }
+    
+    return right - left - 1
+}
+
+passed = 0
+
+if longestPalindromeSubseq("bbbab") == 4 { passed = passed + 1 }
+if longestPalindromeSubseq("cbbd") == 2 { passed = passed + 1 }
+if longestPalindrome("babad") == "bab" { passed = passed + 1 }
+if longestPalindrome("cbbd") == "bb" { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

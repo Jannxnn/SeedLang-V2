@@ -1,0 +1,3 @@
+// 数学 floor/ceil 测试：向下/向上取整函数
+// EXPECT: 7
+result = floor(3.9) + ceil(3.1)

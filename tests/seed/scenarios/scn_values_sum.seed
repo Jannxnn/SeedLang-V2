@@ -1,0 +1,5 @@
+// 场景测试 - values sum：对象 values() 求和操作
+// EXPECT: 6
+obj = { a: 1 b: 2 c: 3 }
+v = values(obj)
+result = v[0] + v[1] + v[2]

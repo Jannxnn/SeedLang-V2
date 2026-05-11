@@ -1,0 +1,108 @@
+// 场景测试 - tree problems：最小高度树等树问题
+// EXPECT: "OK:4"
+fn findMinHeightTrees(n edges) {
+    if n == 1 { return [0] }
+    
+    graph = {}
+    degree = {}
+    
+    i = 0
+    while i < n {
+        graph[i] = []
+        degree[i] = 0
+        i = i + 1
+    }
+    
+    for edge in edges {
+        push(graph[edge[0]] edge[1])
+        push(graph[edge[1]] edge[0])
+        degree[edge[0]] = degree[edge[0]] + 1
+        degree[edge[1]] = degree[edge[1]] + 1
+    }
+    
+    leaves = []
+    for i in keys(degree) {
+        if degree[i] == 1 {
+            push(leaves i)
+        }
+    }
+    
+    remaining = n
+    
+    while remaining > 2 {
+        leafCount = len(leaves)
+        remaining = remaining - leafCount
+        
+        newLeaves = []
+        
+        for leaf in leaves {
+            for neighbor in graph[leaf] {
+                degree[neighbor] = degree[neighbor] - 1
+                if degree[neighbor] == 1 {
+                    push(newLeaves neighbor)
+                }
+            }
+        }
+        
+        leaves = newLeaves
+    }
+    
+    return leaves
+}
+
+fn distanceK(root target k) {
+    graph = {}
+    
+    fn buildGraph(node parent) {
+        if node == null { return }
+        
+        if parent != null {
+            if graph[node.val] == null { graph[node.val] = [] }
+            if graph[parent.val] == null { graph[parent.val] = [] }
+            push(graph[node.val] parent.val)
+            push(graph[parent.val] node.val)
+        }
+        
+        buildGraph(node.left node)
+        buildGraph(node.right node)
+    }
+    
+    buildGraph(root null)
+    
+    result = []
+    visited = {}
+    visited[target.val] = true
+    
+    fn dfs(node dist) {
+        if dist == k {
+            push(result node)
+            return
+        }
+        
+        for neighbor in graph[node] {
+            if visited[neighbor] == null {
+                visited[neighbor] = true
+                dfs(neighbor dist + 1)
+            }
+        }
+    }
+    
+    dfs(target.val 0)
+    return result
+}
+
+passed = 0
+
+mht1 = findMinHeightTrees(4 [[1 0] [1 2] [1 3]])
+if len(mht1) == 1 && mht1[0] == 1 { passed = passed + 1 }
+
+mht2 = findMinHeightTrees(6 [[3 0] [3 1] [3 2] [3 4] [5 4]])
+if len(mht2) == 2 { passed = passed + 1 }
+
+mht3 = findMinHeightTrees(1 [])
+if mht3[0] == 0 { passed = passed + 1 }
+
+mht4 = findMinHeightTrees(2 [[0 1]])
+if len(mht4) == 2 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

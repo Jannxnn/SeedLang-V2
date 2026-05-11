@@ -1,0 +1,58 @@
+// 场景测试 - redux like：Redux 风格的状态管理器
+// EXPECT: "OK:4"
+class Store {
+    init(initial) {
+        this.state = initial
+        this.listeners = []
+    }
+    
+    getState() {
+        return this.state
+    }
+    
+    dispatch(action) {
+        this.state = this.reducer(this.state action)
+        for listener in this.listeners {
+            listener()
+        }
+    }
+    
+    subscribe(listener) {
+        push(this.listeners listener)
+    }
+    
+    reducer(state action) {
+        if action.type == "INCREMENT" {
+            return { count: state.count + 1 }
+        }
+        if action.type == "DECREMENT" {
+            return { count: state.count - 1 }
+        }
+        if action.type == "SET" {
+            return { count: action.value }
+        }
+        return state
+    }
+}
+
+store = Store({ count: 0 })
+notifications = 0
+
+store.subscribe(() => {
+    notifications = notifications + 1
+})
+
+store.dispatch({ type: "INCREMENT" })
+store.dispatch({ type: "INCREMENT" })
+store.dispatch({ type: "DECREMENT" })
+store.dispatch({ type: "SET" value: 100 })
+
+passed = 0
+if store.getState().count == 100 { passed = passed + 1 }
+if notifications == 4 { passed = passed + 1 }
+
+store.dispatch({ type: "UNKNOWN" })
+if store.getState().count == 100 { passed = passed + 1 }
+if notifications == 5 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

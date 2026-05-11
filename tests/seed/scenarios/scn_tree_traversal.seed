@@ -1,0 +1,73 @@
+// 场景测试 - tree traversal：树的前/中/后/层序遍历
+// EXPECT: "OK:4"
+class TreeNode {
+    init(value) {
+        this.value = value
+        this.children = []
+    }
+    
+    addChild(node) {
+        push(this.children node)
+    }
+    
+    depthFirst(callback) {
+        callback(this.value)
+        for child in this.children {
+            child.depthFirst(callback)
+        }
+    }
+    
+    breadthFirst(callback) {
+        queue = [this]
+        while len(queue) > 0 {
+            current = queue[0]
+            queue = slice(queue 1 len(queue))
+            callback(current.value)
+            for child in current.children {
+                push(queue child)
+            }
+        }
+    }
+    
+    find(predicate) {
+        if predicate(this.value) { return this.value }
+        for child in this.children {
+            found = child.find(predicate)
+            if found != null { return found }
+        }
+        return null
+    }
+    
+    count() {
+        total = 1
+        for child in this.children {
+            total = total + child.count()
+        }
+        return total
+    }
+}
+
+root = TreeNode("root")
+child1 = TreeNode("child1")
+child2 = TreeNode("child2")
+grandchild1 = TreeNode("grandchild1")
+grandchild2 = TreeNode("grandchild2")
+
+child1.addChild(grandchild1)
+child2.addChild(grandchild2)
+root.addChild(child1)
+root.addChild(child2)
+
+dfsOrder = []
+root.depthFirst((v) => { push(dfsOrder v) })
+
+bfsOrder = []
+root.breadthFirst((v) => { push(bfsOrder v) })
+
+passed = 0
+if root.count() == 5 { passed = passed + 1 }
+if dfsOrder[0] == "root" { passed = passed + 1 }
+if bfsOrder[1] == "child1" { passed = passed + 1 }
+if root.find((v) => v == "grandchild2") == "grandchild2" { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

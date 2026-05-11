@@ -1,0 +1,49 @@
+// 场景测试 - observer pattern：观察者模式（发布-订阅）
+// EXPECT: "OK:4"
+class Observer {
+    init() {
+        this.observers = {}
+    }
+    
+    subscribe(event callback) {
+        if this.observers[event] == null {
+            this.observers[event] = []
+        }
+        push(this.observers[event] callback)
+        return len(this.observers[event]) - 1
+    }
+    
+    unsubscribe(event id) {
+        if this.observers[event] == null { return false }
+        this.observers[event][id] = null
+        return true
+    }
+    
+    notify(event data) {
+        callbacks = this.observers[event]
+        if callbacks == null { return }
+        for cb in callbacks {
+            if cb != null { cb(data) }
+        }
+    }
+}
+
+obs = Observer()
+notifications = []
+
+id1 = obs.subscribe("data" (d) => { push(notifications "1:" + d) })
+id2 = obs.subscribe("data" (d) => { push(notifications "2:" + d) })
+obs.subscribe("other" (d) => { push(notifications "other:" + d) })
+
+obs.notify("data" "A")
+obs.notify("other" "B")
+obs.unsubscribe("data" id1)
+obs.notify("data" "C")
+
+passed = 0
+if len(notifications) == 4 { passed = passed + 1 }
+if notifications[0] == "1:A" { passed = passed + 1 }
+if notifications[1] == "2:A" { passed = passed + 1 }
+if notifications[3] == "2:C" { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

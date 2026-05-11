@@ -1,0 +1,80 @@
+// 场景测试 - math functions：高级数学函数（幂模/快速幂）
+// EXPECT: "OK:4"
+fn superPow(a b) {
+    result = 1
+    
+    for digit in b {
+        result = (pow(result 10) * pow(a digit)) % 1337
+    }
+    
+    return result
+}
+
+fn myPow(x n) {
+    if n == 0 { return 1 }
+    
+    if n < 0 {
+        x = 1 / x
+        n = -n
+    }
+    
+    result = 1
+    
+    while n > 0 {
+        if n % 2 == 1 {
+            result = result * x
+        }
+        x = x * x
+        n = floor(n / 2)
+    }
+    
+    return result
+}
+
+fn powInt(x n) {
+    if n == 0 { return 1 }
+    
+    result = 1
+    
+    while n > 0 {
+        if n % 2 == 1 {
+            result = result * x
+        }
+        x = x * x
+        n = floor(n / 2)
+    }
+    
+    return result
+}
+
+fn sqrtInt(x) {
+    if x == 0 { return 0 }
+    
+    left = 1
+    right = x
+    
+    while left <= right {
+        mid = floor((left + right) / 2)
+        
+        if mid <= x / mid && (mid + 1) > x / (mid + 1) {
+            return mid
+        }
+        
+        if mid > x / mid {
+            right = mid - 1
+        } else {
+            left = mid + 1
+        }
+    }
+    
+    return right
+}
+
+passed = 0
+
+if myPow(2 10) == 1024 { passed = passed + 1 }
+if sqrtInt(4) == 2 { passed = passed + 1 }
+if sqrtInt(8) == 2 { passed = passed + 1 }
+if myPow(2 -2) == 0.25 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

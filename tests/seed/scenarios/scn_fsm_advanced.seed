@@ -1,0 +1,59 @@
+// 场景测试 - fsm advanced：有限状态机的高级状态转换与事件处理
+// EXPECT: "OK:4"
+class FSM {
+    init(initialState) {
+        this.state = initialState
+        this.transitions = {}
+        this.handlers = {}
+    }
+    
+    addTransition(from event to) {
+        if this.transitions[from] == null {
+            this.transitions[from] = {}
+        }
+        this.transitions[from][event] = to
+    }
+    
+    onEnter(state handler) {
+        if this.handlers[state] == null {
+            this.handlers[state] = []
+        }
+        push(this.handlers[state] handler)
+    }
+    
+    dispatch(event) {
+        stateTransitions = this.transitions[this.state]
+        if stateTransitions == null { return false }
+        nextState = stateTransitions[event]
+        if nextState == null { return false }
+        
+        this.state = nextState
+        
+        handlers = this.handlers[this.state]
+        if handlers != null {
+            for h in handlers { h() }
+        }
+        
+        return true
+    }
+}
+
+log = []
+fsm = FSM("idle")
+
+fsm.addTransition("idle" "START" "running")
+fsm.addTransition("running" "PAUSE" "paused")
+fsm.addTransition("paused" "RESUME" "running")
+fsm.addTransition("running" "STOP" "idle")
+
+fsm.onEnter("running" () => { push(log "enter:running") })
+fsm.onEnter("paused" () => { push(log "enter:paused") })
+fsm.onEnter("idle" () => { push(log "enter:idle") })
+
+passed = 0
+if fsm.dispatch("START") { passed = passed + 1 }
+if fsm.state == "running" { passed = passed + 1 }
+if fsm.dispatch("PAUSE") { passed = passed + 1 }
+if len(log) == 2 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

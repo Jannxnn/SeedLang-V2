@@ -1,0 +1,100 @@
+MODE = 0
+NUM = 80
+FRAMES = 300
+W = 640
+H = 480
+
+bx = []
+by = []
+bvx = []
+bvy = []
+br = []
+
+fn initDense() {
+    i = 0
+    while i < NUM {
+        push(bx 280 + floor(random() * 80))
+        push(by 180 + floor(random() * 120))
+        push(bvx floor((random() - 0.5) * 2))
+        push(bvy floor((random() - 0.5) * 2))
+        push(br 6 + floor(random() * 5))
+        i = i + 1
+    }
+}
+
+fn initSparse() {
+    i = 0
+    while i < NUM {
+        push(bx 10 + floor(random() * (W - 20)))
+        push(by 10 + floor(random() * (H - 20)))
+        push(bvx floor((random() - 0.5) * 4))
+        push(bvy floor((random() - 0.5) * 4))
+        push(br 2 + floor(random() * 3))
+        i = i + 1
+    }
+}
+
+fn step() {
+    i = 0
+    while i < NUM {
+        bx[i] = bx[i] + bvx[i]
+        by[i] = by[i] + bvy[i]
+        r = br[i]
+        if bx[i] < r {
+            bx[i] = r
+            bvx[i] = -bvx[i]
+        }
+        if bx[i] > W - r {
+            bx[i] = W - r
+            bvx[i] = -bvx[i]
+        }
+        if by[i] < r {
+            by[i] = r
+            bvy[i] = -bvy[i]
+        }
+        if by[i] > H - r {
+            by[i] = H - r
+            bvy[i] = -bvy[i]
+        }
+        i = i + 1
+    }
+}
+
+collisions = 0
+
+fn collide() {
+    collisions = 0
+    i = 0
+    while i < NUM {
+        j = i + 1
+        while j < NUM {
+            dx = bx[j] - bx[i]
+            dy = by[j] - by[i]
+            d2 = dx * dx + dy * dy
+            md = br[i] + br[j]
+            if d2 < md * md {
+                collisions = collisions + 1
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+}
+
+if MODE == 0 {
+    initDense()
+} else {
+    initSparse()
+}
+f = 0
+while f < FRAMES {
+    if win32.pollEvents() == 0 {
+        break
+    }
+    step()
+    collide()
+    win32.present()
+    f = f + 1
+}
+print(f)
+print(collisions)

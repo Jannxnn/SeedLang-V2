@@ -1,0 +1,6 @@
+// 数组 concat 测试：多个数组的合并连接操作
+// EXPECT: 5
+a = [1 2]
+b = [3 4 5]
+c = concat(a b)
+result = len(c)

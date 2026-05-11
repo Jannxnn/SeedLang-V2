@@ -1,0 +1,62 @@
+// 场景测试 - command pattern：命令模式的撤销/重做机制
+// EXPECT: "OK:4"
+class Command {
+    init(execute undo) {
+        this.execute = execute
+        this.undo = undo
+    }
+}
+
+class CommandManager {
+    init() {
+        this.history = []
+        this.undone = []
+    }
+    
+    execute(cmd) {
+        result = cmd.execute()
+        push(this.history cmd)
+        this.undone = []
+        return result
+    }
+    
+    undo() {
+        if len(this.history) == 0 { return null }
+        cmd = this.history[len(this.history) - 1]
+        this.history = slice(this.history 0 len(this.history) - 1)
+        result = cmd.undo()
+        push(this.undone cmd)
+        return result
+    }
+    
+    redo() {
+        if len(this.undone) == 0 { return null }
+        cmd = this.undone[len(this.undone) - 1]
+        this.undone = slice(this.undone 0 len(this.undone) - 1)
+        result = cmd.execute()
+        push(this.history cmd)
+        return result
+    }
+}
+
+value = 0
+
+addCmd = Command(
+    () => { value = value + 10 return value }
+    () => { value = value - 10 return value }
+)
+
+mulCmd = Command(
+    () => { value = value * 2 return value }
+    () => { value = value / 2 return value }
+)
+
+manager = CommandManager()
+
+passed = 0
+if manager.execute(addCmd) == 10 { passed = passed + 1 }
+if manager.execute(mulCmd) == 20 { passed = passed + 1 }
+if manager.undo() == 10 { passed = passed + 1 }
+if manager.redo() == 20 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

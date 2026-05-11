@@ -1,0 +1,30 @@
+// Interpreter JIT: unary/call, literal logical folds, members, builtins, ternary (gate probe=1)
+// EXPECT: 2000
+obj = {}
+obj.a = 2
+inner = {}
+inner.b = 3
+obj.inner = inner
+box = {}
+box.x = 1
+box.y = 2
+obj.box = box
+stuff = [1 2]
+nums = [10 3]
+sum = 0
+i = 0
+while i < 40 {
+  pair = obj.a + obj.inner.b
+  mx = obj.box.x + obj.box.y
+  lc = obj.box.x && obj.box.y
+  mixed = obj.a + len(stuff)
+  pick = len(stuff) ? obj.box.y : 0
+  zc = 1 && len(stuff)
+  ubit = ~floor(1)
+  dead = false && len(stuff)
+  term = pair + mx + lc + mixed + pick + dead + abs(-1) + floor(2.9) + pow(2 3) + max(1 5) + min(nums) + sqrt(16)
+  term = term + (3 & 1) + (2 | 1) + (7 ^ 2) + ~(-3) + zc + ubit
+  sum = sum + term
+  i = i + 1
+}
+result = sum

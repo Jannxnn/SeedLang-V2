@@ -1,0 +1,10 @@
+// 闭包基础测试：函数捕获外部变量的词法作用域行为
+// EXPECT: 6
+fn makeAdder(a) {
+    return fn(b) {
+        return a + b
+    }
+}
+
+add2 = makeAdder(2)
+result = add2(4)

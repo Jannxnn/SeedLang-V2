@@ -1,0 +1,20 @@
+// 场景测试 - complex nested try order：嵌套 try-catch 的匹配与执行顺序
+// EXPECT: "A|B|C1|F2|C2|F1"
+trace = ""
+try {
+    trace = "A"
+    try {
+        trace = trace + "|B"
+        throw "boom"
+    } catch(e1) {
+        trace = trace + "|C1"
+        throw "C2"
+    } finally {
+        trace = trace + "|F2"
+    }
+} catch(e2) {
+    trace = trace + "|" + e2
+} finally {
+    trace = trace + "|F1"
+}
+result = trace

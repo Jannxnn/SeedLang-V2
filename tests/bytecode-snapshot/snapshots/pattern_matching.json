@@ -1,0 +1,122 @@
+{
+  "name": "pattern_matching",
+  "source": "\nfn describe(x) {\n    return match x {\n        0 => \"zero\"\n        1 => \"one\"\n        _ => \"other\"\n    }\n}\nprint(describe(3))\n",
+  "bytecode": {
+    "code": [
+      60,
+      7,
+      12,
+      0,
+      79,
+      1,
+      64,
+      2,
+      64,
+      65,
+      0,
+      11,
+      0,
+      10,
+      1,
+      101,
+      0,
+      2,
+      63,
+      1,
+      5,
+      255
+    ],
+    "codeDisasm": [
+      "   0 JUMP 7",
+      "   2 GET_LOCAL 0",
+      "   4 MATCH",
+      "   5 CONST 64",
+      "   7 NULL",
+      "   8 RETURN",
+      "   9 CLOSURE",
+      "  10 NOP",
+      "  11 SET_GLOBAL 0",
+      "  13 GET_GLOBAL 1",
+      "  15 CALL_GLOBAL_CONST1",
+      "  16 NOP",
+      "  17 NULL",
+      "  18 CALL 1 5",
+      "  21 HALT"
+    ],
+    "consts": [
+      {
+        "type": "func",
+        "start": 2,
+        "end": 9,
+        "params": [
+          "x"
+        ],
+        "name": "describe",
+        "capturedVars": [],
+        "capturedLocals": [],
+        "_localCount": 1,
+        "_noCapture": true,
+        "_isLeaf": true,
+        "_isClassicFib": false
+      },
+      [
+        {
+          "pattern": {
+            "kind": "literal",
+            "value": 0
+          },
+          "guard": null,
+          "body": [
+            {
+              "type": "expr",
+              "expr": {
+                "type": "string",
+                "value": "zero"
+              }
+            }
+          ]
+        },
+        {
+          "pattern": {
+            "kind": "literal",
+            "value": 1
+          },
+          "guard": null,
+          "body": [
+            {
+              "type": "expr",
+              "expr": {
+                "type": "string",
+                "value": "one"
+              }
+            }
+          ]
+        },
+        {
+          "pattern": {
+            "kind": "wildcard"
+          },
+          "guard": null,
+          "body": [
+            {
+              "type": "expr",
+              "expr": {
+                "type": "string",
+                "value": "other"
+              }
+            }
+          ]
+        }
+      ],
+      3
+    ],
+    "vars": [
+      "describe",
+      "print"
+    ],
+    "funcNames": {
+      "2": "describe"
+    }
+  },
+  "version": 1
+}

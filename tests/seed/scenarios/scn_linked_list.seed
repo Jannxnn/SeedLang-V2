@@ -1,0 +1,66 @@
+// 场景测试 - linked list：链表数据结构（增删反转等操作）
+// EXPECT: "OK:4"
+class LinkedList {
+    init() {
+        this.head = null
+        this.size = 0
+    }
+    
+    add(value) {
+        node = { value: value next: null }
+        if this.head == null {
+            this.head = node
+        } else {
+            current = this.head
+            while current.next != null {
+                current = current.next
+            }
+            current.next = node
+        }
+        this.size = this.size + 1
+    }
+    
+    get(index) {
+        if index < 0 || index >= this.size { return null }
+        current = this.head
+        i = 0
+        while i < index {
+            current = current.next
+            i = i + 1
+        }
+        return current.value
+    }
+    
+    remove(index) {
+        if index < 0 || index >= this.size { return false }
+        if index == 0 {
+            this.head = this.head.next
+        } else {
+            current = this.head
+            i = 0
+            while i < index - 1 {
+                current = current.next
+                i = i + 1
+            }
+            current.next = current.next.next
+        }
+        this.size = this.size - 1
+        return true
+    }
+}
+
+list = LinkedList()
+list.add(10)
+list.add(20)
+list.add(30)
+list.add(40)
+
+passed = 0
+if list.get(0) == 10 { passed = passed + 1 }
+if list.get(2) == 30 { passed = passed + 1 }
+
+list.remove(1)
+if list.get(1) == 30 { passed = passed + 1 }
+if list.size == 3 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

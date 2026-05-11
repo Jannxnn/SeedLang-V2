@@ -1,0 +1,9 @@
+// while 循环阶乘测试：使用 while 实现递归式阶乘计算
+// EXPECT: 720
+n = 6
+acc = 1
+while n > 1 {
+    acc = acc * n
+    n = n - 1
+}
+result = acc

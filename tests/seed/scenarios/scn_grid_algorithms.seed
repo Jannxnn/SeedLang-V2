@@ -1,0 +1,138 @@
+// 场景测试 - grid algorithms：二维网格接雨水等网格算法
+// EXPECT: "OK:4"
+fn trapRainWater2D(heightMap) {
+    if len(heightMap) == 0 || len(heightMap[0]) == 0 { return 0 }
+    
+    m = len(heightMap)
+    n = len(heightMap[0])
+    
+    visited = []
+    i = 0
+    while i < m {
+        row = []
+        j = 0
+        while j < n {
+            push(row false)
+            j = j + 1
+        }
+        push(visited row)
+        i = i + 1
+    }
+    
+    water = 0
+    minHeap = []
+    
+    j = 0
+    while j < n {
+        topCell = [heightMap[0][j] 0 j]
+        push(minHeap topCell)
+        bottomCell = [heightMap[m - 1][j] m - 1 j]
+        push(minHeap bottomCell)
+        visited[0][j] = true
+        visited[m - 1][j] = true
+        j = j + 1
+    }
+    
+    i = 1
+    while i < m - 1 {
+        leftCell = [heightMap[i][0] i 0]
+        push(minHeap leftCell)
+        rightCell = [heightMap[i][n - 1] i n - 1]
+        push(minHeap rightCell)
+        visited[i][0] = true
+        visited[i][n - 1] = true
+        i = i + 1
+    }
+    
+    directions = [[0 1] [1 0] [0 -1] [-1 0]]
+    
+    while len(minHeap) > 0 {
+        minHeap = sort(minHeap)
+        cell = minHeap[0]
+        minHeap = slice(minHeap 1 len(minHeap))
+        
+        height = cell[0]
+        row = cell[1]
+        col = cell[2]
+        
+        for dir in directions {
+            newRow = row + dir[0]
+            newCol = col + dir[1]
+            
+            if newRow >= 0 && newRow < m && newCol >= 0 && newCol < n {
+                if visited[newRow][newCol] == false {
+                    visited[newRow][newCol] = true
+                    newHeight = heightMap[newRow][newCol]
+                    
+                    if newHeight < height {
+                        water = water + height - newHeight
+                        trappedCell = [height newRow newCol]
+                        push(minHeap trappedCell)
+                    } else {
+                        raisedCell = [newHeight newRow newCol]
+                        push(minHeap raisedCell)
+                    }
+                }
+            }
+        }
+    }
+    
+    return water
+}
+
+fn maxAreaOfIsland(grid) {
+    if len(grid) == 0 { return 0 }
+    
+    rows = len(grid)
+    cols = len(grid[0])
+    maxArea = 0
+    
+    fn dfs(r c) {
+        if r < 0 || r >= rows || c < 0 || c >= cols { return 0 }
+        if grid[r][c] == 0 { return 0 }
+        
+        grid[r][c] = 0
+        return 1 + dfs(r + 1 c) + dfs(r - 1 c) + dfs(r c + 1) + dfs(r c - 1)
+    }
+    
+    i = 0
+    while i < rows {
+        j = 0
+        while j < cols {
+            if grid[i][j] == 1 {
+                area = dfs(i j)
+                if area > maxArea { maxArea = area }
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    
+    return maxArea
+}
+
+passed = 0
+
+island = [
+    [0 0 1 0 0 0 0 1 0 0 0 0 0]
+    [0 0 0 0 0 0 0 1 1 1 0 0 0]
+    [0 1 1 0 1 0 0 0 0 0 0 0 0]
+    [0 1 0 0 1 1 0 0 1 0 1 0 0]
+    [0 1 0 0 1 1 0 0 1 1 1 0 0]
+    [0 0 0 0 0 0 0 0 0 0 1 0 0]
+    [0 0 0 0 0 0 0 1 1 1 0 0 0]
+    [0 0 0 0 0 0 0 1 1 0 0 0 0]
+]
+
+if maxAreaOfIsland(island) == 6 { passed = passed + 1 }
+
+simpleIsland = [[1 1 0] [1 0 0]]
+if maxAreaOfIsland(simpleIsland) == 3 { passed = passed + 1 }
+
+emptyGrid = [[0 0] [0 0]]
+if maxAreaOfIsland(emptyGrid) == 0 { passed = passed + 1 }
+
+fullGrid = [[1 1] [1 1]]
+if maxAreaOfIsland(fullGrid) == 4 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

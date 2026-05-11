@@ -1,0 +1,55 @@
+// 场景测试 - interpreter pattern：解释器模式的表达式求值
+// EXPECT: "OK:4"
+class Interpreter {
+    init() {
+        this.env = {}
+    }
+    
+    eval(expr) {
+        if type(expr) == "number" { return expr }
+        if type(expr) == "string" {
+            if this.env[expr] != null { return this.env[expr] }
+            return expr
+        }
+        if type(expr) != "object" { return expr }
+        
+        op = expr.op
+        left = this.eval(expr.left)
+        right = this.eval(expr.right)
+        
+        if op == "+" { return left + right }
+        if op == "-" { return left - right }
+        if op == "*" { return left * right }
+        if op == "/" { return left / right }
+        
+        return null
+    }
+    
+    setVar(name value) {
+        this.env[name] = value
+    }
+}
+
+interp = Interpreter()
+interp.setVar("x" 10)
+interp.setVar("y" 5)
+
+expr1 = { op: "+" left: { op: "*" left: "x" right: 2 } right: "y" }
+result1 = interp.eval(expr1)
+
+expr2 = { op: "-" left: 20 right: { op: "/" left: 10 right: 2 } }
+result2 = interp.eval(expr2)
+
+expr3 = { op: "*" left: { op: "+" left: 1 right: 2 } right: { op: "-" left: 5 right: 3 } }
+result3 = interp.eval(expr3)
+
+passed = 0
+if result1 == 25 { passed = passed + 1 }
+if result2 == 15 { passed = passed + 1 }
+if result3 == 6 { passed = passed + 1 }
+
+interp.setVar("z" 100)
+expr4 = { op: "+" left: "z" right: 1 }
+if interp.eval(expr4) == 101 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

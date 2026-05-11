@@ -1,0 +1,56 @@
+// 场景测试 - function patterns：防抖/节流等函数式设计模式
+// EXPECT: "OK:4"
+fn debounceSimulate(handler delay) {
+    lastCall = 0
+    return (arg) => {
+        now = timestamp()
+        if now - lastCall >= delay {
+            lastCall = now
+            return handler(arg)
+        }
+        return null
+    }
+}
+
+fn throttleSimulate(handler limit) {
+    lastCall = 0
+    return (arg) => {
+        now = timestamp()
+        if now - lastCall >= limit {
+            lastCall = now
+            return handler(arg)
+        }
+        return null
+    }
+}
+
+fn once(handler) {
+    called = false
+    result = null
+    return (arg) => {
+        if called == false {
+            called = true
+            result = handler(arg)
+        }
+        return result
+    }
+}
+
+counter = 0
+fn increment(x) {
+    counter = counter + 1
+    return counter
+}
+
+onceInc = once(increment)
+r1 = onceInc(1)
+r2 = onceInc(2)
+r3 = onceInc(3)
+
+passed = 0
+if r1 == 1 { passed = passed + 1 }
+if r2 == 1 { passed = passed + 1 }
+if r3 == 1 { passed = passed + 1 }
+if counter == 1 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

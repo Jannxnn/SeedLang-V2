@@ -1,0 +1,47 @@
+// 场景测试 - lazy evaluation：惰性求值模式（延迟计算）
+// EXPECT: "OK:4"
+class Lazy {
+    init(factory) {
+        this.factory = factory
+        this.computed = false
+        this.value = null
+    }
+    
+    get() {
+        if this.computed == false {
+            this.value = this.factory()
+            this.computed = true
+        }
+        return this.value
+    }
+    
+    isComputed() {
+        return this.computed
+    }
+    
+    reset() {
+        this.computed = false
+        this.value = null
+    }
+}
+
+computeCount = 0
+lazyValue = Lazy(() => {
+    computeCount = computeCount + 1
+    return 42
+})
+
+passed = 0
+if lazyValue.isComputed() == false { passed = passed + 1 }
+
+v1 = lazyValue.get()
+v2 = lazyValue.get()
+v3 = lazyValue.get()
+
+if computeCount == 1 { passed = passed + 1 }
+if v1 == 42 && v2 == 42 && v3 == 42 { passed = passed + 1 }
+
+lazyValue.reset()
+if lazyValue.isComputed() == false { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

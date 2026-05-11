@@ -1,0 +1,6 @@
+// 数组 pop 顺序测试：验证 pop 操作的 LIFO 顺序正确性
+// EXPECT: 6
+arr = [1 2 3]
+a = pop(arr)
+b = pop(arr)
+result = a + b + len(arr)

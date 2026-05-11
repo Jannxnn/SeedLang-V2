@@ -1,0 +1,110 @@
+// 场景测试 - simulation：模拟过程类问题
+// EXPECT: "OK:4"
+fn minOperations(boxes) {
+    n = len(boxes)
+    result = []
+    
+    i = 0
+    while i < n {
+        push(result 0)
+        i = i + 1
+    }
+    
+    i = 0
+    while i < n {
+        if boxes[i] == "1" {
+            j = 0
+            while j < n {
+                if j < i {
+                    result[j] = result[j] + i - j
+                } else {
+                    result[j] = result[j] + j - i
+                }
+                j = j + 1
+            }
+        }
+        i = i + 1
+    }
+    
+    return result
+}
+
+fn minTimeToVisitAllPoints(points) {
+    time = 0
+    
+    i = 1
+    while i < len(points) {
+        x1 = points[i - 1][0]
+        y1 = points[i - 1][1]
+        x2 = points[i][0]
+        y2 = points[i][1]
+        
+        dx = abs(x2 - x1)
+        dy = abs(y2 - y1)
+        
+        time = time + max(dx dy)
+        i = i + 1
+    }
+    
+    return time
+}
+
+fn tictactoe(moves) {
+    board = []
+    i = 0
+    while i < 3 {
+        row = []
+        j = 0
+        while j < 3 {
+            push(row 0)
+            j = j + 1
+        }
+        push(board row)
+        i = i + 1
+    }
+    
+    player = 1
+    for move in moves {
+        board[move[0]][move[1]] = player
+        player = player * -1
+    }
+    
+    i = 0
+    while i < 3 {
+        if board[i][0] != 0 && board[i][0] == board[i][1] && board[i][1] == board[i][2] {
+            if board[i][0] == 1 { return "A" }
+            return "B"
+        }
+        if board[0][i] != 0 && board[0][i] == board[1][i] && board[1][i] == board[2][i] {
+            if board[0][i] == 1 { return "A" }
+            return "B"
+        }
+        i = i + 1
+    }
+    
+    if board[0][0] != 0 && board[0][0] == board[1][1] && board[1][1] == board[2][2] {
+        if board[0][0] == 1 { return "A" }
+        return "B"
+    }
+    
+    if board[0][2] != 0 && board[0][2] == board[1][1] && board[1][1] == board[2][0] {
+        if board[0][2] == 1 { return "A" }
+        return "B"
+    }
+    
+    if len(moves) == 9 { return "Draw" }
+    return "Pending"
+}
+
+passed = 0
+
+ops = minOperations("110")
+if ops[0] == 1 && ops[1] == 1 && ops[2] == 3 { passed = passed + 1 }
+
+if minTimeToVisitAllPoints([[1 1] [3 4] [-1 0]]) == 7 { passed = passed + 1 }
+
+if tictactoe([[0 0] [2 0] [1 1] [2 1] [2 2]]) == "A" { passed = passed + 1 }
+
+if tictactoe([[0 0] [1 1] [0 1] [0 2] [1 0] [2 0]]) == "B" { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

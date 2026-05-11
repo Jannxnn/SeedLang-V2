@@ -1,0 +1,4 @@
+// 场景测试 - hell large object（地狱级）：大对象属性访问性能测试
+// EXPECT: 45
+o = { a: 1 b: 2 c: 3 d: 4 e: 5 f: 6 g: 7 h: 8 i: 9 }
+result = o.a + o.b + o.c + o.d + o.e + o.f + o.g + o.h + o.i

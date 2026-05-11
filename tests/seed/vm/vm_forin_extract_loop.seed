@@ -1,0 +1,13 @@
+// 编译器优化：for-in 循环体含热循环时提取为独立函数
+// 验证 for-in 循环体包含 for 循环时，编译器正确提取并执行
+// EXPECT: 4
+total = 0
+inputs = [1 2 3]
+for n in inputs {
+  s = 0
+  for (i = 0; i < n; i = i + 1) {
+    s = s + i
+  }
+  total = total + s
+}
+result = total

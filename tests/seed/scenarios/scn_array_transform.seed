@@ -1,0 +1,60 @@
+// 场景测试 - array transform：数组的交错合并、扁平化等变换操作
+// EXPECT: "OK:4"
+fn interleave(arr1 arr2) {
+    result = []
+    maxLen = max(len(arr1) len(arr2))
+    i = 0
+    while i < maxLen {
+        if i < len(arr1) { push(result arr1[i]) }
+        if i < len(arr2) { push(result arr2[i]) }
+        i = i + 1
+    }
+    return result
+}
+
+fn partition(arr size) {
+    result = []
+    i = 0
+    while i < len(arr) {
+        chunk = []
+        j = 0
+        while j < size && i + j < len(arr) {
+            push(chunk arr[i + j])
+            j = j + 1
+        }
+        push(result chunk)
+        i = i + size
+    }
+    return result
+}
+
+fn rotate(arr k) {
+    n = len(arr)
+    if n == 0 { return arr }
+    k = k % n
+    if k < 0 { k = k + n }
+    result = []
+    i = k
+    while i < n {
+        push(result arr[i])
+        i = i + 1
+    }
+    i = 0
+    while i < k {
+        push(result arr[i])
+        i = i + 1
+    }
+    return result
+}
+
+interleaved = interleave([1 2 3] [4 5 6 7 8])
+chunks = partition([1 2 3 4 5 6 7] 3)
+rotated = rotate([1 2 3 4 5] 2)
+
+passed = 0
+if len(interleaved) == 8 { passed = passed + 1 }
+if len(chunks) == 3 { passed = passed + 1 }
+if rotated[0] == 3 { passed = passed + 1 }
+if rotated[4] == 2 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

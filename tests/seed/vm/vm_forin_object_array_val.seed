@@ -1,0 +1,6 @@
+// 对象 for-in 迭代：属性值为数组
+// EXPECT: 3
+obj = { nums: [1 2 3] }
+for v in obj {
+  result = len(v)
+}

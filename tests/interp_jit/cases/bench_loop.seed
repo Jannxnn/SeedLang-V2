@@ -1,0 +1,9 @@
+// Used by gate --bench wall-clock comparison (warm host + JIT toggles).
+// EXPECT: 1999000
+sum = 0
+i = 0
+while i < 2000 {
+  sum = sum + i
+  i = i + 1
+}
+result = sum

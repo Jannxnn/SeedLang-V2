@@ -1,0 +1,11 @@
+{
+  "name": "class_instantiation",
+  "code": "\nclass Counter {\n    fn __init__() {\n        this.count = 0\n    }\n    fn increment() {\n        this.count = this.count + 1\n        return this.count\n    }\n    fn get() {\n        return this.count\n    }\n}\n\ncounter = Counter()\ncounter.increment()\ncounter.increment()\ncounter.increment()\nresult = counter.get()\nprint(\"Count: \" + result)\n",
+  "output": [
+    "Count: 3"
+  ],
+  "globals": {
+    "result": 3
+  },
+  "timestamp": "2026-04-09T19:19:27.112Z"
+}

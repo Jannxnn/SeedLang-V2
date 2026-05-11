@@ -1,0 +1,11 @@
+// 对象 for-in 迭代：带 continue 跳过
+// EXPECT: 4
+obj = { a: 1 b: 2 c: 3 }
+sum = 0
+for v in obj {
+  if v == 2 {
+    continue
+  }
+  sum = sum + v
+}
+result = sum

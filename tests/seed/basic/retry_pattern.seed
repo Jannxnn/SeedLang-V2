@@ -1,0 +1,18 @@
+// 重试模式测试：循环 + try-catch 实现的错误重试机制
+// EXPECT: "success"
+fn retry(operation times) {
+    i = 0
+    while i < times {
+        r = operation()
+        if r != null { return r }
+        i = i + 1
+    }
+    return null
+}
+counter = 0
+fn tryOp() {
+    counter = counter + 1
+    if counter < 3 { return null }
+    return "success"
+}
+result = retry(tryOp 5)

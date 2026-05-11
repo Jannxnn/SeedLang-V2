@@ -1,0 +1,15 @@
+// 场景测试 - higher order compose：高阶函数组合与柯里化
+// EXPECT: 400
+fn compose(f g) {
+    return (x) => f(g(x))
+}
+
+fn double(x) { return x * 2 }
+fn square(x) { return x * x }
+fn addOne(x) { return x + 1 }
+
+doubleThenSquare = compose(square double)
+squareThenAddOne = compose(addOne square)
+chain = compose(doubleThenSquare squareThenAddOne)
+
+result = chain(3)

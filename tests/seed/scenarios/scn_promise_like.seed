@@ -1,0 +1,69 @@
+// 场景测试 - promise like：Promise 模式的异步状态管理
+// EXPECT: "OK:3"
+class Promise {
+    init(executor) {
+        this.state = "pending"
+        this.value = null
+        this.onFulfilled = null
+        this.onRejected = null
+        
+        executor((v) => this._resolve(v) (e) => this._reject(e))
+    }
+    
+    _resolve(value) {
+        if this.state != "pending" { return }
+        this.state = "fulfilled"
+        this.value = value
+        if this.onFulfilled != null {
+            this.onFulfilled(value)
+        }
+    }
+    
+    _reject(error) {
+        if this.state != "pending" { return }
+        this.state = "rejected"
+        this.value = error
+        if this.onRejected != null {
+            this.onRejected(error)
+        }
+    }
+    
+    then(onFulfilled) {
+        this.onFulfilled = onFulfilled
+        if this.state == "fulfilled" {
+            onFulfilled(this.value)
+        }
+        return this
+    }
+    
+    catch(onRejected) {
+        this.onRejected = onRejected
+        if this.state == "rejected" {
+            onRejected(this.value)
+        }
+        return this
+    }
+}
+
+result1 = null
+result2 = null
+result3 = null
+
+p1 = Promise((resolve reject) => {
+    resolve(42)
+})
+
+p1.then((v) => { result1 = v })
+
+p2 = Promise((resolve reject) => {
+    reject("error")
+})
+
+p2.catch((e) => { result2 = e })
+
+passed = 0
+if p1.state == "fulfilled" { passed = passed + 1 }
+if p1.value == 42 { passed = passed + 1 }
+if p2.state == "rejected" { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

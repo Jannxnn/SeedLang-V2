@@ -1,0 +1,45 @@
+// 场景测试 - event emitter：事件发布/订阅模式的实现
+// EXPECT: "OK:3"
+class EventEmitter {
+    init() {
+        this.events = {}
+    }
+    
+    on(event callback) {
+        if this.events[event] == null {
+            this.events[event] = []
+        }
+        push(this.events[event] callback)
+    }
+    
+    emit(event data) {
+        callbacks = this.events[event]
+        if callbacks != null {
+            for cb in callbacks {
+                cb(data)
+            }
+        }
+    }
+    
+    off(event) {
+        this.events[event] = null
+    }
+}
+
+emitter = EventEmitter()
+received = []
+
+emitter.on("test" (data) => {
+    push(received data)
+})
+
+emitter.emit("test" 1)
+emitter.emit("test" 2)
+emitter.emit("test" 3)
+
+passed = 0
+if len(received) == 3 { passed = passed + 1 }
+if received[0] == 1 { passed = passed + 1 }
+if received[2] == 3 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

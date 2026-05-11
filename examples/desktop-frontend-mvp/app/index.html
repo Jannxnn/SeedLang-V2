@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SeedLang Desktop Frontend MVP</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <div class="logo-mark"></div>
+          <span class="logo-text">SeedLang</span>
+        </div>
+
+        <nav class="nav">
+          <button class="nav-btn" data-route="home">Home</button>
+          <button class="nav-btn" data-route="editor">Editor</button>
+          <button class="nav-btn" data-route="settings">Settings</button>
+        </nav>
+
+        <div class="actions">
+          <button id="openBtn"><span class="btn-icon">📂</span> Open File</button>
+          <button id="saveBtn"><span class="btn-icon">💾</span> Save File</button>
+          <button id="notifyBtn"><span class="btn-icon">🔔</span> Notify</button>
+          <button id="commandBtn"><span class="btn-icon">⌘</span> Command Palette</button>
+        </div>
+
+        <div class="sidebar-footer">
+          <span>v0.4</span>
+        </div>
+      </aside>
+
+      <main class="main-area">
+        <header class="topbar">
+          <div class="topbar-left">
+            <h1 id="title">Desktop Frontend MVP</h1>
+          </div>
+          <div class="topbar-right">
+            <span id="routeLabel" class="route-badge">Route: home</span>
+          </div>
+        </header>
+
+        <div class="content-scroll">
+          <p id="routeNotice" class="notice"></p>
+
+          <section id="view-home" class="view">
+            <h3 id="homeTitle">SeedLang IDE</h3>
+            <p id="homeDesc">Write, compile, and run SeedLang code with real-time output.</p>
+
+            <div class="examples-grid">
+              <div class="example-card" data-example="hello">
+                <div class="example-icon">👋</div>
+                <strong>Hello World</strong>
+                <small>Basic print and functions</small>
+              </div>
+              <div class="example-card" data-example="fibonacci">
+                <div class="example-icon">🔢</div>
+                <strong>Fibonacci</strong>
+                <small>Recursion and loops</small>
+              </div>
+              <div class="example-card" data-example="class">
+                <div class="example-icon">🏗️</div>
+                <strong>Class & OOP</strong>
+                <small>Object-oriented programming</small>
+              </div>
+              <div class="example-card" data-example="async">
+                <div class="example-icon">⚡</div>
+                <strong>Async & Coro</strong>
+                <small>Async functions & coroutines</small>
+              </div>
+              <div class="example-card" data-example="array">
+                <div class="example-icon">📊</div>
+                <strong>Array Ops</strong>
+                <small>map, filter, reduce</small>
+              </div>
+              <div class="example-card" data-example="game">
+                <div class="example-icon">🎮</div>
+                <strong>Game Logic</strong>
+                <small>Game mechanics in SeedLang</small>
+              </div>
+            </div>
+
+            <p id="stateInfo"></p>
+          </section>
+
+          <section id="view-editor" class="view hidden">
+            <div class="workspace-bar">
+              <div class="workspace-info">
+                <span class="workspace-icon">📁</span>
+                <span id="workspacePath" class="workspace-path">No workspace</span>
+              </div>
+              <button id="selectWorkspaceBtn" class="btn-secondary btn-sm">Select Workspace</button>
+            </div>
+            <div class="editor-toolbar">
+              <h3 id="editorTitle">Editor</h3>
+              <div class="editor-actions">
+                <button id="newFileBtn" class="btn-secondary" disabled>New File</button>
+                <button id="runBtn" class="btn-run"><span class="btn-icon">▶</span> <span id="runBtnText">Run Code</span></button>
+                <button id="clearOutputBtn" class="btn-secondary">Clear Output</button>
+              </div>
+            </div>
+            <div id="pathLabel" class="path-label"><span class="path-text">No file opened.</span><input class="rename-input" type="text" spellcheck="false" /></div>
+            <div class="editor-container">
+              <div id="lineNumbers" class="line-numbers"></div>
+              <textarea id="editor" placeholder="// Write SeedLang code here...&#10;// Example:&#10;fn greet(name) { print('Hello ' + name) }&#10;greet('SeedLang')" spellcheck="false"></textarea>
+            </div>
+            <div class="output-panel">
+              <div class="output-header">
+                <span id="outputLabel">Output</span>
+                <span id="outputStatus" class="output-status"></span>
+              </div>
+              <pre id="outputArea" class="output-area">// Click "Run Code" or press Ctrl+Enter to execute</pre>
+            </div>
+          </section>
+
+          <section id="view-settings" class="view hidden">
+            <h3>Settings</h3>
+            <div class="settings-grid">
+              <label class="setting-row">
+                <div class="setting-info">
+                  <strong>Theme</strong>
+                  <small>Choose your preferred color scheme</small>
+                </div>
+                <select id="themeSelect">
+                  <option value="dark">Dark</option>
+                  <option value="light">Light</option>
+                </select>
+              </label>
+              <label class="setting-row">
+                <div class="setting-info">
+                  <strong>Auto save (demo)</strong>
+                  <small>Automatically save changes</small>
+                </div>
+                <input id="autoSaveToggle" type="checkbox" />
+              </label>
+              <label class="setting-row">
+                <div class="setting-info">
+                  <strong>Language / 语言</strong>
+                  <small>Select display language</small>
+                </div>
+                <select id="langSelect" onchange="if(window.__langChange)window.__langChange(this.value)">
+                  <option value="en">English</option>
+                  <option value="zh">中文</option>
+                </select>
+              </label>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <div id="commandPalette" class="palette hidden">
+      <div class="palette-box">
+        <input id="commandInput" placeholder="Type command..." />
+        <div id="commandList"></div>
+      </div>
+    </div>
+
+    <script src="./renderer-bundle.js"></script>
+  </body>
+</html>

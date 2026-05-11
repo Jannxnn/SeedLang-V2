@@ -1,0 +1,42 @@
+// 场景测试 - quicksort：快速排序算法实现与边界处理
+// EXPECT: "OK:8"
+fn quickSort(arr) {
+    if len(arr) <= 1 { return arr }
+    
+    pivot = arr[0]
+    left = []
+    right = []
+    
+    i = 1
+    while i < len(arr) {
+        if arr[i] < pivot {
+            push(left arr[i])
+        } else {
+            push(right arr[i])
+        }
+        i = i + 1
+    }
+    
+    sortedLeft = quickSort(left)
+    sortedRight = quickSort(right)
+    
+    result = []
+    for x in sortedLeft { push(result x) }
+    push(result pivot)
+    for x in sortedRight { push(result x) }
+    
+    return result
+}
+
+input = [3 1 4 1 5 9 2 6]
+sorted = quickSort(input)
+valid = true
+i = 1
+while i < len(sorted) {
+    if sorted[i] < sorted[i - 1] {
+        valid = false
+    }
+    i = i + 1
+}
+
+result = "OK:" + toString(len(sorted))

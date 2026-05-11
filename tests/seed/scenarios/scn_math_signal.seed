@@ -1,0 +1,3 @@
+// 场景测试 - math signal：数学信号处理（三角函数/取整）
+// EXPECT: 1
+result = round(cos(0))

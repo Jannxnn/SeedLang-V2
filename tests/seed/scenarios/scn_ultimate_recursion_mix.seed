@@ -1,0 +1,5 @@
+// 场景测试 - ultimate recursion mix（终极）：递归混合计算验证
+// EXPECT: 133
+fn fib(n) { if n <= 1 { return n } return fib(n - 1) + fib(n - 2) }
+fn fac(n) { if n <= 1 { return 1 } return n * fac(n - 1) }
+result = fib(7) + fac(5)

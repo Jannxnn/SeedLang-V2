@@ -1,0 +1,30 @@
+// 场景测试 - memoization：函数记忆化缓存（避免重复计算）
+// EXPECT: "X:5|Y:0|Z:5"
+fn memoize(func) {
+    cache = {}
+    return (n) => {
+        key = toString(n)
+        if cache[key] != null {
+            return cache[key]
+        }
+        val = func(n)
+        cache[key] = val
+        return val
+    }
+}
+
+fn slowFib(n) {
+    if n <= 1 { return n }
+    return slowFib(n - 1) + slowFib(n - 2)
+}
+
+fastFib = memoize((n) => {
+    if n <= 1 { return n }
+    return fastFib(n - 1) + fastFib(n - 2)
+})
+
+x = fastFib(10)
+y = fastFib(15)
+z = fastFib(20)
+
+result = "X:" + toString(x % 10) + "|Y:" + toString(y % 10) + "|Z:" + toString(z % 10)

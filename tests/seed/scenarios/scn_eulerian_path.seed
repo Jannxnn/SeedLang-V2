@@ -1,0 +1,86 @@
+// 场景测试 - eulerian path：欧拉路径/回路查找（ Hierholzer 算法）
+// EXPECT: "OK:4"
+fn findItinerary(tickets) {
+    graph = {}
+    
+    for ticket in tickets {
+        from = ticket[0]
+        to = ticket[1]
+        
+        if graph[from] == null { graph[from] = [] }
+        push(graph[from] to)
+    }
+    
+    for key in keys(graph) {
+        graph[key] = sort(graph[key])
+    }
+    
+    result = []
+    
+    fn dfs(airport) {
+        while graph[airport] != null && len(graph[airport]) > 0 {
+            next = graph[airport][0]
+            graph[airport] = slice(graph[airport] 1 len(graph[airport]))
+            dfs(next)
+        }
+        push(result airport)
+    }
+    
+    dfs("JFK")
+    
+    return reverse(result)
+}
+
+fn reconstructItinerary(tickets) {
+    graph = {}
+    
+    for ticket in tickets {
+        from = ticket[0]
+        to = ticket[1]
+        
+        if graph[from] == null { graph[from] = [] }
+        push(graph[from] to)
+    }
+    
+    for key in keys(graph) {
+        graph[key] = sort(graph[key])
+    }
+    
+    route = []
+    
+    fn visit(airport) {
+        destinations = graph[airport]
+        while destinations != null && len(destinations) > 0 {
+            next = destinations[0]
+            destinations = slice(destinations 1 len(destinations))
+            graph[airport] = destinations
+            visit(next)
+            destinations = graph[airport]
+        }
+        push(route airport)
+    }
+    
+    visit("JFK")
+    
+    return reverse(route)
+}
+
+passed = 0
+
+tickets1 = [["MUC" "LHR"] ["JFK" "MUC"] ["SFO" "SJC"] ["LHR" "SFO"]]
+itinerary1 = findItinerary(tickets1)
+if itinerary1[0] == "JFK" { passed = passed + 1 }
+
+tickets2 = [["JFK" "SFO"] ["JFK" "ATL"] ["SFO" "ATL"] ["ATL" "JFK"] ["ATL" "SFO"]]
+itinerary2 = findItinerary(tickets2)
+if itinerary2[0] == "JFK" { passed = passed + 1 }
+
+tickets3 = [["JFK" "KUL"] ["JFK" "NRT"] ["NRT" "JFK"]]
+itinerary3 = findItinerary(tickets3)
+if len(itinerary3) == 4 { passed = passed + 1 }
+
+tickets4 = [["JFK" "ATL"] ["ATL" "JFK"]]
+itinerary4 = findItinerary(tickets4)
+if itinerary4[0] == "JFK" && itinerary4[2] == "JFK" { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

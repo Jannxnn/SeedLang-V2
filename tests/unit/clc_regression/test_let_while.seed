@@ -1,0 +1,10 @@
+fn main() {
+  let i = 0
+  let s = 0
+  while i < 3 {
+    let t = i * 2
+    s = s + t
+    i = i + 1
+  }
+  print(s)
+}

@@ -1,0 +1,47 @@
+// EXPECT: "OK:4"
+class Strategy {
+    init() {
+        this.strategies = {}
+    }
+    
+    register(name fn) {
+        this.strategies[name] = fn
+    }
+    
+    execute(name data) {
+        if this.strategies[name] == null { return null }
+        return this.strategies[name](data)
+    }
+}
+
+strategy = Strategy()
+
+strategy.register("sum" (arr) => {
+    total = 0
+    for x in arr { total = total + x }
+    return total
+})
+
+strategy.register("product" (arr) => {
+    total = 1
+    for x in arr { total = total * x }
+    return total
+})
+
+strategy.register("max" (arr) => {
+    maxVal = arr[0]
+    for x in arr {
+        if x > maxVal { maxVal = x }
+    }
+    return maxVal
+})
+
+data = [1 2 3 4 5]
+
+passed = 0
+if strategy.execute("sum" data) == 15 { passed = passed + 1 }
+if strategy.execute("product" data) == 120 { passed = passed + 1 }
+if strategy.execute("max" data) == 5 { passed = passed + 1 }
+if strategy.execute("unknown" data) == null { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

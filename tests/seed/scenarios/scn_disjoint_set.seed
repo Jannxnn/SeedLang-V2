@@ -1,0 +1,62 @@
+// 场景测试 - disjoint set：并查集数据结构（Union-Find）
+// EXPECT: "OK:4"
+class DisjointSet {
+    init() {
+        this.parent = {}
+        this.rank = {}
+    }
+    
+    makeSet(x) {
+        this.parent[x] = x
+        this.rank[x] = 0
+    }
+    
+    find(x) {
+        if this.parent[x] != x {
+            this.parent[x] = this.find(this.parent[x])
+        }
+        return this.parent[x]
+    }
+    
+    union(x y) {
+        xRoot = this.find(x)
+        yRoot = this.find(y)
+        
+        if xRoot == yRoot { return }
+        
+        if this.rank[xRoot] < this.rank[yRoot] {
+            this.parent[xRoot] = yRoot
+        } else {
+            if this.rank[xRoot] > this.rank[yRoot] {
+                this.parent[yRoot] = xRoot
+            } else {
+                this.parent[yRoot] = xRoot
+                this.rank[xRoot] = this.rank[xRoot] + 1
+            }
+        }
+    }
+    
+    connected(x y) {
+        return this.find(x) == this.find(y)
+    }
+}
+
+ds = DisjointSet()
+ds.makeSet(1)
+ds.makeSet(2)
+ds.makeSet(3)
+ds.makeSet(4)
+
+passed = 0
+if ds.connected(1 2) == false { passed = passed + 1 }
+
+ds.union(1 2)
+if ds.connected(1 2) { passed = passed + 1 }
+
+ds.union(3 4)
+ds.union(1 3)
+
+if ds.connected(2 4) { passed = passed + 1 }
+if ds.connected(1 4) { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

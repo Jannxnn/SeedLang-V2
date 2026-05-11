@@ -1,0 +1,160 @@
+{
+  "name": "seedlang",
+  "displayName": "SeedLang - AI Symbolic Language",
+  "description": "SeedLang language support for VS Code - AI-specific efficient symbolic language",
+  "version": "1.5.2",
+  "publisher": "seedlang",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets"
+  ],
+  "keywords": [
+    "seedlang",
+    "ai",
+    "symbolic",
+    "programming language"
+  ],
+  "activationEvents": [
+    "onLanguage:seedlang",
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "seedlang",
+        "aliases": [
+          "SeedLang",
+          "seedlang",
+          "seed"
+        ],
+        "extensions": [
+          ".seed",
+          ".sd",
+          ".seedlang"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./images/seed-icon-light.png",
+          "dark": "./images/seed-icon-dark.png"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "seedlang",
+        "scopeName": "source.seedlang",
+        "path": "./syntaxes/seedlang.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "seedlang",
+        "path": "./snippets/seedlang.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "seedlang.run",
+        "title": "SeedLang: Run Current File",
+        "icon": "$(play)"
+      },
+      {
+        "command": "seedlang.repl",
+        "title": "SeedLang: Open REPL"
+      },
+      {
+        "command": "seedlang.compile",
+        "title": "SeedLang: Compile to JavaScript"
+      },
+      {
+        "command": "seedlang.format",
+        "title": "SeedLang: Format Document"
+      },
+      {
+        "command": "seedlang.lint",
+        "title": "SeedLang: Lint Document"
+      },
+      {
+        "command": "seedlang.initAIConfig",
+        "title": "SeedLang: Initialize AI Config Files"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "when": "resourceExtname == .seed",
+          "command": "seedlang.run",
+          "group": "navigation"
+        }
+      ],
+      "editor/title": [
+        {
+          "when": "resourceExtname == .seed",
+          "command": "seedlang.run",
+          "group": "navigation"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "seedlang.run",
+        "key": "f5",
+        "when": "editorTextFocus && resourceExtname == .seed"
+      },
+      {
+        "command": "seedlang.repl",
+        "key": "ctrl+shift+r",
+        "mac": "cmd+shift+r"
+      }
+    ],
+    "configuration": {
+      "title": "SeedLang",
+      "properties": {
+        "seedlang.executablePath": {
+          "type": "string",
+          "default": "seedlang",
+          "description": "Path to the SeedLang executable"
+        },
+        "seedlang.runOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "保存时自动运行 SeedLang 文件"
+        },
+        "seedlang.showOutput": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show output panel when running"
+        },
+        "seedlang.formatOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "保存时自动格式化 SeedLang 文件"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.60.0",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "eslint": "^8.0.0",
+    "typescript": "^5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/seedlang/seedlang"
+  },
+  "license": "MIT"
+}

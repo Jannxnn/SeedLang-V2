@@ -1,0 +1,28 @@
+{
+  "name": "array_operations",
+  "code": "\nitems = [1 2 3 4 5]\npush(items, 6)\npush(items, 7)\nprint(\"Length: \" + len(items))\nresult = items\n",
+  "output": [
+    "Length: 7"
+  ],
+  "globals": {
+    "result": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "items": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ]
+  },
+  "timestamp": "2026-04-09T19:19:27.099Z"
+}

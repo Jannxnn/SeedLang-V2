@@ -1,0 +1,8 @@
+// 场景测试 - guard pattern：守卫模式（空值保护/默认值）
+// EXPECT: "guest"
+user = null
+if user == null {
+    result = "guest"
+} else {
+    result = "member"
+}

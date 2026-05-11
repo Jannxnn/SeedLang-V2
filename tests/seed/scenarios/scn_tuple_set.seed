@@ -1,0 +1,97 @@
+// 场景测试 - tuple set：元组集合数据结构（去重/比较）
+// EXPECT: "OK:4"
+class Tuple {
+    init(elements) {
+        this.elements = elements
+    }
+    
+    get(index) {
+        return this.elements[index]
+    }
+    
+    size() {
+        return len(this.elements)
+    }
+    
+    equals(other) {
+        if this.size() != other.size() { return false }
+        i = 0
+        while i < this.size() {
+            if this.get(i) != other.get(i) { return false }
+            i = i + 1
+        }
+        return true
+    }
+}
+
+class Set {
+    init() {
+        this.items = []
+    }
+    
+    add(item) {
+        for existing in this.items {
+            if existing == item { return }
+        }
+        push(this.items item)
+    }
+    
+    has(item) {
+        for existing in this.items {
+            if existing == item { return true }
+        }
+        return false
+    }
+    
+    remove(item) {
+        newItems = []
+        for existing in this.items {
+            if existing != item { push(newItems existing) }
+        }
+        this.items = newItems
+    }
+    
+    size() {
+        return len(this.items)
+    }
+    
+    union(other) {
+        result = Set()
+        for item in this.items { result.add(item) }
+        for item in other.items { result.add(item) }
+        return result
+    }
+    
+    intersection(other) {
+        result = Set()
+        for item in this.items {
+            if other.has(item) { result.add(item) }
+        }
+        return result
+    }
+}
+
+s1 = Set()
+s1.add(1)
+s1.add(2)
+s1.add(3)
+s1.add(2)
+
+s2 = Set()
+s2.add(2)
+s2.add(3)
+s2.add(4)
+
+passed = 0
+if s1.size() == 3 { passed = passed + 1 }
+
+u = s1.union(s2)
+if u.size() == 4 { passed = passed + 1 }
+
+i = s1.intersection(s2)
+if i.size() == 2 { passed = passed + 1 }
+
+s1.remove(1)
+if s1.has(1) == false { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

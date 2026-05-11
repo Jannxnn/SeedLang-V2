@@ -1,0 +1,3 @@
+// 逻辑非测试：! 运算符的真假取反行为
+// EXPECT: true
+result = not false

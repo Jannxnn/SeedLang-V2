@@ -1,0 +1,15 @@
+argsList = args()
+if len(argsList) < 2 {
+  print("Usage: clc_cli <input.seed> [output.c]")
+  exit(1)
+}
+sourcePath = argsList[1]
+outputPath = "out.c"
+if len(argsList) >= 3 {
+  outputPath = argsList[2]
+}
+
+source = readFile(sourcePath)
+result = compileToC(source)
+writeFile(outputPath result)
+print("Compiled " + sourcePath + " -> " + outputPath + " (" + toString(len(source)) + " bytes -> " + toString(len(result)) + " bytes)")

@@ -1,0 +1,12 @@
+// 编译器优化：for-in 循环体变量在多次迭代间独立
+// 验证 forInScopedVars 确保每次迭代的变量绑定独立
+// 如果变量错误地共享绑定，x 会累加而不是每次重置
+// EXPECT: 3
+count = 0
+inputs = [10 20 30]
+for n in inputs {
+  x = 0
+  x = x + 1
+  count = count + x
+}
+result = count

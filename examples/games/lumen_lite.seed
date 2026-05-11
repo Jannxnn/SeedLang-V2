@@ -1,0 +1,236 @@
+// Lumen Lite (SeedLang 纯语言版)
+// 目标：验证 SeedLang 可执行简化 GI 思路
+// 内容：直接光 + 阴影检测 + 网格扩散（多次 bounce）+ ASCII 渲染
+
+W = 56
+H = 22
+FRAMES = 24
+RADIUS = 18
+
+RAMP = " .:-=+*#%@"
+
+fn clamp(v lo hi) {
+    if v < lo { return lo }
+    if v > hi { return hi }
+    return v
+}
+
+fn makeGrid(h w init) {
+    g = []
+    y = 0
+    while y < h {
+        row = []
+        x = 0
+        while x < w {
+            push(row init)
+            x = x + 1
+        }
+        push(g row)
+        y = y + 1
+    }
+    return g
+}
+
+fn buildScene() {
+    occ = makeGrid(H W 0)
+    emi = makeGrid(H W 0)
+
+    // 地面
+    x = 0
+    while x < W {
+        occ[H - 3][x] = 1
+        occ[H - 2][x] = 1
+        occ[H - 1][x] = 1
+        x = x + 1
+    }
+
+    // 左中右三个障碍块
+    y = 6
+    while y < H - 3 {
+        occ[y][11] = 1
+        occ[y][12] = 1
+        y = y + 1
+    }
+
+    y = 9
+    while y < H - 3 {
+        occ[y][27] = 1
+        occ[y][28] = 1
+        occ[y][29] = 1
+        y = y + 1
+    }
+
+    y = 7
+    while y < H - 3 {
+        occ[y][43] = 1
+        occ[y][44] = 1
+        y = y + 1
+    }
+
+    // 两个固定发光体（模拟彩色/环境灯简化为强度）
+    emi[2][4] = 1.0
+    emi[2][W - 5] = 0.8
+
+    return { occ: occ emi: emi }
+}
+
+fn shadowFactor(occ x y lx ly) {
+    dx = lx - x
+    dy = ly - y
+    dist = sqrt(dx * dx + dy * dy)
+    if dist < 1 { return 1.0 }
+
+    steps = floor(dist * 1.2)
+    if steps < 1 { steps = 1 }
+
+    i = 1
+    while i < steps {
+        t = i / steps
+        sx = floor(x + dx * t)
+        sy = floor(y + dy * t)
+        if sx >= 0 and sx < W and sy >= 0 and sy < H {
+            if occ[sy][sx] == 1 {
+                return 0.08
+            }
+        }
+        i = i + 1
+    }
+    return 1.0
+}
+
+fn computeDirect(scene lx ly) {
+    occ = scene.occ
+    emi = scene.emi
+    light = makeGrid(H W 0)
+
+    y = 0
+    while y < H {
+        x = 0
+        while x < W {
+            if occ[y][x] == 1 {
+                light[y][x] = 0
+            } else {
+                dx = lx - x
+                dy = ly - y
+                d = sqrt(dx * dx + dy * dy)
+                direct = 0
+                if d < RADIUS {
+                    atten = 1 - d / RADIUS
+                    sh = shadowFactor(occ x y lx ly)
+                    direct = atten * atten * sh
+                }
+                light[y][x] = direct + emi[y][x] * 1.6 + 0.02
+            }
+            x = x + 1
+        }
+        y = y + 1
+    }
+
+    return light
+}
+
+fn diffuse(light occ iterations) {
+    it = 0
+    while it < iterations {
+        next = makeGrid(H W 0)
+        y = 0
+        while y < H {
+            x = 0
+            while x < W {
+                if occ[y][x] == 1 {
+                    next[y][x] = 0
+                } else {
+                    c = light[y][x] * 0.35
+                    acc = 0
+                    n = 0
+
+                    oy = -1
+                    while oy <= 1 {
+                        ox = -1
+                        while ox <= 1 {
+                            if not (ox == 0 and oy == 0) {
+                                nx = x + ox
+                                ny = y + oy
+                                if nx >= 0 and nx < W and ny >= 0 and ny < H {
+                                    if occ[ny][nx] == 0 {
+                                        acc = acc + light[ny][nx]
+                                        n = n + 1
+                                    }
+                                }
+                            }
+                            ox = ox + 1
+                        }
+                        oy = oy + 1
+                    }
+
+                    if n > 0 {
+                        // 简化 bounce：邻域平均衰减叠加
+                        next[y][x] = c + (acc / n) * 0.62
+                    } else {
+                        next[y][x] = c
+                    }
+                }
+                x = x + 1
+            }
+            y = y + 1
+        }
+
+        light = next
+        it = it + 1
+    }
+    return light
+}
+
+fn renderFrame(scene light lx ly frameNo) {
+    occ = scene.occ
+    emi = scene.emi
+    maxIdx = len(RAMP) - 1
+
+    print("Frame " + toString(frameNo) + "  Light(" + toString(lx) + " " + toString(ly) + ")")
+
+    y = 0
+    while y < H {
+        line = ""
+        x = 0
+        while x < W {
+            if x == lx and y == ly {
+                line = line + "@"
+            } else if emi[y][x] > 0.7 {
+                line = line + "*"
+            } else if occ[y][x] == 1 {
+                line = line + "#"
+            } else {
+                v = clamp(light[y][x] 0 1)
+                idx = floor(v * maxIdx)
+                line = line + substring(RAMP idx idx + 1)
+            }
+            x = x + 1
+        }
+        print(line)
+        y = y + 1
+    }
+    print("")
+}
+
+print("=== SeedLang Lumen Lite: Simplified GI Demo ===")
+print("Mode: CLI ASCII")
+print("")
+print("init scene ...")
+scene = buildScene()
+print("scene ok")
+
+f = 0
+while f < FRAMES {
+    // 动态光源左右摆动
+    lx = 8 + floor((W - 16) * (0.5 + 0.5 * sin(f * 0.35)))
+    ly = 4 + floor(2 * sin(f * 0.21))
+
+    direct = computeDirect(scene lx ly)
+    gi = diffuse(direct scene.occ 4)
+    renderFrame(scene gi lx ly f + 1)
+
+    sleep(45)
+    f = f + 1
+}
+
+print("=== Done ===")

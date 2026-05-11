@@ -1,0 +1,23 @@
+// 场景测试 - function pipeline：函数管道的多阶段数据处理
+// EXPECT: "P1:30:P2:15:P3"
+fn pipeline(value) {
+    return fn1(fn2(fn3(value)))
+}
+
+fn fn1(x) { return x * 2 }
+fn fn2(x) { return x + 10 }
+fn fn3(x) { return x - 5 }
+
+fn asyncSimulate(data) {
+    steps = [fn1 fn2 fn3]
+    result = data
+    for step in steps {
+        result = step(result)
+    }
+    return result
+}
+
+r1 = pipeline(10)
+r2 = asyncSimulate(5)
+
+result = "P1:" + toString(r1) + ":P2:" + toString(r2) + ":P3"

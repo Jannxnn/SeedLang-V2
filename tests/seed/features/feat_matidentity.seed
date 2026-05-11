@@ -1,0 +1,4 @@
+// 单位矩阵内置函数测试：matIdentity 创建单位矩阵
+// EXPECT: 1
+c = matIdentity(4)
+result = c[2][2]

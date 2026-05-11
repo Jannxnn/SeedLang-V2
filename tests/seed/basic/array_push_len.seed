@@ -1,0 +1,8 @@
+// 数组 push 与 len 测试：push 后 len 自增的一致性
+// EXPECT: 5
+arr = [1]
+push(arr 2)
+push(arr 3)
+push(arr 4)
+push(arr 5)
+result = len(arr)

@@ -1,0 +1,5 @@
+﻿// 对象键规范测试：keys() 返回值的顺序与一致性
+// EXPECT: 3
+obj = { a: 1 b: 2 c: 3 }
+k = keys(obj)
+result = len(k)

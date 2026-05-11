@@ -1,0 +1,55 @@
+// 场景测试 - priority queue：优先队列（堆）数据结构实现
+// EXPECT: "OK:4"
+class PriorityQueue {
+    init() {
+        this.items = []
+    }
+    
+    enqueue(item priority) {
+        entry = { item: item priority: priority }
+        added = false
+        
+        newItems = []
+        for existing in this.items {
+            if added == false && priority < existing.priority {
+                push(newItems entry)
+                added = true
+            }
+            push(newItems existing)
+        }
+        if added == false {
+            push(newItems entry)
+        }
+        this.items = newItems
+    }
+    
+    dequeue() {
+        if len(this.items) == 0 { return null }
+        entry = this.items[0]
+        this.items = slice(this.items 1 len(this.items))
+        return entry.item
+    }
+    
+    peek() {
+        if len(this.items) == 0 { return null }
+        return this.items[0].item
+    }
+    
+    size() {
+        return len(this.items)
+    }
+}
+
+pq = PriorityQueue()
+pq.enqueue("low" 3)
+pq.enqueue("high" 1)
+pq.enqueue("medium" 2)
+pq.enqueue("urgent" 0)
+
+passed = 0
+if pq.peek() == "urgent" { passed = passed + 1 }
+if pq.dequeue() == "urgent" { passed = passed + 1 }
+if pq.dequeue() == "high" { passed = passed + 1 }
+if pq.size() == 2 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

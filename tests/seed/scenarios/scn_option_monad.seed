@@ -1,0 +1,67 @@
+// 场景测试 - option monad：Option 单子（Maybe 模式）空值安全
+// EXPECT: "OK:4"
+class Option {
+    static Some(value) {
+        return { hasValue: true value: value }
+    }
+    
+    static None() {
+        return { hasValue: false value: null }
+    }
+    
+    static fromNullable(value) {
+        if value == null { return Option.None() }
+        return Option.Some(value)
+    }
+    
+    static map(opt mapper) {
+        if opt.hasValue == false { return opt }
+        return Option.Some(mapper(opt.value))
+    }
+    
+    static flatMap(opt mapper) {
+        if opt.hasValue == false { return opt }
+        return mapper(opt.value)
+    }
+    
+    static getOrElse(opt defaultValue) {
+        if opt.hasValue { return opt.value }
+        return defaultValue
+    }
+    
+    static isSome(opt) {
+        return opt.hasValue
+    }
+    
+    static isNone(opt) {
+        return opt.hasValue == false
+    }
+}
+
+fn findUser(id) {
+    if id == 1 { return Option.Some({ name: "Alice" age: 30 }) }
+    if id == 2 { return Option.Some({ name: "Bob" age: 25 }) }
+    return Option.None()
+}
+
+fn getUserName(opt) {
+    return Option.map(opt (user) => user.name)
+}
+
+passed = 0
+
+user1 = findUser(1)
+name1 = getUserName(user1)
+if Option.getOrElse(name1 "Unknown") == "Alice" { passed = passed + 1 }
+
+user3 = findUser(3)
+name3 = getUserName(user3)
+if Option.getOrElse(name3 "Unknown") == "Unknown" { passed = passed + 1 }
+
+nullable = Option.fromNullable(null)
+if Option.isNone(nullable) { passed = passed + 1 }
+
+some = Option.fromNullable(42)
+if Option.isSome(some) { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

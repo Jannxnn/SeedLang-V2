@@ -1,0 +1,713 @@
+// Win32  sustained stress / stability harness（高负载持续运行）
+//
+// **状态显示**：默认与 particle_bench C++ 一致，用**窗口标题栏**（`win32.setWindowTitleStats` → SetWindowText）显示 N / FPS / 碰撞 / diag / 帧号。
+// 需要录屏用的位图 HUD（大号数字、水印、心跳条）时，启动前设置环境变量 `SEED_WIN32_PIXEL_HUD=1`。
+//
+// 行为概要：
+// - **演示默认**：粒子数 **从 0 线性爬到 DEMO_RAMP_TARGET**，再在峰值驻留 DEMO_HOLD_FRAMES，总帧数 **MAXF**（须等于爬坡帧数 + 驻留帧数）后停止；结束时刷新标题栏并 `present`，**窗口保持打开**直到用户关闭；进程末尾仍有 print。
+//   恢复「档位轮换」旧行为：设 `PARTICLE_BENCH_TIER_MODE=1`。若要**全程固定 N**（从一开始就是 8000）：设 `PARTICLE_BENCH_FIXED_N=8000`。
+// - 档位轮换（可选）：500 → 1000 → … → 20000（21 档，每档驻留 PARTICLE_CYCLE_FRAMES 帧）+
+//   O(n²) 碰撞（仅活跃粒子）+ 实心圆绘制。
+// - `MAXF=0` 表示不按源码帧上限退出（仍可由 `PARTICLE_BENCH_MAX_FRAMES` 限制）；非 0 则跑满即停。
+// - 每帧累加 diag 校验和（碰撞次数、能量proxy、帧号），进程末尾 print（若无可视控制台可忽略）。
+//
+// 构建（仓库根）：
+//   npm run build
+//   node dist/cli.js examples/clc/win32_stress_sustained.seed --compile-c --subsystem windows -o build/win32_stress.c
+// 试跑：链接生成 exe 后双击运行；关闭窗口即停。
+// CI / 无头短跑：设置环境变量 SEED_WIN32_AUTOCLOSE=1（仍建议在 MAXF 内设上限以免无限循环）。
+// **粒子数**：默认 **爬坡→峰值**（见 `DEMO_RAMP_*`）；设 `PARTICLE_BENCH_FIXED_N=<0～MAX_PARTICLES>` 为全程固定 N；设 `PARTICLE_BENCH_TIER_MODE=1` 为档位轮换。C++/Rust 同名 exe 同语义。`win32.envInt(... (-1))` 默认值请带括号，避免解析成减法。
+// **跨实现对齐（CLC / particle_bench C++ / Rust）**：初始粒子不用 random()；Park–Miller（模 2147483647，乘子 16807）用 Schrage 递推；位置/速度/半径由**整数** `%` 映射（与 C/C++/Rust 位级一致）。默认种子 88675123；`PARTICLE_BENCH_RNG_SEED` 可覆盖。`PARTICLE_BENCH_MAX_FRAMES>0` 跑满后退出；与源码 `MAXF` 同时>0 时取较小值。
+//
+MAX_PARTICLES = 20000
+PARTICLE_CYCLE_FRAMES = 600
+PARTICLE_TIER_SLOTS = 21
+particleCount = 500
+W = 640
+H = 480
+BGSTEP = 2
+// 演示：帧 0 起 N 从 0 爬到 DEMO_RAMP_TARGET；之后再跑 DEMO_HOLD_FRAMES 帧便于读数。MAXF 须 = 爬坡 + 驻留。
+DEMO_RAMP_TARGET = 8000
+DEMO_RAMP_FRAMES = 800
+DEMO_HOLD_FRAMES = 400
+MAXF = 1200
+
+bx = []
+by = []
+bvx = []
+bvy = []
+br = []
+
+collisions = 0
+frame = 0
+diag = 0
+lastPerfMs = 0
+smoothFps = 0
+
+HUD_MAIN_SC = 3
+HUD_BRAND_SC = 2
+HUD_BG = 4278329616
+HUD_FG = 4294938368
+HUD_SHADOW = 4280697589
+HUD_AC = 4278255615
+HUD_ACCENT = 4288487818
+HUD_BR = 4294918567
+HUD_BR_BOX = 4279376414
+
+BENCH_RNG_MOD = 2147483647
+benchRngState = 1
+
+fn benchRngSeedFromEnv() {
+    s = win32.envInt("PARTICLE_BENCH_RNG_SEED" (-1))
+    if s < 0 {
+        return 88675123
+    }
+    if s == 0 {
+        return 1
+    }
+    r = s % BENCH_RNG_MOD
+    if r == 0 {
+        return 1
+    }
+    return r
+}
+
+fn benchRngNext() {
+    z = benchRngState
+    hi = floor(z / 127773)
+    lo = z - hi * 127773
+    t = 16807 * lo - 2836 * hi
+    if t <= 0 {
+        t = t + BENCH_RNG_MOD
+    }
+    benchRngState = t
+    return t
+}
+
+fn init() {
+    benchRngState = benchRngSeedFromEnv()
+    i = 0
+    while i < MAX_PARTICLES {
+        push(bx 24 + benchRngNext() % (W - 48))
+        push(by 24 + benchRngNext() % (H - 48))
+        push(bvx benchRngNext() % 10 - 5)
+        push(bvy benchRngNext() % 10 - 5)
+        push(br 4 + benchRngNext() % 7)
+        i = i + 1
+    }
+}
+
+fn fillRect(x0 y0 rw rh c) {
+    yy = 0
+    while yy < rh {
+        xx = 0
+        while xx < rw {
+            px = x0 + xx
+            py = y0 + yy
+            if px >= 0 && px < W && py >= 0 && py < H {
+                win32.setPixel(px py c)
+            }
+            xx = xx + 1
+        }
+        yy = yy + 1
+    }
+}
+
+fn digitPat(d rz) {
+    if d == 0 {
+        if rz == 0 { return 31 }
+        if rz == 1 { return 17 }
+        if rz == 2 { return 21 }
+        if rz == 3 { return 21 }
+        if rz == 4 { return 21 }
+        if rz == 5 { return 17 }
+        return 31
+    }
+    if d == 1 {
+        if rz == 0 { return 4 }
+        if rz == 1 { return 12 }
+        if rz == 2 { return 4 }
+        if rz == 3 { return 4 }
+        if rz == 4 { return 4 }
+        if rz == 5 { return 4 }
+        return 14
+    }
+    if d == 2 {
+        if rz == 0 { return 31 }
+        if rz == 1 { return 16 }
+        if rz == 2 { return 8 }
+        if rz == 3 { return 4 }
+        if rz == 4 { return 2 }
+        if rz == 5 { return 1 }
+        return 31
+    }
+    if d == 3 {
+        if rz == 0 { return 31 }
+        if rz == 1 { return 16 }
+        if rz == 2 { return 14 }
+        if rz == 3 { return 16 }
+        if rz == 4 { return 16 }
+        if rz == 5 { return 16 }
+        return 31
+    }
+    if d == 4 {
+        if rz == 0 { return 17 }
+        if rz == 1 { return 17 }
+        if rz == 2 { return 31 }
+        if rz == 3 { return 16 }
+        if rz == 4 { return 16 }
+        if rz == 5 { return 16 }
+        return 0
+    }
+    if d == 5 {
+        if rz == 0 { return 31 }
+        if rz == 1 { return 1 }
+        if rz == 2 { return 1 }
+        if rz == 3 { return 30 }
+        if rz == 4 { return 16 }
+        if rz == 5 { return 16 }
+        return 31
+    }
+    if d == 6 {
+        if rz == 0 { return 30 }
+        if rz == 1 { return 1 }
+        if rz == 2 { return 1 }
+        if rz == 3 { return 30 }
+        if rz == 4 { return 17 }
+        if rz == 5 { return 17 }
+        return 30
+    }
+    if d == 7 {
+        if rz == 0 { return 31 }
+        if rz == 1 { return 16 }
+        if rz == 2 { return 8 }
+        if rz == 3 { return 8 }
+        if rz == 4 { return 4 }
+        if rz == 5 { return 4 }
+        return 4
+    }
+    if d == 8 {
+        if rz == 0 { return 30 }
+        if rz == 1 { return 17 }
+        if rz == 2 { return 17 }
+        if rz == 3 { return 30 }
+        if rz == 4 { return 17 }
+        if rz == 5 { return 17 }
+        return 30
+    }
+    if d == 9 {
+        if rz == 0 { return 30 }
+        if rz == 1 { return 17 }
+        if rz == 2 { return 17 }
+        if rz == 3 { return 30 }
+        if rz == 4 { return 16 }
+        if rz == 5 { return 16 }
+        return 30
+    }
+    return 0
+}
+
+fn bitAt(m cx) {
+    div = 1
+    k = 4 - cx
+    while k > 0 {
+        div = div * 2
+        k = k - 1
+    }
+    return floor(m / div) % 2
+}
+
+fn plotDigit(d ox oy sc col) {
+    rz = 0
+    while rz < 7 {
+        m = digitPat(d rz)
+        cx = 0
+        while cx < 5 {
+            if bitAt(m cx) == 1 {
+                sy = 0
+                while sy < sc {
+                    sx = 0
+                    while sx < sc {
+                        px = ox + cx * sc + sx
+                        py = oy + rz * sc + sy
+                        if px >= 0 && px < W && py >= 0 && py < H {
+                            win32.setPixel(px py col)
+                        }
+                        sx = sx + 1
+                    }
+                    sy = sy + 1
+                }
+            }
+            cx = cx + 1
+        }
+        rz = rz + 1
+    }
+}
+
+fn plotDigitNice(d ox oy sc fg sh) {
+    sd = 2
+    if sc <= 1 {
+        sd = 1
+    }
+    plotDigit(d ox + sd oy + sd sc sh)
+    plotDigit(d ox oy sc fg)
+}
+
+fn drawNumber(val nd ox oy sc col) {
+    vi = 0
+    while vi < nd {
+        pow10 = 1
+        kk = nd - 1 - vi
+        while kk > 0 {
+            pow10 = pow10 * 10
+            kk = kk - 1
+        }
+        dg = floor(val / pow10) % 10
+        plotDigit(dg ox + vi * (5 * sc + 2) oy sc col)
+        vi = vi + 1
+    }
+}
+
+fn drawNumberNice(val nd ox oy sc fg sh) {
+    vi = 0
+    while vi < nd {
+        pow10 = 1
+        kk = nd - 1 - vi
+        while kk > 0 {
+            pow10 = pow10 * 10
+            kk = kk - 1
+        }
+        dg = floor(val / pow10) % 10
+        plotDigitNice(dg ox + vi * (5 * sc + 2) oy sc fg sh)
+        vi = vi + 1
+    }
+}
+
+fn letterPat(li rz) {
+    if li == 0 {
+        if rz == 0 { return 31 }
+        if rz == 1 { return 17 }
+        if rz == 2 { return 16 }
+        if rz == 3 { return 31 }
+        if rz == 4 { return 1 }
+        if rz == 5 { return 17 }
+        return 31
+    }
+    if li == 1 {
+        if rz == 0 { return 31 }
+        if rz == 1 { return 16 }
+        if rz == 2 { return 16 }
+        if rz == 3 { return 31 }
+        if rz == 4 { return 16 }
+        if rz == 5 { return 16 }
+        return 31
+    }
+    if li == 2 {
+        if rz == 0 { return 30 }
+        if rz == 1 { return 17 }
+        if rz == 2 { return 17 }
+        if rz == 3 { return 17 }
+        if rz == 4 { return 17 }
+        if rz == 5 { return 17 }
+        return 14
+    }
+    if li == 3 {
+        if rz == 0 { return 16 }
+        if rz == 1 { return 16 }
+        if rz == 2 { return 16 }
+        if rz == 3 { return 16 }
+        if rz == 4 { return 16 }
+        if rz == 5 { return 16 }
+        return 31
+    }
+    if li == 4 {
+        if rz == 0 { return 14 }
+        if rz == 1 { return 17 }
+        if rz == 2 { return 17 }
+        if rz == 3 { return 31 }
+        if rz == 4 { return 17 }
+        if rz == 5 { return 17 }
+        return 17
+    }
+    if li == 5 {
+        if rz == 0 { return 17 }
+        if rz == 1 { return 27 }
+        if rz == 2 { return 21 }
+        if rz == 3 { return 19 }
+        if rz == 4 { return 17 }
+        if rz == 5 { return 17 }
+        return 17
+    }
+    if li == 6 {
+        if rz == 0 { return 30 }
+        if rz == 1 { return 17 }
+        if rz == 2 { return 16 }
+        if rz == 3 { return 23 }
+        if rz == 4 { return 17 }
+        if rz == 5 { return 17 }
+        return 30
+    }
+    if li == 7 {
+        if rz == 0 { return 31 }
+        if rz == 1 { return 17 }
+        if rz == 2 { return 17 }
+        if rz == 3 { return 30 }
+        if rz == 4 { return 17 }
+        if rz == 5 { return 17 }
+        return 17
+    }
+    if li == 8 {
+        if rz == 0 { return 30 }
+        if rz == 1 { return 17 }
+        if rz == 2 { return 17 }
+        if rz == 3 { return 30 }
+        if rz == 4 { return 17 }
+        if rz == 5 { return 17 }
+        return 17
+    }
+    return 0
+}
+
+fn plotLetter(li ox oy sc col) {
+    rz = 0
+    while rz < 7 {
+        m = letterPat(li rz)
+        cx = 0
+        while cx < 5 {
+            if bitAt(m cx) == 1 {
+                sy = 0
+                while sy < sc {
+                    sx = 0
+                    while sx < sc {
+                        px = ox + cx * sc + sx
+                        py = oy + rz * sc + sy
+                        if px >= 0 && px < W && py >= 0 && py < H {
+                            win32.setPixel(px py col)
+                        }
+                        sx = sx + 1
+                    }
+                    sy = sy + 1
+                }
+            }
+            cx = cx + 1
+        }
+        rz = rz + 1
+    }
+}
+
+fn plotLetterNice(li ox oy sc fg sh) {
+    sd = 2
+    if sc <= 1 {
+        sd = 1
+    }
+    plotLetter(li ox + sd oy + sd sc sh)
+    plotLetter(li ox oy sc fg)
+}
+
+fn drawSeedLangBrand(ox oy brSc fg sh) {
+    gap = 5 * brSc + 3
+    plotLetterNice(0 ox oy brSc fg sh)
+    plotLetterNice(1 ox + gap oy brSc fg sh)
+    plotLetterNice(0 ox + 2 * gap oy brSc fg sh)
+    plotLetterNice(2 ox + 3 * gap oy brSc fg sh)
+    plotLetterNice(3 ox + 4 * gap oy brSc fg sh)
+    plotLetterNice(4 ox + 5 * gap oy brSc fg sh)
+    plotLetterNice(5 ox + 6 * gap oy brSc fg sh)
+    plotLetterNice(6 ox + 7 * gap oy brSc fg sh)
+}
+
+fn drawFPSWord(ox oy sc fg sh) {
+    gap = 5 * sc + 3
+    plotLetterNice(7 ox oy sc fg sh)
+    plotLetterNice(8 ox + gap oy sc fg sh)
+    plotLetterNice(0 ox + 2 * gap oy sc fg sh)
+}
+
+fn drawVideoHud(fr colls dg fpsDisp partCt) {
+    rowy = 10
+    stepBig = 5 * HUD_MAIN_SC + 4
+    sepH = 7 * HUD_MAIN_SC
+    boy = rowy + sepH + 14
+    fpsRowY = boy + 7 * HUD_BRAND_SC + 16
+    partRowY = fpsRowY + 7 * HUD_BRAND_SC + 12
+    bandH = partRowY + sepH + 16
+    fillRect(0 0 W bandH HUD_BG)
+    fshow = fr % 100000000
+    cshow = colls % 10000
+    hshow = dg % 1000000
+    ox0 = 10
+    drawNumberNice(fshow 8 ox0 rowy HUD_MAIN_SC HUD_FG HUD_SHADOW)
+    sep1 = ox0 + 8 * stepBig + 10
+    fillRect(sep1 rowy 5 sepH HUD_AC)
+    ox1 = sep1 + 18
+    drawNumberNice(cshow 4 ox1 rowy HUD_MAIN_SC HUD_FG HUD_SHADOW)
+    sep2 = ox1 + 4 * stepBig + 10
+    fillRect(sep2 rowy 5 sepH HUD_AC)
+    ox2 = sep2 + 18
+    drawNumberNice(hshow 6 ox2 rowy HUD_MAIN_SC HUD_FG HUD_SHADOW)
+    bw = 8 * (5 * HUD_BRAND_SC + 3) + 8
+    box = W - bw - 12
+    fillRect(box - 6 boy - 4 bw + 12 7 * HUD_BRAND_SC + 10 HUD_BR_BOX)
+    drawSeedLangBrand(box boy HUD_BRAND_SC HUD_BR HUD_SHADOW)
+    drawFPSWord(12 fpsRowY HUD_BRAND_SC HUD_ACCENT HUD_SHADOW)
+    fpsOx = 12 + 3 * (5 * HUD_BRAND_SC + 3) + 16
+    fpsCap = fpsDisp
+    if fpsCap > 999 {
+        fpsCap = 999
+    }
+    drawNumberNice(fpsCap 3 fpsOx fpsRowY - 2 HUD_MAIN_SC HUD_FG HUD_SHADOW)
+    pcap = partCt
+    if pcap > 99999 {
+        pcap = 99999
+    }
+    drawNumberNice(pcap 5 12 partRowY HUD_MAIN_SC HUD_AC HUD_SHADOW)
+    hb = fr % 640
+    fillRect(hb H - 5 48 5 HUD_AC)
+    fillRect((hb + 220) % 640 H - 5 16 5 HUD_FG)
+}
+
+fn particlesForFrame(fr) {
+    if FIXED_PARTICLE_N >= 0 {
+        if FIXED_PARTICLE_N > MAX_PARTICLES {
+            return MAX_PARTICLES
+        }
+        return FIXED_PARTICLE_N
+    }
+    if TIER_MODE > 0 {
+        slot = floor(fr / PARTICLE_CYCLE_FRAMES) % PARTICLE_TIER_SLOTS
+        if slot == 0 {
+            return 500
+        }
+        return slot * 1000
+    }
+    if fr < DEMO_RAMP_FRAMES {
+        denom = DEMO_RAMP_FRAMES - 1
+        if denom < 1 {
+            return DEMO_RAMP_TARGET
+        }
+        return floor(fr * DEMO_RAMP_TARGET / denom)
+    }
+    return DEMO_RAMP_TARGET
+}
+
+fn step() {
+    i = 0
+    while i < particleCount {
+        bx[i] = bx[i] + bvx[i]
+        by[i] = by[i] + bvy[i]
+        r = br[i]
+        if bx[i] < r {
+            bx[i] = r
+            bvx[i] = 0 - bvx[i]
+        }
+        if bx[i] > W - r {
+            bx[i] = W - r
+            bvx[i] = 0 - bvx[i]
+        }
+        if by[i] < r {
+            by[i] = r
+            bvy[i] = 0 - bvy[i]
+        }
+        if by[i] > H - r {
+            by[i] = H - r
+            bvy[i] = 0 - bvy[i]
+        }
+        i = i + 1
+    }
+}
+
+fn collideResolve() {
+    collisions = 0
+    i = 0
+    while i < particleCount {
+        j = i + 1
+        while j < particleCount {
+            dx = bx[j] - bx[i]
+            dy = by[j] - by[i]
+            d2 = dx * dx + dy * dy
+            md = br[i] + br[j]
+            if d2 > 0 && d2 < md * md {
+                collisions = collisions + 1
+                sx = bvx[i]
+                bvx[i] = bvx[j]
+                bvx[j] = sx
+                sy = bvy[i]
+                bvy[i] = bvy[j]
+                bvy[j] = sy
+                if dx > 0 {
+                    bx[i] = bx[i] - 2
+                    bx[j] = bx[j] + 2
+                }
+                if dx < 0 {
+                    bx[i] = bx[i] + 2
+                    bx[j] = bx[j] - 2
+                }
+                if dx == 0 {
+                    if dy > 0 {
+                        by[i] = by[i] - 2
+                        by[j] = by[j] + 2
+                    }
+                    if dy < 0 {
+                        by[i] = by[i] + 2
+                        by[j] = by[j] - 2
+                    }
+                }
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+}
+
+fn bgColor(x y t) {
+    bb = (x * 59 + t * 13) % 220
+    gg = (y * 47 + t * 29) % 220
+    rr = (x + y * 3 + t * 7) % 220
+    return 4278190080 + bb + gg * 256 + rr * 65536
+}
+
+fn drawBackground(t) {
+    y = 0
+    while y < H {
+        x = 0
+        while x < W {
+            win32.setPixelUnsafe(x y bgColor(x y t))
+            x = x + BGSTEP
+        }
+        y = y + BGSTEP
+    }
+}
+
+fn ballColor(i) {
+    bb = (i * 193049) % 230
+    gg = (i * 7919) % 230
+    rr = (i * 503) % 230
+    return 4278190080 + bb + gg * 256 + rr * 65536
+}
+
+fn renderDisks() {
+    i = 0
+    while i < particleCount {
+        cx = bx[i]
+        cy = by[i]
+        r = br[i]
+        col = ballColor(i)
+        win32.fillCircle(cx cy r col)
+        i = i + 1
+    }
+}
+
+fn energyProxy() {
+    s = 0
+    i = 0
+    while i < particleCount {
+        s = s + bvx[i] * bvx[i] + bvy[i] * bvy[i]
+        i = i + 1
+    }
+    return s
+}
+
+fn secondaryHeat() {
+    acc = 0
+    k = 0
+    while k < 24 {
+        u = 0
+        while u < 160 {
+            acc = acc + (u * u + k * k * 3) % 997
+            u = u + 1
+        }
+        k = k + 1
+    }
+    return acc
+}
+
+FIXED_PARTICLE_N = win32.envInt("PARTICLE_BENCH_FIXED_N" (-1))
+STOP_AT_FRAMES = win32.envInt("PARTICLE_BENCH_MAX_FRAMES" (0))
+TIER_MODE = win32.envInt("PARTICLE_BENCH_TIER_MODE" (0))
+PIXEL_HUD = win32.envInt("SEED_WIN32_PIXEL_HUD" (0))
+DEBUG_MODE = win32.envInt("PARTICLE_BENCH_DEBUG" (0))
+if DEBUG_MODE > 0 {
+    if FIXED_PARTICLE_N < 0 {
+        FIXED_PARTICLE_N = 5000
+    }
+    if STOP_AT_FRAMES <= 0 {
+        STOP_AT_FRAMES = 300
+    }
+}
+if TIER_MODE > 0 {
+    FIXED_PARTICLE_N = -1
+}
+fpsMin = 999999
+fpsMax = 0
+fpsSum = 0
+fpsSamples = 0
+instFps = 0
+holdAfterStop = 0
+init()
+while win32.pollEvents() {
+    nowMs = win32.perfMillis()
+    if lastPerfMs > 0 {
+        dtm = nowMs - lastPerfMs
+        if dtm < 1 {
+            dtm = 1
+        }
+        inst = 1000 / dtm
+        instFps = inst
+        smoothFps = (smoothFps * 24 + inst) / 25
+    }
+    lastPerfMs = nowMs
+    particleCount = particlesForFrame(frame)
+    drawBackground(frame)
+    renderDisks()
+    step()
+    collideResolve()
+    ep = energyProxy()
+    sh = secondaryHeat()
+    diag = (diag * 1315423911 + collisions * 911382323 + ep + sh + frame + bx[0]) % 2147483647
+    if frame % 30 == 0 {
+        win32.setWindowTitleStats(particleCount smoothFps collisions diag frame)
+    }
+    if frame % 30 == 0 && smoothFps > 0 {
+        print("frame=" + frame + " N=" + particleCount + " fps=" + smoothFps + " coll=" + collisions)
+    }
+    if PIXEL_HUD > 0 {
+        drawVideoHud(frame collisions diag smoothFps particleCount)
+    }
+    if DEBUG_MODE > 0 && instFps > 0 {
+        fpsSamples = fpsSamples + 1
+        fpsSum = fpsSum + instFps
+        if instFps < fpsMin {
+            fpsMin = instFps
+        }
+        if instFps > fpsMax {
+            fpsMax = instFps
+        }
+    }
+    win32.present()
+    frame = frame + 1
+    cap = STOP_AT_FRAMES
+    if cap <= 0 {
+        cap = MAXF
+    } else if MAXF > 0 && MAXF < cap {
+        cap = MAXF
+    }
+    if cap > 0 && frame >= cap {
+        holdAfterStop = 1
+        break
+    }
+}
+win32.setWindowTitleStats(particleCount smoothFps collisions diag frame)
+renderDisks()
+win32.present()
+print(frame)
+print(collisions)
+print(diag)
+if DEBUG_MODE > 0 && fpsSamples > 0 {
+    print(fpsMin)
+    print(fpsMax)
+    print(fpsSum / fpsSamples)
+}
+if holdAfterStop > 0 {
+    while win32.pollEvents() {
+    }
+}

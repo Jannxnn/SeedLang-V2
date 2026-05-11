@@ -1,0 +1,89 @@
+// 场景测试 - two pointer：双指针算法（容器盛水/三数之和）
+// EXPECT: "OK:4"
+fn maxArea(height) {
+    left = 0
+    right = len(height) - 1
+    maxWater = 0
+    
+    while left < right {
+        h = min(height[left] height[right])
+        w = right - left
+        area = h * w
+        if area > maxWater { maxWater = area }
+        
+        if height[left] < height[right] {
+            left = left + 1
+        } else {
+            right = right - 1
+        }
+    }
+    
+    return maxWater
+}
+
+fn trap(height) {
+    if len(height) == 0 { return 0 }
+    
+    left = 0
+    right = len(height) - 1
+    leftMax = 0
+    rightMax = 0
+    water = 0
+    
+    while left < right {
+        if height[left] < height[right] {
+            if height[left] >= leftMax {
+                leftMax = height[left]
+            } else {
+                water = water + leftMax - height[left]
+            }
+            left = left + 1
+        } else {
+            if height[right] >= rightMax {
+                rightMax = height[right]
+            } else {
+                water = water + rightMax - height[right]
+            }
+            right = right - 1
+        }
+    }
+    
+    return water
+}
+
+fn largestRectangleArea(heights) {
+    stack = [-1]
+    maxArea = 0
+    
+    i = 0
+    while i < len(heights) {
+        while len(stack) > 1 && heights[i] < heights[stack[len(stack) - 1]] {
+            h = heights[stack[len(stack) - 1]]
+            stack = slice(stack 0 len(stack) - 1)
+            w = i - stack[len(stack) - 1] - 1
+            area = h * w
+            if area > maxArea { maxArea = area }
+        }
+        push(stack i)
+        i = i + 1
+    }
+    
+    while len(stack) > 1 {
+        h = heights[stack[len(stack) - 1]]
+        stack = slice(stack 0 len(stack) - 1)
+        w = len(heights) - stack[len(stack) - 1] - 1
+        area = h * w
+        if area > maxArea { maxArea = area }
+    }
+    
+    return maxArea
+}
+
+passed = 0
+
+if maxArea([1 8 6 2 5 4 8 3 7]) == 49 { passed = passed + 1 }
+if trap([0 1 0 2 1 0 1 3 2 1 2 1]) == 6 { passed = passed + 1 }
+if largestRectangleArea([2 1 5 6 2 3]) == 10 { passed = passed + 1 }
+if maxArea([1 1]) == 1 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

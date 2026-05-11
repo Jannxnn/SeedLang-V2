@@ -1,0 +1,62 @@
+// 场景测试 - validator pattern：验证器模式（链式规则校验）
+// EXPECT: "OK:4"
+class Validator {
+    init() {
+        this.rules = []
+    }
+    
+    addRule(rule) {
+        push(this.rules rule)
+        return this
+    }
+    
+    validate(value) {
+        for rule in this.rules {
+            result = rule(value)
+            if result != true {
+                return result
+            }
+        }
+        return true
+    }
+}
+
+fn isString(x) {
+    if type(x) == "string" { return true }
+    return "NOT_STRING"
+}
+
+fn minLength(n) {
+    return (x) => {
+        if len(x) >= n { return true }
+        return "TOO_SHORT"
+    }
+}
+
+fn maxLength(n) {
+    return (x) => {
+        if len(x) <= n { return true }
+        return "TOO_LONG"
+    }
+}
+
+fn isEmail(x) {
+    if indexOf(x "@") >= 0 { return true }
+    return "NOT_EMAIL"
+}
+
+validator = Validator()
+validator.addRule(isString).addRule(minLength(3)).addRule(maxLength(10))
+
+r1 = validator.validate("hello")
+r2 = validator.validate("hi")
+r3 = validator.validate("")
+r4 = validator.validate(123)
+
+passed = 0
+if r1 == true { passed = passed + 1 }
+if r2 == "TOO_SHORT" { passed = passed + 1 }
+if r3 == "TOO_SHORT" { passed = passed + 1 }
+if r4 == "NOT_STRING" { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

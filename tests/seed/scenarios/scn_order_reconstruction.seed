@@ -1,0 +1,124 @@
+// 场景测试 - order reconstruction：序列重建（外星字典）
+// EXPECT: "OK:4"
+fn alienOrder(words) {
+    graph = {}
+    inDegree = {}
+    
+    for word in words {
+        for c in split(word "") {
+            graph[c] = []
+            inDegree[c] = 0
+        }
+    }
+    
+    i = 0
+    while i < len(words) - 1 {
+        w1 = words[i]
+        w2 = words[i + 1]
+        
+        if len(w1) > len(w2) && substring(w1 0 len(w2)) == w2 {
+            return ""
+        }
+        
+        j = 0
+        while j < min(len(w1) len(w2)) {
+            c1 = charAt(w1 j)
+            c2 = charAt(w2 j)
+            
+            if c1 != c2 {
+                push(graph[c1] c2)
+                inDegree[c2] = inDegree[c2] + 1
+                break
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    
+    queue = []
+    for c in keys(inDegree) {
+        if inDegree[c] == 0 {
+            push(queue c)
+        }
+    }
+    
+    result = ""
+    while len(queue) > 0 {
+        c = queue[0]
+        queue = slice(queue 1 len(queue))
+        result = result + c
+        
+        for neighbor in graph[c] {
+            inDegree[neighbor] = inDegree[neighbor] - 1
+            if inDegree[neighbor] == 0 {
+                push(queue neighbor)
+            }
+        }
+    }
+    
+    if len(result) == len(keys(inDegree)) { return result }
+    return ""
+}
+
+fn sequenceReconstruction(org seqs) {
+    graph = {}
+    inDegree = {}
+    
+    for n in org {
+        graph[n] = []
+        inDegree[n] = 0
+    }
+    
+    for seq in seqs {
+        i = 0
+        while i < len(seq) - 1 {
+            from = seq[i]
+            to = seq[i + 1]
+            
+            push(graph[from] to)
+            inDegree[to] = inDegree[to] + 1
+            i = i + 1
+        }
+    }
+    
+    queue = []
+    for n in keys(inDegree) {
+        if inDegree[n] == 0 {
+            push(queue n)
+        }
+    }
+    
+    idx = 0
+    while len(queue) > 0 {
+        if len(queue) > 1 { return false }
+        
+        current = queue[0]
+        queue = slice(queue 1 len(queue))
+        
+        if idx >= len(org) || org[idx] != current { return false }
+        idx = idx + 1
+        
+        for neighbor in graph[current] {
+            inDegree[neighbor] = inDegree[neighbor] - 1
+            if inDegree[neighbor] == 0 {
+                push(queue neighbor)
+            }
+        }
+    }
+    
+    return idx == len(org)
+}
+
+passed = 0
+
+order1 = alienOrder(["wrt" "wrf" "er" "ett" "rftt"])
+if len(order1) > 0 { passed = passed + 1 }
+
+order2 = alienOrder(["z" "x"])
+if order2 == "zx" || order2 == "xz" { passed = passed + 1 }
+
+if sequenceReconstruction([1 2 3] [[1 2] [1 3]]) == false { passed = passed + 1 }
+
+if sequenceReconstruction([1 2 3] [[1 2] [2 3]]) { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

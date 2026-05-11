@@ -1,0 +1,4 @@
+// 场景测试 - window sum：滑动窗口求和
+// EXPECT: 18
+arr = [2 4 6 8 10]
+result = arr[1] + arr[2] + arr[3]

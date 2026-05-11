@@ -1,0 +1,133 @@
+bx = []
+by = []
+bvx = []
+bvy = []
+br = []
+
+px = []
+py = []
+pw = []
+
+bounceCount = 0
+
+fn initBalls() {
+    push(bx 10.0)
+    push(by 4.0)
+    push(bvx 2.0)
+    push(bvy 0.0)
+    push(br 2.0)
+    push(bx 30.0)
+    push(by 3.0)
+    push(bvx -1.5)
+    push(bvy 0.5)
+    push(br 3.0)
+    push(bx 50.0)
+    push(by 7.0)
+    push(bvx 1.0)
+    push(bvy -1.0)
+    push(br 2.0)
+}
+
+fn initPlatforms() {
+    push(px 4)
+    push(py 16)
+    push(pw 16)
+    push(px 34)
+    push(py 12)
+    push(pw 14)
+    push(px 16)
+    push(py 8)
+    push(pw 12)
+    push(px 42)
+    push(py 18)
+    push(pw 14)
+}
+
+fn updateBalls() {
+    i = 0
+    while i < len(bx) {
+        bvy[i] = bvy[i] + 0.15
+        bvx[i] = bvx[i] * 0.998
+        bvy[i] = bvy[i] * 0.998
+        bx[i] = bx[i] + bvx[i]
+        by[i] = by[i] + bvy[i]
+        r = br[i]
+        if bx[i] - r < 1 {
+            bx[i] = 1 + r
+            bvx[i] = abs(bvx[i]) * 0.75
+            bounceCount = bounceCount + 1
+        }
+        if bx[i] + r > 58 {
+            bx[i] = 58 - r
+            bvx[i] = 0 - abs(bvx[i]) * 0.75
+            bounceCount = bounceCount + 1
+        }
+        if by[i] - r < 1 {
+            by[i] = 1 + r
+            bvy[i] = abs(bvy[i]) * 0.75
+            bounceCount = bounceCount + 1
+        }
+        if by[i] + r > 20 {
+            by[i] = 20 - r
+            bvy[i] = 0 - abs(bvy[i]) * 0.75
+            bvx[i] = bvx[i] * 0.96
+            bounceCount = bounceCount + 1
+        }
+        i = i + 1
+    }
+}
+
+fn render() {
+    y = 0
+    while y < 22 {
+        line = ""
+        x = 0
+        while x < 60 {
+            ch = " "
+            if y == 0 or y == 21 or x == 0 or x == 59 {
+                ch = "#"
+            }
+            j = 0
+            while j < len(px) {
+                if y == py[j] and x >= px[j] and x < px[j] + pw[j] {
+                    ch = "="
+                }
+                j = j + 1
+            }
+            i = 0
+            while i < len(bx) {
+                bxi = floor(bx[i])
+                byi = floor(by[i])
+                ri = floor(br[i])
+                ddx = x - bxi
+                ddy = y - byi
+                if ddx * ddx + ddy * ddy <= ri * ri {
+                    ch = "O"
+                }
+                i = i + 1
+            }
+            line = line + ch
+            x = x + 1
+        }
+        print(line)
+        y = y + 1
+    }
+}
+
+initBalls()
+initPlatforms()
+
+print("=== PHYSICS DEMO: Gravity Bounce (CLC Native) ===")
+print("")
+
+f = 0
+while f < 50 {
+    updateBalls()
+    render()
+    print("  Frame:" + str(f + 1) + "/50  Bounces:" + str(bounceCount))
+    print("")
+    f = f + 1
+}
+
+print("=== Physics Demo Complete ===")
+print("Total bounces: " + str(bounceCount))

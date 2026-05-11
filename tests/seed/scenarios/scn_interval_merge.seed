@@ -1,0 +1,93 @@
+// 场景测试 - interval merge：区间合并算法
+// EXPECT: "OK:4"
+fn merge(intervals) {
+    if len(intervals) == 0 { return [] }
+    
+    sorted = sort(intervals)
+    merged = [sorted[0]]
+    
+    i = 1
+    while i < len(sorted) {
+        current = sorted[i]
+        last = merged[len(merged) - 1]
+        
+        if current[0] <= last[1] {
+            if current[1] > last[1] {
+                last[1] = current[1]
+            }
+        } else {
+            push(merged current)
+        }
+        i = i + 1
+    }
+    
+    return merged
+}
+
+fn insertInterval(intervals newInterval) {
+    result = []
+    i = 0
+    
+    while i < len(intervals) && intervals[i][1] < newInterval[0] {
+        push(result intervals[i])
+        i = i + 1
+    }
+    
+    while i < len(intervals) && intervals[i][0] <= newInterval[1] {
+        if intervals[i][0] < newInterval[0] {
+            newInterval[0] = intervals[i][0]
+        }
+        if intervals[i][1] > newInterval[1] {
+            newInterval[1] = intervals[i][1]
+        }
+        i = i + 1
+    }
+    push(result newInterval)
+    
+    while i < len(intervals) {
+        push(result intervals[i])
+        i = i + 1
+    }
+    
+    return result
+}
+
+fn intervalIntersection(firstList secondList) {
+    result = []
+    i = 0
+    j = 0
+    
+    while i < len(firstList) && j < len(secondList) {
+        lo = max(firstList[i][0] secondList[j][0])
+        hi = min(firstList[i][1] secondList[j][1])
+        
+        if lo <= hi {
+            inter = [lo hi]
+            push(result inter)
+        }
+        
+        if firstList[i][1] < secondList[j][1] {
+            i = i + 1
+        } else {
+            j = j + 1
+        }
+    }
+    
+    return result
+}
+
+passed = 0
+
+merged = merge([[1 3] [2 6] [8 10] [15 18]])
+if len(merged) == 3 { passed = passed + 1 }
+
+inserted = insertInterval([[1 3] [6 9]] [2 5])
+if inserted[0][0] == 1 && inserted[0][1] == 5 { passed = passed + 1 }
+
+intersection = intervalIntersection([[0 2] [5 10] [13 23] [24 25]] [[1 5] [8 12] [15 24] [25 26]])
+if len(intersection) == 6 { passed = passed + 1 }
+
+merged2 = merge([[1 4] [4 5]])
+if len(merged2) == 1 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

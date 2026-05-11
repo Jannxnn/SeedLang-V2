@@ -1,0 +1,5 @@
+// 场景测试 - entries count：对象 entries() 键值对计数
+// EXPECT: 2
+obj = { a: 1 b: 2 }
+e = entries(obj)
+result = len(e)

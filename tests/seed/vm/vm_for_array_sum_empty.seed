@@ -1,0 +1,8 @@
+// VM 优化：FOR_ARRAY_SUM — 空数组求和应返回 0
+// EXPECT: 0
+arr = []
+sum = 0
+for i in arr {
+    sum = sum + i
+}
+result = sum

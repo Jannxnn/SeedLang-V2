@@ -1,0 +1,4 @@
+macro gpu_map(arr expr) {
+    __gpu_result__ = gpu.map(arr expr)
+    result = __gpu_result__
+}

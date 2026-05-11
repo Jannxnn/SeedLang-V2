@@ -1,0 +1,20 @@
+// EXPECT: "DONE:S4"
+ctx = { state: "S1" count: 0 }
+maxTransitions = 10
+
+i = 0
+while i < maxTransitions && ctx.state != "S4" {
+    if ctx.state == "S1" {
+        ctx.state = "S2"
+    } else {
+        if ctx.state == "S2" {
+            ctx.count = ctx.count + 1
+            if ctx.count >= 3 { ctx.state = "S3" }
+        } else {
+            if ctx.state == "S3" { ctx.state = "S4" }
+        }
+    }
+    i = i + 1
+}
+
+result = "DONE:" + ctx.state

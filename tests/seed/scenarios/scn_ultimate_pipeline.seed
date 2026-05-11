@@ -1,0 +1,6 @@
+// 场景测试 - ultimate pipeline（终极）：综合管道数据处理
+// EXPECT: "PASS:2"
+input = [1 2 3 4]
+out = map(input (x) => x * 2)
+f = filter(out (x) => x > 4)
+result = "PASS:" + toString(len(f))

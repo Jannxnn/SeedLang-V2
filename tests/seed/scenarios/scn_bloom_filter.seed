@@ -1,0 +1,72 @@
+// 场景测试 - bloom filter：布隆过滤器的概率数据结构实现
+// EXPECT: "OK:3"
+class BloomFilter {
+    init(size hashCount) {
+        this.size = size
+        this.hashCount = hashCount
+        this.bits = []
+        i = 0
+        while i < size {
+            push(this.bits false)
+            i = i + 1
+        }
+    }
+    
+    hash1(str) {
+        hash = 0
+        chars = split(str "")
+        for char in chars {
+            hash = hash * 31 + (charAt(char 0) - 0)
+        }
+        return hash % this.size
+    }
+    
+    hash2(str) {
+        hash = 0
+        chars = split(str "")
+        for char in chars {
+            hash = hash * 37 + (charAt(char 0) - 0)
+        }
+        return hash % this.size
+    }
+    
+    add(str) {
+        h1 = this.hash1(str)
+        h2 = this.hash2(str)
+        
+        i = 0
+        while i < this.hashCount {
+            idx = (h1 + i * h2) % this.size
+            if idx < 0 { idx = idx + this.size }
+            this.bits[idx] = true
+            i = i + 1
+        }
+    }
+    
+    mightContain(str) {
+        h1 = this.hash1(str)
+        h2 = this.hash2(str)
+        
+        i = 0
+        while i < this.hashCount {
+            idx = (h1 + i * h2) % this.size
+            if idx < 0 { idx = idx + this.size }
+            if this.bits[idx] == false { return false }
+            i = i + 1
+        }
+        return true
+    }
+}
+
+bf = BloomFilter(100 3)
+bf.add("hello")
+bf.add("world")
+bf.add("test")
+
+passed = 0
+if bf.mightContain("hello") { passed = passed + 1 }
+if bf.mightContain("world") { passed = passed + 1 }
+if bf.mightContain("test") { passed = passed + 1 }
+if bf.mightContain("nonexistent") { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

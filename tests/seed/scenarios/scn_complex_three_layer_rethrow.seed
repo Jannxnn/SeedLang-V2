@@ -1,0 +1,25 @@
+// 场景测试 - complex three layer rethrow：三层嵌套 rethrow 的异常传播
+// EXPECT: "S|C1|F1|C2|F2|E2|F3"
+trace = "S"
+try {
+    try {
+        try {
+            throw "E0"
+        } catch(e0) {
+            trace = trace + "|C1"
+            throw "E1"
+        } finally {
+            trace = trace + "|F1"
+        }
+    } catch(e1) {
+        trace = trace + "|C2"
+        throw "E2"
+    } finally {
+        trace = trace + "|F2"
+    }
+} catch(e2) {
+    trace = trace + "|" + e2
+} finally {
+    trace = trace + "|F3"
+}
+result = trace

@@ -1,0 +1,7 @@
+// 递归求和测试：使用递归计算 1 到 n 的累加和
+// EXPECT: 15
+fn sumN(n) {
+    if n <= 0 { return 0 }
+    return n + sumN(n - 1)
+}
+result = sumN(5)

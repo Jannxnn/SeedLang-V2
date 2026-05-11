@@ -1,0 +1,4 @@
+// 字符串 trim 与 len 测试：去除空白与长度计算
+// EXPECT: 4
+s = trim("  abcd  ")
+result = len(s)

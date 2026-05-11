@@ -1,0 +1,118 @@
+// 场景测试 - union find：并查集（朋友圈/连通分量）
+// EXPECT: "OK:4"
+fn findCircleNum(isConnected) {
+    n = len(isConnected)
+    visited = []
+    i = 0
+    while i < n {
+        push(visited false)
+        i = i + 1
+    }
+    
+    provinces = 0
+    
+    fn dfs(city) {
+        visited[city] = true
+        j = 0
+        while j < n {
+            if isConnected[city][j] == 1 && visited[j] == false {
+                dfs(j)
+            }
+            j = j + 1
+        }
+    }
+    
+    i = 0
+    while i < n {
+        if visited[i] == false {
+            provinces = provinces + 1
+            dfs(i)
+        }
+        i = i + 1
+    }
+    
+    return provinces
+}
+
+fn accountsMerge(accounts) {
+    emailToName = {}
+    emailToId = {}
+    idToEmail = {}
+    id = 0
+    
+    for account in accounts {
+        name = account[0]
+        i = 1
+        while i < len(account) {
+            email = account[i]
+            emailToName[email] = name
+            if emailToId[email] == null {
+                emailToId[email] = id
+                idToEmail[id] = email
+                id = id + 1
+            }
+            i = i + 1
+        }
+    }
+    
+    parent = []
+    i = 0
+    while i < id {
+        push(parent i)
+        i = i + 1
+    }
+    
+    fn find(x) {
+        if parent[x] != x {
+            parent[x] = find(parent[x])
+        }
+        return parent[x]
+    }
+    
+    fn union(x y) {
+        parent[find(x)] = find(y)
+    }
+    
+    for account in accounts {
+        firstEmail = account[1]
+        i = 2
+        while i < len(account) {
+            union(emailToId[firstEmail] emailToId[account[i]])
+            i = i + 1
+        }
+    }
+    
+    merged = {}
+    i = 0
+    while i < id {
+        root = find(i)
+        if merged[root] == null { merged[root] = [] }
+        push(merged[root] idToEmail[i])
+        i = i + 1
+    }
+    
+    result = []
+    for root in keys(merged) {
+        emails = merged[root]
+        emails = sort(emails)
+        push(result [emailToName[emails[0]]] + emails)
+    }
+    
+    return result
+}
+
+passed = 0
+
+isConnected = [[1 1 0] [1 1 0] [0 0 1]]
+if findCircleNum(isConnected) == 2 { passed = passed + 1 }
+
+isConnected2 = [[1 0 0] [0 1 0] [0 0 1]]
+if findCircleNum(isConnected2) == 3 { passed = passed + 1 }
+
+isConnected3 = [[1 1 1] [1 1 1] [1 1 1]]
+if findCircleNum(isConnected3) == 1 { passed = passed + 1 }
+
+isConnected4 = [[1]]
+if findCircleNum(isConnected4) == 1 { passed = passed + 1 }
+
+result = "OK:" + toString(passed)

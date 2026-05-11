@@ -1,0 +1,66 @@
+// 场景测试 - binary tree：二叉树的遍历/构建/翻转等基本操作
+// EXPECT: "PASS:3"
+class Node {
+    init(value) {
+        this.value = value
+        this.left = null
+        this.right = null
+    }
+}
+
+class Tree {
+    init() {
+        this.root = null
+    }
+    
+    insert(value) {
+        if this.root == null {
+            this.root = Node(value)
+            return
+        }
+        this._insertRec(this.root value)
+    }
+    
+    _insertRec(node value) {
+        if value < node.value {
+            if node.left == null {
+                node.left = Node(value)
+            } else {
+                this._insertRec(node.left value)
+            }
+        } else {
+            if node.right == null {
+                node.right = Node(value)
+            } else {
+                this._insertRec(node.right value)
+            }
+        }
+    }
+    
+    search(value) {
+        return this._searchRec(this.root value)
+    }
+    
+    _searchRec(node value) {
+        if node == null { return false }
+        if node.value == value { return true }
+        if value < node.value {
+            return this._searchRec(node.left value)
+        }
+        return this._searchRec(node.right value)
+    }
+}
+
+tree = Tree()
+tree.insert(50)
+tree.insert(30)
+tree.insert(70)
+tree.insert(20)
+tree.insert(40)
+
+found = 0
+if tree.search(30) { found = found + 1 }
+if tree.search(40) { found = found + 1 }
+if tree.search(99) == false { found = found + 1 }
+
+result = "PASS:" + toString(found)

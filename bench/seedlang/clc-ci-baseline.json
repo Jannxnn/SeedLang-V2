@@ -1,0 +1,4 @@
+{
+  "_comment": "Median ms per bench line key name:arg (from bench_clc stdout). Enable checks with SEED_CLC_GATE_TIMING=1 and SEED_CLC_GATE_SLACK (default 2.5). Empty medians = correctness-only when timing gate is on.",
+  "medians": {}
+}
