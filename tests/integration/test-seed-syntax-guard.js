@@ -6,9 +6,6 @@
  * 1) Legacy reduce order: reduce(arr fn init)
  * 2) Inline if-return without block: if(cond)return x
  *
- * It also emits non-blocking style warnings:
- * - comma-separated function arguments
- * - comma-separated array/object literals
  */
 
 const fs = require('fs');
@@ -107,29 +104,6 @@ function findIssues(filePath, snippet) {
       errors.push('inline if-return without block: use if cond { return x }');
       break;
     }
-  }
-
-  // Non-blocking style checks.
-  // Function call args with comma: foo(a, b)
-  // Ignore function declarations: fn add(a, b) { ... }
-  const strippedLines = stripped.split('\n');
-  const hasCommaCall = strippedLines.some((line) => {
-    const t = line.trim();
-    if (t.startsWith('fn ') || t.startsWith('async fn ') || t.startsWith('coro ')) {
-      return false;
-    }
-    return /\b\w+\s*\([^)\n]*,[^)\n]*\)/.test(t);
-  });
-  if (hasCommaCall) {
-    warnings.push('comma-separated call args found: prefer space-separated style');
-  }
-  // Array literal commas: [1, 2]
-  if (/\[[^\]\n]*,[^\]\n]*\]/.test(stripped)) {
-    warnings.push('comma-separated array literal found: prefer [1 2 3]');
-  }
-  // Object literal commas: {a: 1, b: 2}
-  if (/\{[^}\n]*:[^}\n]*,[^}\n]*:[^}\n]*\}/.test(stripped)) {
-    warnings.push('comma-separated object literal found: prefer {a: 1 b: 2}');
   }
 
   return { errors, warnings };

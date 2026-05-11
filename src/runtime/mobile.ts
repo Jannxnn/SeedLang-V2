@@ -1,40 +1,105 @@
 // SeedLang 移动端运行时：基于 Interpreter 扩展的移动设备 API，支持设备信息、屏幕、电池、定位、相机、通知、传感器等
+// 默认设备字段为仿真/未接宿主；真机环境请通过 MobileRuntimeOptions.device 注入。
 
 import { Interpreter, SeedValue } from '../core/interpreter';
 import { parse } from '../core/parser';
 
+export interface MobileDeviceProfile {
+  platform?: string;
+  os?: string;
+  osVersion?: string;
+  model?: string;
+  manufacturer?: string;
+  uuid?: string;
+  serial?: string;
+  isVirtual?: boolean;
+  isRooted?: boolean;
+}
+
+export interface MobileRuntimeOptions {
+  device?: MobileDeviceProfile;
+  /** 为 true 时 API 桩将日志打到 console（前缀 [MobileRuntime]）。默认 false（静默）。 */
+  debug?: boolean;
+  log?: (message: string) => void;
+}
+
+interface ResolvedMobileDevice {
+  platform: string;
+  os: string;
+  osVersion: string;
+  model: string;
+  manufacturer: string;
+  uuid: string;
+  serial: string;
+  isVirtual: boolean;
+  isRooted: boolean;
+}
+
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+function mergeMobileDeviceProfile(overrides?: MobileDeviceProfile): ResolvedMobileDevice {
+  const uuid = overrides?.uuid ?? generateUUID();
+  const serial = overrides?.serial ?? `sim-${uuid.replace(/-/g, '').slice(0, 12)}`;
+  return {
+    platform: overrides?.platform ?? 'mobile',
+    os: overrides?.os ?? 'unknown',
+    osVersion: overrides?.osVersion ?? '1.0',
+    model: overrides?.model ?? 'Generic Device',
+    manufacturer: overrides?.manufacturer ?? 'Unknown',
+    uuid,
+    serial,
+    isVirtual: overrides?.isVirtual ?? true,
+    isRooted: overrides?.isRooted ?? false
+  };
+}
+
 export class MobileRuntime extends Interpreter {
   private deviceInfo: Map<string, SeedValue> = new Map();
+  private readonly logSink: (message: string) => void;
+  private readonly device: ResolvedMobileDevice;
 
-  constructor() {
+  constructor(options: MobileRuntimeOptions = {}) {
     super();
+    this.device = mergeMobileDeviceProfile(options.device);
+    this.logSink =
+      options.log ??
+      (options.debug === true ? (m: string) => console.log(`[MobileRuntime] ${m}`) : () => {});
     this.setupMobileAPIs();
   }
 
   private setupMobileAPIs(): void {
+    const d = this.device;
     this.globals.define('device', {
       type: 'object',
       value: null,
       properties: new Map([
-        ['platform', { type: 'string', value: 'mobile' }],
-        ['os', { type: 'string', value: 'unknown' }],
-        ['osVersion', { type: 'string', value: '1.0' }],
-        ['model', { type: 'string', value: 'Generic Device' }],
-        ['manufacturer', { type: 'string', value: 'Unknown' }],
-        ['uuid', { type: 'string', value: this.generateUUID() }],
-        ['serial', { type: 'string', value: 'MOCK-SERIAL' }],
-        ['isVirtual', { type: 'boolean', value: true }],
-        ['isRooted', { type: 'boolean', value: false }],
+        ['platform', { type: 'string', value: d.platform }],
+        ['os', { type: 'string', value: d.os }],
+        ['osVersion', { type: 'string', value: d.osVersion }],
+        ['model', { type: 'string', value: d.model }],
+        ['manufacturer', { type: 'string', value: d.manufacturer }],
+        ['uuid', { type: 'string', value: d.uuid }],
+        ['serial', { type: 'string', value: d.serial }],
+        ['isVirtual', { type: 'boolean', value: d.isVirtual }],
+        ['isRooted', { type: 'boolean', value: d.isRooted }],
         ['getInfo', {
           type: 'function',
           value: (): SeedValue => ({
             type: 'object',
             value: null,
             properties: new Map([
-              ['platform', { type: 'string', value: 'mobile' }],
-              ['model', { type: 'string', value: 'Generic Device' }],
-              ['os', { type: 'string', value: 'unknown' }],
-              ['osVersion', { type: 'string', value: '1.0' }]
+              ['platform', { type: 'string', value: d.platform }],
+              ['model', { type: 'string', value: d.model }],
+              ['os', { type: 'string', value: d.os }],
+              ['osVersion', { type: 'string', value: d.osVersion }],
+              ['serial', { type: 'string', value: d.serial }],
+              ['isVirtual', { type: 'boolean', value: d.isVirtual }]
             ])
           })
         }]
@@ -53,14 +118,14 @@ export class MobileRuntime extends Interpreter {
         ['keepAwake', {
           type: 'function',
           value: (enable: SeedValue): SeedValue => {
-            console.log(`Screen keepAwake: ${enable.value}`);
+            this.logSink(`Screen keepAwake: ${enable.value}`);
             return { type: 'boolean', value: true };
           }
         }],
         ['setBrightness', {
           type: 'function',
           value: (level: SeedValue): SeedValue => {
-            console.log(`Screen brightness set to: ${level.value}`);
+            this.logSink(`Screen brightness set to: ${level.value}`);
             return { type: 'boolean', value: true };
           }
         }],
@@ -71,7 +136,7 @@ export class MobileRuntime extends Interpreter {
         ['lockOrientation', {
           type: 'function',
           value: (orientation: SeedValue): SeedValue => {
-            console.log(`Orientation locked to: ${orientation.value}`);
+            this.logSink(`Orientation locked to: ${orientation.value}`);
             return { type: 'boolean', value: true };
           }
         }]
@@ -122,7 +187,7 @@ export class MobileRuntime extends Interpreter {
         ['getCurrentPosition', {
           type: 'function',
           value: (success: SeedValue, _error?: SeedValue): SeedValue => {
-            console.log('Getting current position...');
+            this.logSink('Getting current position...');
             const position: SeedValue = {
               type: 'object',
               value: null,
@@ -143,14 +208,14 @@ export class MobileRuntime extends Interpreter {
         ['watchPosition', {
           type: 'function',
           value: (_success: SeedValue, _error?: SeedValue, _options?: SeedValue): SeedValue => {
-            console.log('Watching position...');
+            this.logSink('Watching position...');
             return { type: 'number', value: Date.now() };
           }
         }],
         ['clearWatch', {
           type: 'function',
           value: (watchId: SeedValue): SeedValue => {
-            console.log(`Clearing watch: ${watchId.value}`);
+            this.logSink(`Clearing watch: ${watchId.value}`);
             return { type: 'null', value: null };
           }
         }]
@@ -164,7 +229,7 @@ export class MobileRuntime extends Interpreter {
         ['getPicture', {
           type: 'function',
           value: (success: SeedValue, _error?: SeedValue, _options?: SeedValue): SeedValue => {
-            console.log('Opening camera...');
+            this.logSink('Opening camera...');
             const result: SeedValue = {
               type: 'object',
               value: null,
@@ -183,7 +248,7 @@ export class MobileRuntime extends Interpreter {
         ['capture', {
           type: 'function',
           value: (_options?: SeedValue): SeedValue => {
-            console.log('Capturing photo...');
+            this.logSink('Capturing photo...');
             return {
               type: 'promise',
               value: Promise.resolve({
@@ -200,7 +265,7 @@ export class MobileRuntime extends Interpreter {
         ['openGallery', {
           type: 'function',
           value: (_success: SeedValue, _options?: SeedValue): SeedValue => {
-            console.log('Opening gallery...');
+            this.logSink('Opening gallery...');
             return { type: 'null', value: null };
           }
         }]
@@ -215,21 +280,21 @@ export class MobileRuntime extends Interpreter {
           type: 'function',
           value: (duration?: SeedValue): SeedValue => {
             const ms = duration ? duration.value as number : 100;
-            console.log(`Vibrating for ${ms}ms`);
+            this.logSink(`Vibrating for ${ms}ms`);
             return { type: 'null', value: null };
           }
         }],
         ['vibratePattern', {
           type: 'function',
           value: (pattern: SeedValue): SeedValue => {
-            console.log(`Vibrating pattern: ${JSON.stringify(pattern.value)}`);
+            this.logSink(`Vibrating pattern: ${JSON.stringify(pattern.value)}`);
             return { type: 'null', value: null };
           }
         }],
         ['cancel', {
           type: 'function',
           value: (): SeedValue => {
-            console.log('Vibration cancelled');
+            this.logSink('Vibration cancelled');
             return { type: 'null', value: null };
           }
         }]
@@ -245,12 +310,12 @@ export class MobileRuntime extends Interpreter {
           value: (options: SeedValue): SeedValue => {
             const title = options.properties?.get('title')?.value || 'Notification';
             const body = options.properties?.get('body')?.value || '';
-            console.log(`Notification scheduled: ${title} - ${body}`);
+            this.logSink(`Notification scheduled: ${title} - ${body}`);
             return {
               type: 'object',
               value: null,
               properties: new Map([
-                ['id', { type: 'string', value: this.generateUUID() }]
+                ['id', { type: 'string', value: generateUUID() }]
               ])
             };
           }
@@ -258,21 +323,21 @@ export class MobileRuntime extends Interpreter {
         ['cancel', {
           type: 'function',
           value: (id: SeedValue): SeedValue => {
-            console.log(`Notification cancelled: ${id.value}`);
+            this.logSink(`Notification cancelled: ${id.value}`);
             return { type: 'boolean', value: true };
           }
         }],
         ['cancelAll', {
           type: 'function',
           value: (): SeedValue => {
-            console.log('All notifications cancelled');
+            this.logSink('All notifications cancelled');
             return { type: 'boolean', value: true };
           }
         }],
         ['requestPermission', {
           type: 'function',
           value: (): SeedValue => {
-            console.log('Requesting notification permission');
+            this.logSink('Requesting notification permission');
             return { type: 'promise', value: Promise.resolve({ type: 'boolean', value: true }) };
           }
         }]
@@ -286,7 +351,7 @@ export class MobileRuntime extends Interpreter {
         ['find', {
           type: 'function',
           value: (_options: SeedValue): SeedValue => {
-            console.log('Finding contacts...');
+            this.logSink('Finding contacts...');
             return {
               type: 'array',
               value: [
@@ -306,7 +371,7 @@ export class MobileRuntime extends Interpreter {
         ['pick', {
           type: 'function',
           value: (): SeedValue => {
-            console.log('Picking contact...');
+            this.logSink('Picking contact...');
             return {
               type: 'promise',
               value: Promise.resolve({
@@ -331,7 +396,7 @@ export class MobileRuntime extends Interpreter {
           type: 'function',
           value: (key: SeedValue, value: SeedValue): SeedValue => {
             this.deviceInfo.set(key.value as string, value);
-            console.log(`Storage set: ${key.value}`);
+            this.logSink(`Storage set: ${key.value}`);
             return { type: 'boolean', value: true };
           }
         }],
@@ -372,7 +437,7 @@ export class MobileRuntime extends Interpreter {
         ['isAvailable', {
           type: 'function',
           value: (): SeedValue => {
-            console.log('Checking biometric availability...');
+            this.logSink('Checking biometric availability...');
             return {
               type: 'promise',
               value: Promise.resolve({
@@ -389,7 +454,7 @@ export class MobileRuntime extends Interpreter {
         ['authenticate', {
           type: 'function',
           value: (reason: SeedValue): SeedValue => {
-            console.log(`Biometric auth: ${reason.value}`);
+            this.logSink(`Biometric auth: ${reason.value}`);
             return {
               type: 'promise',
               value: Promise.resolve({
@@ -413,7 +478,7 @@ export class MobileRuntime extends Interpreter {
         ['register', {
           type: 'function',
           value: (): SeedValue => {
-            console.log('Registering for push notifications...');
+            this.logSink('Registering for push notifications...');
             return {
               type: 'promise',
               value: Promise.resolve({
@@ -429,14 +494,14 @@ export class MobileRuntime extends Interpreter {
         ['unregister', {
           type: 'function',
           value: (): SeedValue => {
-            console.log('Unregistering from push notifications');
+            this.logSink('Unregistering from push notifications');
             return { type: 'boolean', value: true };
           }
         }],
         ['subscribe', {
           type: 'function',
           value: (topic: SeedValue): SeedValue => {
-            console.log(`Subscribed to topic: ${topic.value}`);
+            this.logSink(`Subscribed to topic: ${topic.value}`);
             return { type: 'boolean', value: true };
           }
         }]
@@ -453,14 +518,14 @@ export class MobileRuntime extends Interpreter {
         ['exit', {
           type: 'function',
           value: (): SeedValue => {
-            console.log('App exiting...');
+            this.logSink('App exiting...');
             return { type: 'null', value: null };
           }
         }],
         ['minimize', {
           type: 'function',
           value: (): SeedValue => {
-            console.log('App minimizing...');
+            this.logSink('App minimizing...');
             return { type: 'null', value: null };
           }
         }],
@@ -487,21 +552,21 @@ export class MobileRuntime extends Interpreter {
           type: 'function',
           value: (style?: SeedValue): SeedValue => {
             const s = style?.value || 'medium';
-            console.log(`Haptic impact: ${s}`);
+            this.logSink(`Haptic impact: ${s}`);
             return { type: 'null', value: null };
           }
         }],
         ['notification', {
           type: 'function',
           value: (type: SeedValue): SeedValue => {
-            console.log(`Haptic notification: ${type.value}`);
+            this.logSink(`Haptic notification: ${type.value}`);
             return { type: 'null', value: null };
           }
         }],
         ['selection', {
           type: 'function',
           value: (): SeedValue => {
-            console.log('Haptic selection');
+            this.logSink('Haptic selection');
             return { type: 'null', value: null };
           }
         }]
@@ -515,21 +580,21 @@ export class MobileRuntime extends Interpreter {
         ['show', {
           type: 'function',
           value: (): SeedValue => {
-            console.log('Showing keyboard');
+            this.logSink('Showing keyboard');
             return { type: 'null', value: null };
           }
         }],
         ['hide', {
           type: 'function',
           value: (): SeedValue => {
-            console.log('Hiding keyboard');
+            this.logSink('Hiding keyboard');
             return { type: 'null', value: null };
           }
         }],
         ['setStyle', {
           type: 'function',
           value: (style: SeedValue): SeedValue => {
-            console.log(`Keyboard style: ${style.value}`);
+            this.logSink(`Keyboard style: ${style.value}`);
             return { type: 'null', value: null };
           }
         }]
@@ -542,7 +607,7 @@ export class MobileRuntime extends Interpreter {
         const title = options.properties?.get('title')?.value || '';
         const text = options.properties?.get('text')?.value || '';
         const url = options.properties?.get('url')?.value || '';
-        console.log(`Sharing: ${title} - ${text} - ${url}`);
+        this.logSink(`Sharing: ${title} - ${text} - ${url}`);
         return {
           type: 'promise',
           value: Promise.resolve({ type: 'boolean', value: true })
@@ -557,26 +622,18 @@ export class MobileRuntime extends Interpreter {
         ['write', {
           type: 'function',
           value: (text: SeedValue): SeedValue => {
-            console.log(`Clipboard write: ${text.value}`);
+            this.logSink(`Clipboard write: ${text.value}`);
             return { type: 'boolean', value: true };
           }
         }],
         ['read', {
           type: 'function',
           value: (): SeedValue => {
-            console.log('Clipboard read');
+            this.logSink('Clipboard read');
             return { type: 'string', value: '' };
           }
         }]
       ])
-    });
-  }
-
-  private generateUUID(): string {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = Math.random() * 16 | 0;
-      const v = c === 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
     });
   }
 

@@ -9,7 +9,7 @@ SeedLang has a built-in powerful debugger that supports breakpoints, step execut
 seedlang --debugger
 
 # Or debug a specific file
-seedlang --debugger examples/debug/demo.seed
+seedlang --debugger examples/clc/test_clc.seed
 ```
 
 ## Debugger Commands
@@ -64,29 +64,25 @@ seedlang --debugger examples/debug/demo.seed
 ### 1. Basic Debugging Workflow
 
 ```
-(debug) load examples/debug/demo.seed
-Loaded: examples/debug/demo.seed
+(debug) load examples/clc/test_clc.seed
+Loaded: examples/clc/test_clc.seed
 
-(debug) break 5
-Breakpoint #1 set at line 5
-
-(debug) break 12
-Breakpoint #2 set at line 12
+(debug) break 3
+Breakpoint #1 set at line 3
 
 (debug) run
 
-📄 Source (examples/debug/demo.seed):
-      | // Define a function to calculate factorial
-  → ●  5 |   if n <= 1 {
-      |     return 1
-      |   }
+📄 Source (examples/clc/test_clc.seed):
+      | print("Hello from CLC!")
+  → ●  3 | print(abs(-42))
+      | print(floor(3.9))
 
-🔴 Breakpoint hit at line 5
+🔴 Breakpoint hit at line 3
 
 (debug) vars
 
 📦 Variables:
-   n = 5
+   (none at top-level before calls)
 
 (debug) step
 

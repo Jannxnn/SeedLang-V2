@@ -2728,7 +2728,21 @@ export class Interpreter {
         return {
           type: 'promise',
           value: fetch(url.value as string)
-            .then(res => res.json())
+            .then(async (res) => {
+              const text = await res.text();
+              if (!res.ok) {
+                const snippet = text.length > 200 ? `${text.slice(0, 200)}…` : text;
+                throw new Error(
+                  `jsonRequest failed: HTTP ${res.status} ${res.statusText}${snippet ? ` — ${snippet}` : ''}`
+                );
+              }
+              try {
+                return JSON.parse(text) as unknown;
+              } catch (e) {
+                const msg = e instanceof Error ? e.message : String(e);
+                throw new Error(`jsonRequest: response is not valid JSON (${msg})`);
+              }
+            })
             .then(data => this.jsToSeedValue(data))
         };
       }
@@ -2746,7 +2760,9 @@ export class Interpreter {
         if (fs.existsSync(dbPath)) {
           return JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn('[Seed] Failed to read or parse .seedlang_db; using empty store.', e);
+      }
       return {};
     };
 

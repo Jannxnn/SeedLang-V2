@@ -1,5 +1,5 @@
 /**
- * 交付物回归：examples/deliverables/stability-check/app.seed 输出须与 golden.txt 一致。
+ * 交付物回归：tests/deliverables/fixtures/stability-check/app.seed 输出须与 golden.txt 一致。
  * 单独运行: node tests/deliverables/test-stability-deliverable.js
  * 默认随 npm test（--quick 起即包含）。
  */
@@ -10,8 +10,8 @@ const root = path.join(__dirname, '..', '..');
 const { parse } = require(path.join(root, 'dist', 'core', 'parser'));
 const { Interpreter } = require(path.join(root, 'dist', 'core', 'interpreter'));
 
-const seedPath = path.join(root, 'examples', 'deliverables', 'stability-check', 'app.seed');
-const goldenPath = path.join(root, 'examples', 'deliverables', 'stability-check', 'golden.txt');
+const seedPath = path.join(root, 'tests', 'deliverables', 'fixtures', 'stability-check', 'app.seed');
+const goldenPath = path.join(root, 'tests', 'deliverables', 'fixtures', 'stability-check', 'golden.txt');
 
 console.log('='.repeat(60));
 console.log('  Stability Deliverable (Seed app.seed vs golden.txt)');

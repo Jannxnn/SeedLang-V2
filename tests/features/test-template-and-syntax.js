@@ -70,17 +70,21 @@ b = 2
 result = "" + a + " + " + b + " = " + (a + b)
 `, (a) => a === '1 + 2 = 3');
 
-console.log('\n--- Comma rejection (v1.0 spec) ---');
-testError('Comma in array literal rejected', `
+console.log('\n--- Optional comma separators ---');
+test('Comma-separated array', `
 result = [1, 2, 3]
-`);
-testError('Comma in function args rejected', `
+`, (a) => JSON.stringify(a) === '[1,2,3]');
+test('Comma-separated function args', `
 fn add(a b) { return a + b }
 result = add(1, 2)
-`);
-testError('Comma in object literal rejected', `
+`, (a) => a === 3);
+test('Comma-separated function parameters', `
+fn add(a, b) { return a + b }
+result = add(3, 4)
+`, (a) => a === 7);
+test('Comma-separated object', `
 result = { a: 1, b: 2 }
-`);
+`, (a) => a.a === 1 && a.b === 2);
 
 console.log('\n--- SeedLang syntax rules ---');
 test('Space-separated array', `

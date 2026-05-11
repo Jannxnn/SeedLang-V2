@@ -3,6 +3,7 @@ import * as path from 'path';
 import { execSync } from 'child_process';
 import {
   getClcWin32GccLinkSuffix,
+  getClcWin32MsvcLinkLibs,
   resolveClcWin32RtSourcePath,
   resolveClcWin32ToolsClcDir,
   resolvePreferredMingwGcc
@@ -24,7 +25,7 @@ function mingwLinkTail(opt: ClcNativeCompileOptions): string {
 function msvcLinkTail(opt: ClcNativeCompileOptions): string {
   if (!opt.clcSubsystem) return '/link';
   if (opt.clcSubsystem === 'windows') {
-    return '/link /SUBSYSTEM:WINDOWS user32.lib gdi32.lib comdlg32.lib winmm.lib';
+    return `/link /SUBSYSTEM:WINDOWS ${getClcWin32MsvcLinkLibs()}`;
   }
   return '/link /SUBSYSTEM:CONSOLE';
 }
@@ -36,8 +37,9 @@ function clcCompileSourceArgs(outputPath: string, options: ClcNativeCompileOptio
   }
   const rt = resolveClcWin32RtSourcePath(__dirname);
   if (!fs.existsSync(rt)) {
-    console.warn(`CLC Win32: ${rt} not found — link may fail (no wWinMain)`);
-    return `"${outputPath}"`;
+    console.error(`CLC Win32: required runtime missing: ${rt}`);
+    console.error('Expected tools/clc/sl_win32_rt.c in the Seed repo (GUI subsystem needs wWinMain).');
+    process.exit(2);
   }
   return `"${outputPath}" "${rt}"`;
 }
@@ -79,7 +81,7 @@ export function runClcNativeCompile(
     }
     compilers.push({
       name: 'nvcc',
-      cmd: `nvcc -O3 -o ${exePath.replace('.exe', '')} ${outputPath} -lcudart`
+      cmd: `nvcc -O3${incFlag} -o ${exePath.replace('.exe', '')} ${srcArgs} -lcudart`
     });
   }
   if (fs.existsSync(gccExe) || gccExe === 'gcc' || gccExe.endsWith('gcc.exe')) {

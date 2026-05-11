@@ -8,7 +8,7 @@ import { runFile, runEval, watchFile } from './cli/cli_run_modes';
 import { runClcNativeCompile } from './cli/cli_clc_native';
 import { formatCode, lintCode, showStats, initProject } from './cli/cli_dev_tools';
 import { startRepl } from './cli/cli_repl';
-import { SL_RUNTIME as getSlRuntime } from './cli/clc_runtime';
+import { SL_RUNTIME } from './cli/clc_runtime';
 import { collectLocalVars } from './cli/compiler_shared';
 import { CLC_EXPR_UNSUPPORTED_HINTS, CLC_STMT_UNSUPPORTED_HINTS, ClcCompileError, getClcUnsupportedBoundary } from './cli/clc_types';
 export { getClcUnsupportedBoundary };
@@ -2198,7 +2198,6 @@ export function compileToC(source: string, options: any = {}): string {
     return funcReturnTypes.get(name) || 'long long';
   }
 
-  const SL_RUNTIME = getSlRuntime;
   const funcDefs: string[] = [];
   const classStructDefs: string[] = [];
   const topStmts: string[] = [];

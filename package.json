@@ -1,7 +1,7 @@
 {
   "name": "seedlang",
   "version": "2.0.0",
-  "description": "AI-specific efficient symbolic language - A high-efficiency programming language designed for AI, supporting Web/Agent/Game/Software development",
+  "description": "Personal experiment: toy language with JS-like semantics; CLC + bootstrap for learning; not production software",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
@@ -15,11 +15,11 @@
     "repl": "node repl.js",
     "run:clc-seed": "node dist/cli.js selfhost/clc/clc.seed",
     "test": "node tests/test-suite.js",
-    "verify:deliverable": "node examples/deliverables/stability-check/verify.js",
+    "verify:deliverable": "node tests/deliverables/test-stability-deliverable.js",
     "verify:clc-win32": "node tools/verify-clc-win32.js",
     "verify:particle-bench-consistency": "node tools/verify-particle-bench-consistency.js",
     "compile:particle-bench-win32": "node tools/build-particle-bench-win32.js",
-    "compile:game:dungeon-win32": "node dist/cli.js examples/games/clc_reliability_dungeon_win32.seed --compile-c --subsystem windows -o dist/dungeon_win32.c",
+    "compile:game:dungeon-win32": "node dist/cli.js examples/clc/clc_reliability_dungeon_win32.seed --compile-c --subsystem windows -o dist/dungeon_win32.c",
     "dev:game:dungeon-win32": "node tools/watch-dungeon-win32.js",
     "compile:bench-clc": "node tools/compile-bench-clc.js",
     "bench:clc:ci": "node bench/clc-ci-gate.js",
@@ -32,13 +32,11 @@
     "test:interp-jit": "node tests/interp_jit/gate.js",
     "test:jest": "jest",
     "dev": "ts-node src/index.ts",
-    "build:website": "node examples/website/build_website.js",
     "bench:game": "node bench/game/run.js",
     "bench:game:ci": "node bench/game/ci-gate.js",
     "bench:game:trend": "node bench/game/trend-report.js",
     "bench:game:trend:strict": "node bench/game/trend-report.js --strict-exit true",
     "bench:game:hotspots": "node bench/game/hotspots.js",
-    "compile:webapp": "node tools/seed-web-compile.js examples/website/website.seed dist/webapp",
     "lint:seed": "node tools/seed-lint.js .",
     "lint:seed:strict": "node tools/seed-lint.js . --strict",
     "lint:seed:json": "node tools/seed-lint.js . --json",
@@ -64,15 +62,17 @@
     "README.md"
   ],
   "keywords": [
-    "ai-language",
-    "symbolic-language",
-    "dsl",
-    "agent",
-    "web",
-    "game"
+    "experimental",
+    "language",
+    "compiler",
+    "learning",
+    "toy"
   ],
-  "author": "SeedLang Team",
+  "author": "SeedLang (personal experiment)",
   "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
   "devDependencies": {
     "@types/jest": "^29.5.0",
     "@types/node": "^20.0.0",

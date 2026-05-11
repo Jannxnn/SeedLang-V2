@@ -89,18 +89,13 @@ bench/bin/*.zip
 # Game bench CI writes here; keep history/*.jsonl curated separately if needed
 bench/game/out/
 
-examples/compare/cpp/*.obj
-examples/compare/cpp/*.exe
-examples/compare/rust/target/
 examples/particle_bench_win32/rust/target/
 examples/particle_bench_win32/particle_bench_headless.c
-examples/games/*.exe
-examples/games/.physics_frames/
-examples/games/.physics_frames.bin
-examples/games/*_compiled.js
-examples/games/clc_reliability_dungeon.c
-examples/games/physics_demo_clc.c
-examples/games/test_clc.c
+examples/clc/*.exe
+examples/clc/clc_reliability_dungeon.c
+examples/clc/physics_demo_clc.c
+examples/clc/test_clc.c
+examples/clc/raiden_win32.c
 
 # Generated C files
 bench/seedlang/bench_clc.c
@@ -120,3 +115,11 @@ Thumbs.db
 
 # Electron runtime cache
 electron-data/
+
+# Closed-source VM regression assets (optional local copy; do not commit)
+tests/seed/vm/
+tests/bytecode-snapshot/
+tests/unit/test-vm-execution-budget.js
+tests/unit/test-vm-opcodes.js
+tests/unit/test-vm-frame-limits.js
+tests/unit/test-vm-jit.js

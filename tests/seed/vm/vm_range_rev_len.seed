@@ -1,3 +1,0 @@
-// rangeRev(5) 长度应为 5
-// EXPECT: 5
-result = len(rangeRev(5))

@@ -1000,37 +1000,44 @@ class SeedLangAPI {
 }
 
 // ============================================
-// 专用运行时工厂
+// 专用运行时工厂（运行时代码为 TypeScript，产物在 dist/runtime/*.js）
 // ============================================
+
+const path = require('path');
+
+function requireDistRuntime(moduleBaseName) {
+    const p = path.join(__dirname, '..', 'dist', 'runtime', `${moduleBaseName}.js`);
+    return require(p);
+}
 
 class RuntimeFactory {
     static createAgentRuntime(config = {}) {
-        const { AgentRuntime } = require('./runtime/agent.js');
+        const { AgentRuntime } = requireDistRuntime('agent');
         return new AgentRuntime(config);
     }
 
     static createGameRuntime(config = {}) {
-        const { GameRuntime } = require('./runtime/game.js');
+        const { GameRuntime } = requireDistRuntime('game');
         return new GameRuntime(config);
     }
 
     static createGraphicsRuntime(config = {}) {
-        const { GraphicsRuntime } = require('./runtime/graphics.js');
+        const { GraphicsRuntime } = requireDistRuntime('graphics');
         return new GraphicsRuntime(config);
     }
 
     static createWebRuntime(config = {}) {
-        const { WebRuntime } = require('./runtime/web.js');
+        const { WebRuntime } = requireDistRuntime('web');
         return new WebRuntime(config);
     }
 
     static createMobileRuntime(config = {}) {
-        const { MobileRuntime } = require('./runtime/mobile.js');
+        const { MobileRuntime } = requireDistRuntime('mobile');
         return new MobileRuntime(config);
     }
 
     static createEmbeddedRuntime(config = {}) {
-        const { EmbeddedRuntime } = require('./runtime/embedded.js');
+        const { EmbeddedRuntime } = requireDistRuntime('embedded');
         return new EmbeddedRuntime(config);
     }
 }

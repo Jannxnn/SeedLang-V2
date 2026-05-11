@@ -59,11 +59,8 @@ export class Lexer {
       } else if (char === '[' || char === ']') {
         this.tokens.push(this.readBracket());
       } else if (char === ',') {
-        throw new LexerError(
-          "Comma ',' is not supported in SeedLang. Use spaces to separate items/arguments.",
-          this.line,
-          this.column
-        );
+        this.tokens.push({ type: TokenType.COMMA, value: ',', line: this.line, column: this.column });
+        this.advance();
       } else if (char === '.' && this.peek(1) === '.' && this.peek(2) === '.') {
         this.tokens.push({ type: TokenType.SPREAD, value: '...', line: this.line, column: this.column });
         this.advance();

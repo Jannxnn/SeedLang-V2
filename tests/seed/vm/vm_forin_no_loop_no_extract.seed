@@ -1,9 +1,0 @@
-// 编译器优化：for-in 循环体不含循环时不提取（保持内联）
-// 验证简单 for-in 循环体不会被错误提取
-// EXPECT: 6
-total = 0
-inputs = [1 2 3]
-for n in inputs {
-  total = total + n
-}
-result = total

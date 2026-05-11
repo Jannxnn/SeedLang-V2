@@ -3,7 +3,7 @@
 export function printUsage(): void {
   console.log(`
 +==============================================================+
-|           SeedLang - AI-Optimized Language                   |
+|     SeedLang — experimental / learning (not production)    |
 |              Version 2.0.0                                   |
 +==============================================================+
 
@@ -19,10 +19,10 @@ Usage:
 Run Options:
   --eval, -e     Execute inline code
   --repl         Start interactive interpreter
-  --vm           Run in VM mode (bytecode VM with coroutines/macros/scheduler)
+  --vm           Optional bytecode VM path (learning/experiment; --compile-c is native codegen playground)
   Host / JIT (environment):
                  SEED_INTERP_JIT=0  disable interpreter own JIT (default: own JIT on); AST interpreter JIT is bootstrap-era tuning.
-                 Primary shipped/de-shelled perf target: --vm (SeedLangVM + bytecode JIT under src/jit).
+                 Toy native path: --compile-c + host C compiler; src/jit optimizes interpreter/IR paths, not a shipping engine.
                  SEED_INTERP_JIT_PROBE, SEED_INTERP_JIT_PROBE_ASSIGN  warmup iterations before tier compile (default 128)
                  SEED_HOST_JIT=0    force Node --jitless for CLI (disable V8 JIT tiers); unset/1 keeps V8 JIT
                  SEED_ALLOW_JIT_OUTSIDE_VM=1 — legacy alias: allow host V8 JIT even when SEED_HOST_JIT=0
@@ -89,17 +89,17 @@ More docs: https://github.com/seedlang/seedlang
 
 export function printVersion(): void {
   console.log('SeedLang v2.0.0');
-  console.log('AI-Optimized Language');
+  console.log('Experimental / learning language (not production)');
   console.log('');
-  console.log('Runtime Modes:');
-  console.log('  - General (Interpreter)    Full-featured AST interpreter');
-  console.log('  - VM (--vm)                Bytecode VM with JIT/TCO/sandbox');
-  console.log('  - Web (--web)              DOM rendering & component system');
-  console.log('  - Agent (--agent)          AI agent with memory & tools');
-  console.log('  - Game (--game)            ECS game engine with physics');
-  console.log('  - Graphics (--graphics)    Terminal canvas & sprite engine');
-  console.log('  - Mobile (API)             Device APIs (camera/GPS/sensors)');
-  console.log('  - Embedded (API)           IoT/Arduino (GPIO/I2C/SPI)');
+  console.log('Runtime Modes (mostly stubs / demos):');
+  console.log('  - General (Interpreter)    AST interpreter (default)');
+  console.log('  - VM (--vm)               Bytecode path (optional experiment)');
+  console.log('  - Web (--web)              Web-like API stubs');
+  console.log('  - Agent (--agent)          Agent-shaped stubs (no built-in LLM)');
+  console.log('  - Game (--game)            Game demo API (not a shipped engine)');
+  console.log('  - Graphics (--graphics)    Terminal-oriented drawing demo');
+  console.log('  - Mobile (API)             Device API shape + simulation');
+  console.log('  - Embedded (API)           GPIO-like stubs + JS simulation');
   console.log('');
   console.log('Compilation Targets:');
   console.log('  - JavaScript (--compile/-c)   .seed -> .js');

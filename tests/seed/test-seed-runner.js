@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Seed 文件批量运行器：扫描 tests/seed/ 下所有 .seed 文件，逐一通过 VM 执行并汇总结果
+// Seed 文件批量运行器：扫描 tests/seed/ 下所有 .seed 文件，逐一通过 VM 执行并汇总结果。
+// （历史上 `tests/seed/vm/` 下的 VM 专项语料已闭源，公开树仅保留其余 .seed。）
 
 const fs = require('fs');
 const path = require('path');

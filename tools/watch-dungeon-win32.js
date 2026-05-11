@@ -11,7 +11,7 @@ const path = require('path');
 const { spawn, execFileSync } = require('child_process');
 
 const repoRoot = path.join(__dirname, '..');
-const seedPath = path.join(repoRoot, 'examples', 'games', 'clc_reliability_dungeon_win32.seed');
+const seedPath = path.join(repoRoot, 'examples', 'clc', 'clc_reliability_dungeon_win32.seed');
 const rtPath = path.join(repoRoot, 'tools', 'clc', 'sl_win32_rt.c');
 const distCli = path.join(repoRoot, 'dist', 'cli.js');
 const outC = path.join(repoRoot, 'dist', 'dungeon_win32.c');

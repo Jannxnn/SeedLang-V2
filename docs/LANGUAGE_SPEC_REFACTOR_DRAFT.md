@@ -69,23 +69,22 @@ count = 42
 
 ### 4.2 Collections
 
-- Array elements are space-separated.
-- Object fields are space-separated.
-- Commas are not supported in arrays, objects, function parameters, or function calls.
-- Any comma usage is a lexical error in `v1.0`.
+- Array elements may be separated by **spaces** and/or **commas** (commas are optional separators; trailing commas are allowed where a closing bracket/brace follows).
+- Object fields follow the same rule: spaces and/or commas between entries.
+- Function parameters and call arguments accept the same optional comma separators.
 
-Note: This is one of the core differences between SeedLang and JavaScript. Arrays and objects use space separation and reject commas.
+Note: Space-only separation remains valid minimal style; commas improve readability for readers accustomed to JavaScript.
 
 ```seedlang
 arr = [1 2 3]
+arr2 = [1, 2, 3]
 obj = { name: "Alice" age: 20 }
-
-// Invalid (comma is rejected)
-// arr2 = [1, 2, 3]
-// obj2 = { name: "Alice", age: 20 }
+obj2 = { name: "Alice", age: 20 }
 ```
 
 ### 4.3 Functions
+
+Parameter lists accept spaces and/or commas (`fn add(a b)` and `fn add(a, b)` are equivalent).
 
 ```seedlang
 fn add(a b) {

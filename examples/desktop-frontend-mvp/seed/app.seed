@@ -1,9 +1,0 @@
-// SeedLang logic placeholder for desktop frontend.
-// Replace with real app logic and compile into dist/seed-logic.js.
-
-name = "desktop-mvp"
-
-fn getTitle() {
-  return "SeedLang Desktop Frontend MVP"
-}
-

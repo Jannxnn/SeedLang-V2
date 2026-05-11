@@ -66,6 +66,11 @@ export function getClcWin32MsvcPragmaLibs(): string {
   return CLC_WIN32_LIBS_MINGW.map((lib) => `#pragma comment(lib, "${lib}.lib")`).join('\n');
 }
 
+/** Space-separated `user32.lib` … for MSVC `/link` (same set as {@link CLC_WIN32_LIBS_MINGW}). */
+export function getClcWin32MsvcLinkLibs(): string {
+  return CLC_WIN32_LIBS_MINGW.map((lib) => `${lib}.lib`).join(' ');
+}
+
 /**
  * Absolute path to `sl_win32_rt.c` in the repo.
  * @param resolverDir `__dirname` of the compiled caller (e.g. `dist/cli`).

@@ -1,7 +1,0 @@
-// VM 优化：FOR_SUM — 负数范围累加
-// EXPECT: -10
-sum = 0
-for (i = -1; i >= -4; i = i - 1) {
-    sum = sum + i
-}
-result = sum

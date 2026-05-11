@@ -1,8 +1,0 @@
-// 对象 for-in 迭代：字符串值拼接
-// EXPECT: Alice30
-obj = { name: "Alice" age: 30 }
-s = ""
-for v in obj {
-  s = s + v
-}
-result = s

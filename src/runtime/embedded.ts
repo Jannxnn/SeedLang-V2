@@ -1,7 +1,14 @@
 // SeedLang 嵌入式运行时：基于 Interpreter 扩展的 IoT/嵌入式 API，支持 GPIO、I2C、SPI、UART、PWM、ADC 等硬件接口
+// 本模块为纯 JS 仿真层，不包含 wiringPi / rpio 等原生硬件绑定；接真板需由宿主提供 native 适配。
 
 import { Interpreter, SeedValue } from '../core/interpreter';
 import { parse } from '../core/parser';
+
+/** 默认不向控制台输出；debug 或自定义 log 可打开轨迹。 */
+export interface EmbeddedRuntimeOptions {
+  debug?: boolean;
+  log?: (message: string) => void;
+}
 
 export class EmbeddedRuntime extends Interpreter {
   private gpio: Map<number, PinState> = new Map();
@@ -12,9 +19,13 @@ export class EmbeddedRuntime extends Interpreter {
   private adc: Map<number, number> = new Map();
   private timers: Map<number, NodeJS.Timeout> = new Map();
   private timerId: number = 0;
+  private readonly emitTrace: (message: string) => void;
 
-  constructor() {
+  constructor(options?: EmbeddedRuntimeOptions) {
     super();
+    this.emitTrace =
+      options?.log ??
+      (options?.debug === true ? (m: string) => this.emitTrace(`[EmbeddedRuntime] ${m}`) : () => {});
     this.setupEmbeddedAPIs();
   }
 
@@ -35,7 +46,7 @@ export class EmbeddedRuntime extends Interpreter {
             const pinNum = pin.value as number;
             const modeNum = mode.value as number;
             this.gpio.set(pinNum, { mode: modeNum, value: 0 });
-            console.log(`GPIO ${pinNum} set to mode ${modeNum}`);
+            this.emitTrace(`GPIO ${pinNum} set to mode ${modeNum}`);
             return { type: 'null', value: null };
           }
         }],
@@ -47,7 +58,7 @@ export class EmbeddedRuntime extends Interpreter {
             if (this.gpio.has(pinNum)) {
               this.gpio.get(pinNum)!.value = val;
             }
-            console.log(`GPIO ${pinNum} write ${val}`);
+            this.emitTrace(`GPIO ${pinNum} write ${val}`);
             return { type: 'null', value: null };
           }
         }],
@@ -57,7 +68,7 @@ export class EmbeddedRuntime extends Interpreter {
             const pinNum = pin.value as number;
             const state = this.gpio.get(pinNum);
             const val = state ? state.value : 0;
-            console.log(`GPIO ${pinNum} read ${val}`);
+            this.emitTrace(`GPIO ${pinNum} read ${val}`);
             return { type: 'number', value: val };
           }
         }],
@@ -68,7 +79,7 @@ export class EmbeddedRuntime extends Interpreter {
             if (this.gpio.has(pinNum)) {
               const state = this.gpio.get(pinNum)!;
               state.value = state.value === 0 ? 1 : 0;
-              console.log(`GPIO ${pinNum} toggle to ${state.value}`);
+              this.emitTrace(`GPIO ${pinNum} toggle to ${state.value}`);
               return { type: 'number', value: state.value };
             }
             return { type: 'number', value: 0 };
@@ -79,7 +90,7 @@ export class EmbeddedRuntime extends Interpreter {
           value: (pin: SeedValue, duration: SeedValue): SeedValue => {
             const pinNum = pin.value as number;
             const dur = duration.value as number;
-            console.log(`GPIO ${pinNum} pulse ${dur}ms`);
+            this.emitTrace(`GPIO ${pinNum} pulse ${dur}ms`);
             return { type: 'null', value: null };
           }
         }]
@@ -97,7 +108,7 @@ export class EmbeddedRuntime extends Interpreter {
             const freq = frequency.value as number;
             const dutyVal = duty ? duty.value as number : 0.5;
             this.pwm.set(pinNum, { frequency: freq, duty: dutyVal });
-            console.log(`PWM ${pinNum} freq=${freq}Hz duty=${dutyVal}`);
+            this.emitTrace(`PWM ${pinNum} freq=${freq}Hz duty=${dutyVal}`);
             return { type: 'null', value: null };
           }
         }],
@@ -109,7 +120,7 @@ export class EmbeddedRuntime extends Interpreter {
             if (this.pwm.has(pinNum)) {
               this.pwm.get(pinNum)!.duty = dutyVal;
             }
-            console.log(`PWM ${pinNum} duty=${dutyVal}`);
+            this.emitTrace(`PWM ${pinNum} duty=${dutyVal}`);
             return { type: 'null', value: null };
           }
         }],
@@ -121,7 +132,7 @@ export class EmbeddedRuntime extends Interpreter {
             if (this.pwm.has(pinNum)) {
               this.pwm.get(pinNum)!.frequency = freq;
             }
-            console.log(`PWM ${pinNum} freq=${freq}Hz`);
+            this.emitTrace(`PWM ${pinNum} freq=${freq}Hz`);
             return { type: 'null', value: null };
           }
         }],
@@ -130,7 +141,7 @@ export class EmbeddedRuntime extends Interpreter {
           value: (pin: SeedValue): SeedValue => {
             const pinNum = pin.value as number;
             this.pwm.delete(pinNum);
-            console.log(`PWM ${pinNum} stopped`);
+            this.emitTrace(`PWM ${pinNum} stopped`);
             return { type: 'null', value: null };
           }
         }]
@@ -146,7 +157,7 @@ export class EmbeddedRuntime extends Interpreter {
           value: (pin: SeedValue): SeedValue => {
             const pinNum = pin.value as number;
             this.adc.set(pinNum, 0);
-            console.log(`ADC ${pinNum} setup`);
+            this.emitTrace(`ADC ${pinNum} setup`);
             return { type: 'null', value: null };
           }
         }],
@@ -156,7 +167,7 @@ export class EmbeddedRuntime extends Interpreter {
             const pinNum = pin.value as number;
             const val = Math.random() * 4095;
             this.adc.set(pinNum, val);
-            console.log(`ADC ${pinNum} read ${val.toFixed(2)}`);
+            this.emitTrace(`ADC ${pinNum} read ${val.toFixed(2)}`);
             return { type: 'number', value: val };
           }
         }],
@@ -167,7 +178,7 @@ export class EmbeddedRuntime extends Interpreter {
             const ref = vref ? vref.value as number : 3.3;
             const raw = Math.random() * 4095;
             const voltage = (raw / 4095) * ref;
-            console.log(`ADC ${pinNum} voltage ${voltage.toFixed(3)}V`);
+            this.emitTrace(`ADC ${pinNum} voltage ${voltage.toFixed(3)}V`);
             return { type: 'number', value: voltage };
           }
         }]
@@ -183,7 +194,7 @@ export class EmbeddedRuntime extends Interpreter {
           value: (bus: SeedValue, _options?: SeedValue): SeedValue => {
             const busNum = bus.value as number;
             this.i2c.set(busNum, { address: 0, buffer: [] });
-            console.log(`I2C bus ${busNum} setup`);
+            this.emitTrace(`I2C bus ${busNum} setup`);
             return { type: 'null', value: null };
           }
         }],
@@ -192,7 +203,7 @@ export class EmbeddedRuntime extends Interpreter {
           value: (bus: SeedValue, address: SeedValue, data: SeedValue): SeedValue => {
             const busNum = bus.value as number;
             const addr = address.value as number;
-            console.log(`I2C bus ${busNum} write to 0x${addr.toString(16)}: ${JSON.stringify(data.value)}`);
+            this.emitTrace(`I2C bus ${busNum} write to 0x${addr.toString(16)}: ${JSON.stringify(data.value)}`);
             return { type: 'boolean', value: true };
           }
         }],
@@ -203,7 +214,7 @@ export class EmbeddedRuntime extends Interpreter {
             const addr = address.value as number;
             const len = length.value as number;
             const data = Array(len).fill(0).map(() => Math.floor(Math.random() * 256));
-            console.log(`I2C bus ${busNum} read from 0x${addr.toString(16)}: ${len} bytes`);
+            this.emitTrace(`I2C bus ${busNum} read from 0x${addr.toString(16)}: ${len} bytes`);
             return { type: 'array', value: data.map(d => ({ type: 'number', value: d })) };
           }
         }],
@@ -212,7 +223,7 @@ export class EmbeddedRuntime extends Interpreter {
           value: (bus: SeedValue): SeedValue => {
             const busNum = bus.value as number;
             const devices = [0x3C, 0x68, 0x76];
-            console.log(`I2C bus ${busNum} scan found: ${devices.map(d => '0x' + d.toString(16)).join(', ')}`);
+            this.emitTrace(`I2C bus ${busNum} scan found: ${devices.map(d => '0x' + d.toString(16)).join(', ')}`);
             return { type: 'array', value: devices.map(d => ({ type: 'number', value: d })) };
           }
         }]
@@ -228,7 +239,7 @@ export class EmbeddedRuntime extends Interpreter {
           value: (bus: SeedValue, _options?: SeedValue): SeedValue => {
             const busNum = bus.value as number;
             this.spi.set(busNum, { mode: 0, speed: 1000000, buffer: [] });
-            console.log(`SPI bus ${busNum} setup`);
+            this.emitTrace(`SPI bus ${busNum} setup`);
             return { type: 'null', value: null };
           }
         }],
@@ -238,7 +249,7 @@ export class EmbeddedRuntime extends Interpreter {
             const busNum = bus.value as number;
             const input = data.value as SeedValue[];
             const output = input.map(() => ({ type: 'number', value: Math.floor(Math.random() * 256) }));
-            console.log(`SPI bus ${busNum} transfer ${input.length} bytes`);
+            this.emitTrace(`SPI bus ${busNum} transfer ${input.length} bytes`);
             return { type: 'array', value: output };
           }
         }],
@@ -246,7 +257,7 @@ export class EmbeddedRuntime extends Interpreter {
           type: 'function',
           value: (bus: SeedValue, data: SeedValue): SeedValue => {
             const busNum = bus.value as number;
-            console.log(`SPI bus ${busNum} write ${JSON.stringify(data.value)}`);
+            this.emitTrace(`SPI bus ${busNum} write ${JSON.stringify(data.value)}`);
             return { type: 'null', value: null };
           }
         }]
@@ -263,7 +274,7 @@ export class EmbeddedRuntime extends Interpreter {
             const portNum = port.value as number;
             const baud = options?.properties?.get('baudRate')?.value || 9600;
             this.uart.set(portNum, { baudRate: baud as number, buffer: '' });
-            console.log(`UART ${portNum} setup baud=${baud}`);
+            this.emitTrace(`UART ${portNum} setup baud=${baud}`);
             return { type: 'null', value: null };
           }
         }],
@@ -271,7 +282,7 @@ export class EmbeddedRuntime extends Interpreter {
           type: 'function',
           value: (port: SeedValue, data: SeedValue): SeedValue => {
             const portNum = port.value as number;
-            console.log(`UART ${portNum} write: ${data.value}`);
+            this.emitTrace(`UART ${portNum} write: ${data.value}`);
             return { type: 'null', value: null };
           }
         }],
@@ -281,7 +292,7 @@ export class EmbeddedRuntime extends Interpreter {
             const portNum = port.value as number;
             const len = length ? length.value as number : 64;
             const data = 'mock-uart-data';
-            console.log(`UART ${portNum} read ${len} bytes`);
+            this.emitTrace(`UART ${portNum} read ${len} bytes`);
             return { type: 'string', value: data };
           }
         }],
@@ -295,7 +306,7 @@ export class EmbeddedRuntime extends Interpreter {
           type: 'function',
           value: (port: SeedValue, _callback: SeedValue): SeedValue => {
             const portNum = port.value as number;
-            console.log(`UART ${portNum} data handler registered`);
+            this.emitTrace(`UART ${portNum} data handler registered`);
             return { type: 'null', value: null };
           }
         }]
@@ -317,7 +328,7 @@ export class EmbeddedRuntime extends Interpreter {
               }
             }, ms);
             this.timers.set(id, timer);
-            console.log(`Timer ${id} interval ${ms}ms`);
+            this.emitTrace(`Timer ${id} interval ${ms}ms`);
             return { type: 'number', value: id };
           }
         }],
@@ -333,7 +344,7 @@ export class EmbeddedRuntime extends Interpreter {
               this.timers.delete(id);
             }, ms);
             this.timers.set(id, timer);
-            console.log(`Timer ${id} timeout ${ms}ms`);
+            this.emitTrace(`Timer ${id} timeout ${ms}ms`);
             return { type: 'number', value: id };
           }
         }],
@@ -344,7 +355,7 @@ export class EmbeddedRuntime extends Interpreter {
             if (this.timers.has(timerId)) {
               clearTimeout(this.timers.get(timerId)!);
               this.timers.delete(timerId);
-              console.log(`Timer ${timerId} cleared`);
+              this.emitTrace(`Timer ${timerId} cleared`);
             }
             return { type: 'null', value: null };
           }
@@ -352,7 +363,7 @@ export class EmbeddedRuntime extends Interpreter {
         ['delay', {
           type: 'function',
           value: (ms: SeedValue): SeedValue => {
-            console.log(`Delay ${ms.value}ms`);
+            this.emitTrace(`Delay ${ms.value}ms`);
             return { type: 'null', value: null };
           }
         }]
@@ -367,7 +378,7 @@ export class EmbeddedRuntime extends Interpreter {
           type: 'function',
           value: (): SeedValue => {
             const temp = 25 + (Math.random() - 0.5) * 10;
-            console.log(`Temperature: ${temp.toFixed(2)}°C`);
+            this.emitTrace(`Temperature: ${temp.toFixed(2)}°C`);
             return { type: 'number', value: temp };
           }
         }],
@@ -375,7 +386,7 @@ export class EmbeddedRuntime extends Interpreter {
           type: 'function',
           value: (): SeedValue => {
             const hum = 50 + (Math.random() - 0.5) * 20;
-            console.log(`Humidity: ${hum.toFixed(2)}%`);
+            this.emitTrace(`Humidity: ${hum.toFixed(2)}%`);
             return { type: 'number', value: hum };
           }
         }],
@@ -383,7 +394,7 @@ export class EmbeddedRuntime extends Interpreter {
           type: 'function',
           value: (): SeedValue => {
             const pressure = 101325 + (Math.random() - 0.5) * 1000;
-            console.log(`Pressure: ${pressure.toFixed(0)} Pa`);
+            this.emitTrace(`Pressure: ${pressure.toFixed(0)} Pa`);
             return { type: 'number', value: pressure };
           }
         }],
@@ -391,7 +402,7 @@ export class EmbeddedRuntime extends Interpreter {
           type: 'function',
           value: (): SeedValue => {
             const light = Math.random() * 1000;
-            console.log(`Light: ${light.toFixed(0)} lux`);
+            this.emitTrace(`Light: ${light.toFixed(0)} lux`);
             return { type: 'number', value: light };
           }
         }],
@@ -401,7 +412,7 @@ export class EmbeddedRuntime extends Interpreter {
             const x = (Math.random() - 0.5) * 2;
             const y = (Math.random() - 0.5) * 2;
             const z = 9.8 + (Math.random() - 0.5);
-            console.log(`Accelerometer: x=${x.toFixed(2)}, y=${y.toFixed(2)}, z=${z.toFixed(2)}`);
+            this.emitTrace(`Accelerometer: x=${x.toFixed(2)}, y=${y.toFixed(2)}, z=${z.toFixed(2)}`);
             return {
               type: 'object',
               value: null,
@@ -419,7 +430,7 @@ export class EmbeddedRuntime extends Interpreter {
             const x = (Math.random() - 0.5) * 10;
             const y = (Math.random() - 0.5) * 10;
             const z = (Math.random() - 0.5) * 10;
-            console.log(`Gyroscope: x=${x.toFixed(2)}, y=${y.toFixed(2)}, z=${z.toFixed(2)} deg/s`);
+            this.emitTrace(`Gyroscope: x=${x.toFixed(2)}, y=${y.toFixed(2)}, z=${z.toFixed(2)} deg/s`);
             return {
               type: 'object',
               value: null,
@@ -437,7 +448,7 @@ export class EmbeddedRuntime extends Interpreter {
             const x = (Math.random() - 0.5) * 100;
             const y = (Math.random() - 0.5) * 100;
             const z = (Math.random() - 0.5) * 100;
-            console.log(`Magnetometer: x=${x.toFixed(2)}, y=${y.toFixed(2)}, z=${z.toFixed(2)} µT`);
+            this.emitTrace(`Magnetometer: x=${x.toFixed(2)}, y=${y.toFixed(2)}, z=${z.toFixed(2)} µT`);
             return {
               type: 'object',
               value: null,
@@ -453,7 +464,7 @@ export class EmbeddedRuntime extends Interpreter {
           type: 'function',
           value: (): SeedValue => {
             const dist = Math.random() * 400;
-            console.log(`Distance: ${dist.toFixed(2)} cm`);
+            this.emitTrace(`Distance: ${dist.toFixed(2)} cm`);
             return { type: 'number', value: dist };
           }
         }]
@@ -467,7 +478,7 @@ export class EmbeddedRuntime extends Interpreter {
         ['connect', {
           type: 'function',
           value: (ssid: SeedValue, _password: SeedValue): SeedValue => {
-            console.log(`WiFi connecting to ${ssid.value}...`);
+            this.emitTrace(`WiFi connecting to ${ssid.value}...`);
             return {
               type: 'promise',
               value: Promise.resolve({
@@ -484,7 +495,7 @@ export class EmbeddedRuntime extends Interpreter {
         ['disconnect', {
           type: 'function',
           value: (): SeedValue => {
-            console.log('WiFi disconnecting...');
+            this.emitTrace('WiFi disconnecting...');
             return { type: 'null', value: null };
           }
         }],
@@ -504,7 +515,7 @@ export class EmbeddedRuntime extends Interpreter {
         ['scan', {
           type: 'function',
           value: (): SeedValue => {
-            console.log('WiFi scanning...');
+            this.emitTrace('WiFi scanning...');
             return {
               type: 'array',
               value: [
@@ -525,21 +536,21 @@ export class EmbeddedRuntime extends Interpreter {
         ['start', {
           type: 'function',
           value: (): SeedValue => {
-            console.log('BLE starting...');
+            this.emitTrace('BLE starting...');
             return { type: 'boolean', value: true };
           }
         }],
         ['stop', {
           type: 'function',
           value: (): SeedValue => {
-            console.log('BLE stopping...');
+            this.emitTrace('BLE stopping...');
             return { type: 'null', value: null };
           }
         }],
         ['advertise', {
           type: 'function',
           value: (data: SeedValue): SeedValue => {
-            console.log(`BLE advertising: ${JSON.stringify(data.value)}`);
+            this.emitTrace(`BLE advertising: ${JSON.stringify(data.value)}`);
             return { type: 'null', value: null };
           }
         }],
@@ -547,7 +558,7 @@ export class EmbeddedRuntime extends Interpreter {
           type: 'function',
           value: (duration?: SeedValue): SeedValue => {
             const dur = duration ? duration.value as number : 5000;
-            console.log(`BLE scanning for ${dur}ms...`);
+            this.emitTrace(`BLE scanning for ${dur}ms...`);
             return {
               type: 'promise',
               value: Promise.resolve({
@@ -570,7 +581,7 @@ export class EmbeddedRuntime extends Interpreter {
         ['connect', {
           type: 'function',
           value: (address: SeedValue): SeedValue => {
-            console.log(`BLE connecting to ${address.value}...`);
+            this.emitTrace(`BLE connecting to ${address.value}...`);
             return {
               type: 'promise',
               value: Promise.resolve({ type: 'boolean', value: true })
@@ -587,7 +598,7 @@ export class EmbeddedRuntime extends Interpreter {
         ['connect', {
           type: 'function',
           value: (host: SeedValue, _options?: SeedValue): SeedValue => {
-            console.log(`MQTT connecting to ${host.value}...`);
+            this.emitTrace(`MQTT connecting to ${host.value}...`);
             return {
               type: 'promise',
               value: Promise.resolve({ type: 'boolean', value: true })
@@ -597,28 +608,28 @@ export class EmbeddedRuntime extends Interpreter {
         ['publish', {
           type: 'function',
           value: (topic: SeedValue, message: SeedValue): SeedValue => {
-            console.log(`MQTT publish ${topic.value}: ${message.value}`);
+            this.emitTrace(`MQTT publish ${topic.value}: ${message.value}`);
             return { type: 'boolean', value: true };
           }
         }],
         ['subscribe', {
           type: 'function',
           value: (topic: SeedValue, _callback: SeedValue): SeedValue => {
-            console.log(`MQTT subscribe ${topic.value}`);
+            this.emitTrace(`MQTT subscribe ${topic.value}`);
             return { type: 'boolean', value: true };
           }
         }],
         ['unsubscribe', {
           type: 'function',
           value: (topic: SeedValue): SeedValue => {
-            console.log(`MQTT unsubscribe ${topic.value}`);
+            this.emitTrace(`MQTT unsubscribe ${topic.value}`);
             return { type: 'boolean', value: true };
           }
         }],
         ['disconnect', {
           type: 'function',
           value: (): SeedValue => {
-            console.log('MQTT disconnecting...');
+            this.emitTrace('MQTT disconnecting...');
             return { type: 'null', value: null };
           }
         }]
@@ -632,28 +643,28 @@ export class EmbeddedRuntime extends Interpreter {
         ['save', {
           type: 'function',
           value: (key: SeedValue, _value: SeedValue): SeedValue => {
-            console.log(`Storage save ${key.value}`);
+            this.emitTrace(`Storage save ${key.value}`);
             return { type: 'boolean', value: true };
           }
         }],
         ['load', {
           type: 'function',
           value: (key: SeedValue): SeedValue => {
-            console.log(`Storage load ${key.value}`);
+            this.emitTrace(`Storage load ${key.value}`);
             return { type: 'null', value: null };
           }
         }],
         ['remove', {
           type: 'function',
           value: (key: SeedValue): SeedValue => {
-            console.log(`Storage remove ${key.value}`);
+            this.emitTrace(`Storage remove ${key.value}`);
             return { type: 'boolean', value: true };
           }
         }],
         ['clear', {
           type: 'function',
           value: (): SeedValue => {
-            console.log('Storage clear');
+            this.emitTrace('Storage clear');
             return { type: 'boolean', value: true };
           }
         }]
@@ -680,14 +691,14 @@ export class EmbeddedRuntime extends Interpreter {
         ['reset', {
           type: 'function',
           value: (): SeedValue => {
-            console.log('Device resetting...');
+            this.emitTrace('Device resetting...');
             return { type: 'null', value: null };
           }
         }],
         ['deepSleep', {
           type: 'function',
           value: (ms: SeedValue): SeedValue => {
-            console.log(`Device deep sleep ${ms.value}ms`);
+            this.emitTrace(`Device deep sleep ${ms.value}ms`);
             return { type: 'null', value: null };
           }
         }],
@@ -714,7 +725,7 @@ export class EmbeddedRuntime extends Interpreter {
           type: 'function',
           value: (pin?: SeedValue): SeedValue => {
             const p = pin ? pin.value : 2;
-            console.log(`LED ${p} ON`);
+            this.emitTrace(`LED ${p} ON`);
             return { type: 'null', value: null };
           }
         }],
@@ -722,14 +733,14 @@ export class EmbeddedRuntime extends Interpreter {
           type: 'function',
           value: (pin?: SeedValue): SeedValue => {
             const p = pin ? pin.value : 2;
-            console.log(`LED ${p} OFF`);
+            this.emitTrace(`LED ${p} OFF`);
             return { type: 'null', value: null };
           }
         }],
         ['blink', {
           type: 'function',
           value: (pin: SeedValue, interval: SeedValue): SeedValue => {
-            console.log(`LED ${pin.value} blink ${interval.value}ms`);
+            this.emitTrace(`LED ${pin.value} blink ${interval.value}ms`);
             return { type: 'null', value: null };
           }
         }]
@@ -743,21 +754,21 @@ export class EmbeddedRuntime extends Interpreter {
         ['attach', {
           type: 'function',
           value: (pin: SeedValue): SeedValue => {
-            console.log(`Servo attached to pin ${pin.value}`);
+            this.emitTrace(`Servo attached to pin ${pin.value}`);
             return { type: 'null', value: null };
           }
         }],
         ['write', {
           type: 'function',
           value: (pin: SeedValue, angle: SeedValue): SeedValue => {
-            console.log(`Servo ${pin.value} angle ${angle.value}°`);
+            this.emitTrace(`Servo ${pin.value} angle ${angle.value}°`);
             return { type: 'null', value: null };
           }
         }],
         ['detach', {
           type: 'function',
           value: (pin: SeedValue): SeedValue => {
-            console.log(`Servo detached from pin ${pin.value}`);
+            this.emitTrace(`Servo detached from pin ${pin.value}`);
             return { type: 'null', value: null };
           }
         }]

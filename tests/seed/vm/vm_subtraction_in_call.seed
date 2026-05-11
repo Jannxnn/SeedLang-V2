@@ -1,6 +1,0 @@
-// 解析器修复：函数参数中减法 vs 负号歧义
-// print(10 - 3) 应解析为 print(10-3)=7，不是 print(10, -3)
-// EXPECT: 7
-result = 0
-x = 10 - 3
-result = x

@@ -1,18 +1,38 @@
 # SeedLang
 
-> AI-first 编程语言 — 简洁语法，JavaScript 语义，多运行时支持，可编译至原生二进制
+> **个人实验与学习向** 的玩具语言实现：语法上贴近「AI 友好 + JS 语义」的练习题目；**读源码、跑示例、改着玩** 即可，勿当作工业编译器或业务交付工具。
 
-**版本**: `2.0.0` | **协议**: MIT | **规范文档**: [docs/LANGUAGE_SPEC_REFACTOR_DRAFT.md](docs/LANGUAGE_SPEC_REFACTOR_DRAFT.md)
+**版本**: `2.0.0` | **协议**: MIT | **规范**: [LANGUAGE_SPEC_REFACTOR_DRAFT.md](docs/LANGUAGE_SPEC_REFACTOR_DRAFT.md) | **仓库/主链地图**: [ARCHITECTURE_MAP.md](docs/ARCHITECTURE_MAP.md)
+
+**开源**：当前仓库内的源码与文档均在 **`LICENSE`（MIT）** 下开放使用、修改与分发。下文「对外承诺」「专项测试未收录」说的是 **维护叙事与目录取舍**，**不是**收回开源许可；若你 fork 后自行删掉子模块，仍以你仓库里的许可证为准。
+
+### 性质说明（必读）
+
+- **不是**工业级语言或生产就绪工具链；**不承诺** Web / 游戏 / 嵌入式 / Agent 等场景能「真上线干活」。仓库里出现的 OpenMP、GPU、CUDA、Win32 窗口、`bench/industry`（目录名）、「并行」「交付物」等，只表示 **有过实验代码或本地脚本**，**不等于**具备对应领域的可靠工程能力。
+- **阅读主线（学习向）**：若想跟代码走一圈，可优先跟 **`--compile-c`（CLC）**、**自举**（`selfhost/`、`npm run test:bootstrap`）与 **AST 解释器**；其余多为拼图式实验。
+- **字节码 VM（`--vm`）**：练习用路径之一，**不**作为能力宣传；与 CLC / 规范勿混谈。**VM 专项回归文件**（单元测、`tests/seed/vm/` 语料、字节码快照）**已从本公开树移除**；本地若自行补回，请勿提交（见 `.gitignore`）。
+
+### 对外承诺 / 拆仓备忘（MIT 下仍可整仓保留）
+
+若你希望 **对外叙事只强调 CLC + 自举**，但 **代码仍全部 MIT 留在本仓库**，可参考下表做文档或日后拆 npm 包——**不是**要求把这些目录改成闭源：
+
+| 取向 | 目录 / 产物 | 说明 |
+|------|----------------|------|
+| **叙事与维护优先** | `src/core/`、`src/cli/`（含 CLC）、`tools/clc/`、`selfhost/` | 自举与 `--compile-c` 的最小闭环。 |
+| **拆仓时可优先考虑迁出** | `jit/`、`aot/`、`native/cpp/`、`ai/`、`python/`、`rust/`、`wasm/` | 与 CLC+自举故事弱相关；迁出可减少外界误读（许可仍可 MIT）。 |
+| **拆仓前要盘点依赖** | `modules/`、`types/`、`errors/`、`async/`、`concurrent/`、`optimizer/`、`memory/`、`ffi/`、`debug/`、`safety/`、`sandbox/` | 多被 core / CLI 间接引用；需配合依赖裁剪。 |
+| **公共 API** | `src/index.ts`、`src/api.js` | 现为全家桶导出；若叙事收窄，可在文档或后续版本中强调 **parse / interpret / CLC** 为「主推集成面」。 |
+
+**结论**：**整仓开源（MIT）** 与 **对外只说清承诺边界** 可以同时成立；不必把 jit～wasm 当成「必须闭源」，除非你另有商业策略要在别的许可证下分发。
 
 ---
 
-## 为什么选择 SeedLang
+## 适合拿来做什么
 
-- 🤖 **AI 友好**: 极简语法减少样板代码，降低 token 消耗
-- 🔗 **JS 语义兼容**: 控制流与表达式模型与 JavaScript 一致，学习成本低
-- 🌐 **多运行时**: Web、Agent、Game、Graphics、Mobile、Embedded 六大运行时
-- ⚡ **双编译后端**: 编译到 JavaScript 或 C（原生二进制，支持 OpenMP 并行 / GPU / CUDA）
-- 🛡️ **完整工具链**: REPL、调试器、格式化器、Linter、文件监视器、VS Code 扩展
+- 🤖 **练编译器与前后端**：默认偏「空格分隔」；**逗号可作可选分隔符**（数组、对象、实参等与 JS 类似），解析、代码生成、自举流水线——当课程设计或 side project 正好。
+- 🔗 **对照 JS 语义**：控制流与表达式模型刻意贴近 JavaScript，便于对照 ECMA 心智模型（仍可能有边角差异，以规范草稿为准）。
+- ⚡ **玩 CLI 代码生成**：可试 `--compile` 出 JS、`--compile-c` 出 C 再交给本机 gcc/clang；OpenMP / `--gpu` / `--cuda` / Win32 子系统等仅为 **实验开关**，默认假定你会自己判断能不能用、该不该用。
+- 🛡️ **附带玩具级工具**：REPL、格式化、Lint、简单调试与 VS Code 语法包——方便本地折腾，**不是**可与主流工业链对标的一套。
 
 ## 快速开始
 
@@ -24,14 +44,17 @@ cd seedlang && npm install && npm run build
 # REPL 交互模式
 npm run repl
 
-# 运行 .seed 文件
-node dist/cli.js examples/sandbox/demo.seed
+# 运行 .seed 文件（示例语料仅在 examples/clc/）
+node dist/cli.js examples/clc/test_clc.seed
 
 # 编译到 JavaScript
-node dist/cli.js --compile examples/sandbox/demo.seed -o demo.js
+node dist/cli.js --compile examples/clc/test_clc.seed -o demo.js
 
 # 编译到 C 并构建原生二进制（需要 gcc/clang）
-node dist/cli.js --compile-c examples/games/physics_demo_clc.seed
+node dist/cli.js --compile-c examples/clc/physics_demo_clc.seed
+
+# 自举 CLC 管线（仓库根 selfhost/）
+npm run run:clc-seed
 
 # 运行测试
 npm test
@@ -43,7 +66,33 @@ node bench/run.js
 npm run bench:parallel
 ```
 
-对外复核性能口径（执行模型 / GCC 消融 / Win32 / profiling）：见 **`docs/PERFORMANCE_VERIFICATION_CHECKLIST.md`**。
+**Windows PowerShell（5.x）**：若一行命令里的 `&&` 报错，请分步执行，例如：
+
+```powershell
+Set-Location seedlang   # 换成你的克隆目录
+npm install
+npm run build
+```
+
+### 最小上手闭环（本地玩玩）
+
+若只想「clone 下来能动两下」：
+
+1. `npm install && npm run build`
+2. `node dist/cli.js --compile your.seed -o out.js`
+3. `node out.js`（产物结构随示例变化，接进严肃项目前请先读生成代码）
+
+想继续可试 `--compile-c` + 本机编译器；其它 CLI 开关当 **选修实验**。读代码入口见 **[docs/ARCHITECTURE_MAP.md](docs/ARCHITECTURE_MAP.md)**。
+
+### 热点优化（`src/jit`）说明
+
+该目录中的流水线在 **AST / 中间表示** 上做类型画像、常量折叠、SSA 等优化，并把热点结果缓存在 `Map` 中供解释执行路径使用；**不会**生成机器码，也**不使用** `new Function` / `eval` 执行编译产物。与常见引擎中的「CPU JIT」不是同一概念；更接近 **解释器上的分层优化**。若要和别人讨论「跑得快不快」，请明说用的是 **`--compile-c` + 本机编译器** 还是解释器，避免统称「这个语言 JIT」。
+
+### 性能基准读法（诚实口径）
+
+- `bench/run.js` 等多处通过 **`execSync` 子进程墙钟**测量整段命令（生成、编译、执行可能都在一次计时里），读数前要分清测的是哪一段。
+- 走 **C 后端**的对照：流程一般是「SeedLang `--compile-c` 生成 C → 调用 gcc/clang 编译 → 运行原生可执行文件」。与 **CPython / Node 直跑基准脚本**对比时，结果里混有 **编译器优化级别（如 `-O2`）**、**libc 与宿主环境** 以及 **生成 C 的质量**；不宜把整个加速比都表述成「SeedLang 语言/解释器单独的胜利」，更准确是 **「当前工具链 + 生成代码」相对某基线的墙钟**。
+- 细粒度分解、消融与自查口径（执行模型 / GCC 消融 / Win32 / profiling）：见 **`docs/PERFORMANCE_VERIFICATION_CHECKLIST.md`**。
 
 ### CLC 基准 C 代码与本地编译
 
@@ -54,7 +103,7 @@ npm run bench:parallel
 
 ## 语法速览
 
-SeedLang 与 JavaScript 的核心区别：**空格分隔，无逗号，无分号**（逗号会直接报错）
+SeedLang 与 JavaScript：**无分号**；列表/参数可用 **空格或逗号** 分隔（逗号为可选，兼顾可读性与极简写法）
 
 ```seedlang
 // 变量与基本类型
@@ -62,17 +111,21 @@ num = 42
 name = "SeedLang"
 flag = true
 
-// 函数定义（空格分隔参数）
+// 函数定义（参数可用空格或逗号分隔）
 fn add(a b) {
   return a + b
 }
+// fn add(a, b) { ... }  // 等价
 
-// 数组/对象（空格分隔元素）
+// 数组/对象（空格或逗号分隔均可）
 arr = [1 2 3]
+arr2 = [1, 2, 3]
 obj = { name: "Alice" age: 20 }
+obj2 = { name: "Alice", age: 20 }
 
-// 调用函数（空格分隔参数）
+// 调用函数（空格或逗号分隔实参）
 print(add(1 2))
+print(add(1, 2))
 
 // 流程控制
 if num > 0 {
@@ -112,25 +165,25 @@ export fn helper() { ... }
 
 ## 编译后端
 
-### JavaScript 后端（`--compile` / `-c`）
+### JavaScript 后端（`--compile` / `-c`，实验向）
 
-将 `.seed` 编译为可执行的 `.js`，支持自动 memoization、内联优化、minify。
+将 `.seed` 编译为 `.js`，带 memoization、内联、minify 等 **玩具级优化**，产物请勿默认当通用打包产物。
 
 ```bash
 node dist/cli.js --compile app.seed -o app.js
 node dist/cli.js --compile app.seed --minify
 ```
 
-### C 后端（`--compile-c`）
+### C 后端（`--compile-c`，实验向）
 
-将 `.seed` 编译为 `.c`，再通过 gcc/clang 编译为原生二进制。内置 2200+ 行 C 运行时，支持：
+将 `.seed` 编译为 `.c`，再由本机 gcc/clang 尝试链接成可执行文件。内置一大段 **模板化 C 支撑库**（体量≠工程质量）。下列条目均为 **「代码里有过这条路」**，**不**表示工业可用的内存模型、并行正确性或 GPU 栈：
 
-- **引用计数 GC** — 自动内存管理，零暂停
-- **编码压缩数组** — U8/U16/I32/I64/F64/Mixed 自适应编码，内存效率极高
-- **OpenMP 并行** — `--parallel` 自动在安全循环上生成 `#pragma omp parallel for`
-- **GPU 加速** — OpenCL 后端，支持数组求和/映射/缩放/矩阵乘法
-- **CUDA 加速** — `--cuda` 启用 CUDA 后端，支持 cuBLAS 矩阵乘法
-- **Win32 原生 GUI** — `--subsystem windows` 生成 Win32 窗口应用
+- **引用计数 GC** — 实验性自动释放策略，非并发安全承诺
+- **编码压缩数组** — 若干紧凑表示的尝试，非通用高性能数据结构保证
+- **OpenMP** — `--parallel` 可能在部分循环上插入 pragma，需自行验证语义与安全
+- **`--gpu`（OpenCL）** — 演示向路径，覆盖有限算子
+- **`--cuda` / cuBLAS** — 演示向路径，依赖环境齐全时才值得一试
+- **`--subsystem windows`** — 小型 Win32 示例向窗口管线，非 GUI 框架
 
 ```bash
 node dist/cli.js --compile-c app.seed
@@ -161,50 +214,18 @@ seedlang/
 │   │   ├── cli_dev_tools.ts      # format/lint/stats/init
 │   │   ├── cli_clc_native.ts     # C 编译 & 原生链接
 │   │   ├── clc_win32_link.ts     # Win32 子系统链接
-│   │   ├── clc_runtime.ts        # C 运行时模板（2200+ 行）
+│   │   ├── clc_runtime.ts        # CLC 生成用 C 模板（2200+ 行）
 │   │   ├── clc_types.ts          # CLC 常量 & 错误类
 │   │   ├── js_compiler.ts        # JS 编译器（compileToJS）
 │   │   └── compiler_shared.ts    # 共享 AST 分析工具
 │   ├── cli.ts                    # CLI 入口（compileToC + main）
 │   ├── index.ts                  # 库入口
-│   ├── api.js                    # 公共 API
+│   ├── api.js                    # 聚合入口（体积大；导出面见「开源边界」）
 │   ├── token-counter.js          # Token 计数器
-│   │
-│   ├── runtime/                  # 运行时系统
-│   │   ├── vm.js                 # VM 主入口
-│   │   ├── vm/                   # 字节码虚拟机（80+ 模块化文件）
-│   │   │   ├── builtins/         # 内置函数（core/collection/data/io/graphics/matrix/regex/ai_async）
-│   │   │   ├── modules/          # 运行时模块（scheduler/coroutine/parallel/gpu/cluster/worker_pool/web_html）
-│   │   │   └── macros/           # VM 宏（distributed_fiber/gpu_dispatch/task_split）
-│   │   ├── agent.ts              # Agent 运行时（任务/记忆/工具）
-│   │   ├── web.ts                # Web 运行时（DOM/组件）
-│   │   ├── graphics.ts           # 图形运行时（Canvas/终端渲染）
-│   │   ├── game.ts               # 游戏运行时（场景/实体/物理/音频）
-│   │   ├── mobile.ts             # 移动端运行时（设备/传感器/通知）
-│   │   ├── embedded.ts           # 嵌入式运行时（GPIO/I2C/SPI）
-│   │   └── node.js               # Node.js 运行时
-│   │
-│   ├── jit/                      # JIT 编译器（SSA/内联缓存/寄存器分配/SIMD/尾调用）
-│   ├── aot/                      # AOT 预编译
-│   ├── native/cpp/               # C++ Native Addon（极限性能数学/数组/字符串）
-│   ├── ai/                       # AI 集成模块
-│   ├── async/                    # 异步运行时
-│   ├── concurrent/               # 并发原语
-│   ├── debug/                    # 调试基础设施
-│   ├── errors/                   # 错误报告系统
-│   ├── ffi/                      # 外部函数接口
-│   ├── memory/                   # 内存优化器
-│   ├── modules/                  # 模块系统
-│   ├── optimizer/                # 解释器优化
-│   ├── python/                   # Python 绑定
-│   ├── rust/                     # Rust 绑定（Cargo 集成）
-│   ├── safety/                   # 运行时安全
-│   ├── sandbox/                  # 沙箱隔离
-│   ├── types/                    # 类型系统 & 类型检查器
-│   └── wasm/                     # WASM 加载器
+│   └── …                         # 另有 jit / aot / 绑定 / 扩展模块等目录，README 不列；是否公开见「开源边界」
 │
 ├── tools/                        # 工具链
-│   ├── clc/                      # CLC Win32 运行时（头文件/C 源码）
+│   ├── clc/                      # CLC Win32（头文件/C 源码）
 │   ├── tcc/                      # Tiny C Compiler 分发版
 │   ├── seed-doc.js               # 文档生成器
 │   ├── seed-format.js            # 代码格式化器
@@ -219,20 +240,14 @@ seedlang/
 │   ├── run.js                    # 主基准测试（跨语言对比）
 │   ├── bench.{js,cpp,rs,py}      # 各语言基线实现
 │   ├── game/                     # 游戏专项基准
-│   ├── industry/                 # 行业基准
+│   ├── industry/                 # 本地对照脚本（目录名历史遗留，非行业标准套件）
 │   ├── samples/                  # 基准样本（矩阵/循环/嵌套）
 │   ├── seedlang/                 # SeedLang 专项基准（含 CLC C 代码）
 │   ├── sources/                  # 各语言基准源码（含并行版本）
 │   └── win32/                    # Win32 性能测试
-├── examples/                     # 示例程序
-│   ├── sandbox/                  # 基础示例
-│   ├── games/                    # 游戏示例（含物理引擎/Win32 原生/CLC 可靠性地牢）
-│   ├── website/                  # 网站/SSG 示例（含基准/对比页面）
-│   ├── compare/                  # 跨语言对比示例（JS/Python/C++/Rust）
-│   ├── clc/                      # CLC 编译示例（Win32 smoke test）
-│   ├── debug/                    # 调试示例
-│   ├── deliverables/             # 交付物示例（含稳定性验证）
-│   └── desktop-frontend-mvp/     # Electron 桌面端示例
+├── examples/                     # 仅 CLC / Win32 对照示例（见 examples/README.md）
+│   ├── clc/                      # `.seed`、Win32 bat、应力/展示用例
+│   └── particle_bench_win32/     # C++/Rust 与 CLC 对齐的 Win32 粒子基准
 ├── scripts/                      # 工具脚本
 ├── editors/vscode/               # VS Code 扩展源码
 ├── crl/                          # CRL（压缩表示层）词典与规则
@@ -240,7 +255,7 @@ seedlang/
 └── seedlang/                     # 语言配置与元数据
 ```
 
-## 可用命令
+## 可用命令（均为本地开发/实验脚本）
 
 | 命令 | 说明 |
 |------|------|
@@ -248,15 +263,17 @@ seedlang/
 | `npm run start` | 运行 CLI |
 | `npm run repl` | 启动 REPL |
 | `npm test` | 运行全量测试 |
-| `npm run bench:parallel` | 多语言并行/多核对照基准 |
+| `npm run bench:parallel` | 多语言墙钟对照（玩具基准，勿当行业标准） |
 | `npm run dev` | ts-node 开发模式 |
-| `npm run bench:game` | 游戏性能基准 |
-| `npm run bench:game:ci` | 游戏 CI 门禁 |
-| `npm run bench:game:trend` | 性能趋势报告 |
-| `npm run bench:game:hotspots` | 热点分析 |
+| `npm run bench:game` | 游戏向示例基准脚本 |
+| `npm run bench:game:ci` | 本地门禁脚本（非云端工业 CI 承诺） |
+| `npm run bench:game:trend` | 本地趋势输出 |
+| `npm run bench:game:hotspots` | 热点辅助脚本 |
 | `npm run lint:seed` | SeedLint 代码检查 |
 
-## 内置函数速查
+## 内置函数速查（名字盘点，≠工业级库表）
+
+以下为解释器侧 **可能出现的内置名**，覆盖度与边界行为随实验变化，**不要**假设与某标准库 1:1 对齐。
 
 | 类别 | 函数 |
 |------|------|
@@ -268,25 +285,7 @@ seedlang/
 | **文件** | readFile, writeFile, exists, listDir, mkdir, remove |
 | **时间** | time, timestamp, date, sleep |
 | **JSON** | jsonParse, jsonStringify |
-| **并行** | parallelMap, parallelFilter, parallelReduce |
-
-## 多运行时架构
-
-```
-SeedLang Program
-    │
-    ├── Interpreter    → AST 直接执行（开发/调试）
-    ├── VM (--vm)      → 字节码虚拟机（JIT/TCO/协程/Fiber 调度器）
-    ├── JS Backend     → 编译到 JavaScript（Web/Node.js 部署）
-    ├── C Backend      → 编译到原生二进制（OpenMP/GPU/CUDA 加速）
-    │
-    ├── Web Runtime    → DOM 渲染 / 组件注册 / 事件绑定
-    ├── Agent Runtime  → 任务管理 / 记忆系统 / 工具调用 / API 对接
-    ├── Game Runtime   → 场景管理 / 实体组件 / 物理 / 音频 / UI
-    ├── Graphics Runtime → 终端 Canvas / 像素绘图 / 精灵 / 动画
-    ├── Mobile Runtime → 设备信息 / 传感器 / 相机 / 通知 / 定位
-    └── Embedded Runtime → GPIO / I2C / SPI / UART / PWM / ADC
-```
+| **并行** | parallelMap, parallelFilter, parallelReduce（实验 API，非调度器保证） |
 
 ## VS Code 扩展
 
@@ -305,16 +304,17 @@ npm run compile
 
 ## 回归验证
 
-修改 `src/runtime/vm.js` 后必须执行：
+修改 **编译器核心**（`src/core/`）、**CLC / CLI 编译路径**（`src/cli/`、`src/cli/clc_*.ts`）或 **自举相关** 后建议执行：
 
 ```bash
 node tests/test-suite.js      # 全量测试
-node bench/run.js              # 性能基准（确保无退化）
+npm run test:bootstrap          # 自举烟测（若触及 selfhost）
+node bench/run.js               # 本地墙钟对照（读法见上文；非标准测评）
 ```
 
 ## 社区与开源
 
-欢迎参与贡献与讨论：
+MIT 开源，学习与实验向；欢迎 **Issue / PR**（默认预期是玩具质量，请自行把握投入）：
 
 | 文档 | 说明 |
 |------|------|

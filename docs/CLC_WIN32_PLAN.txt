@@ -46,7 +46,7 @@ CLC → Win32 原生窗口（路线说明，替代 Node/JS 宿主）
   - tests/unit/test-compile-to-c.js：sl_user_main、win32.* lowering、Windows+gcc 时链接 sl_win32_rt.c 并运行
     （带 SEED_WIN32_AUTOCLOSE）。
   - npm run verify:clc-win32：一键编译 examples/clc/win32_smoke.seed 并短时运行（需先 npm run build）。
-  - 完整示例局：examples/games/clc_reliability_dungeon_win32.seed（迷宫模拟 + 棋盘绘制 + poll）；
+  - 完整示例局：examples/clc/clc_reliability_dungeon_win32.seed（迷宫模拟 + 棋盘绘制 + poll）；
     npm run compile:game:dungeon-win32 生成 dist/dungeon_win32.c（再按 --subsystem windows 方式链接运行）。
   - 可选后续：golden 像素 / 无显示 CI 只编译不运行。
 

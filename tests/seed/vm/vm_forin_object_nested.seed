@@ -1,9 +1,0 @@
-// 对象 for-in 迭代：嵌套对象属性访问
-// EXPECT: 2
-inner = { x: 1 }
-obj = { a: inner b: inner }
-count = 0
-for v in obj {
-  count = count + v.x
-}
-result = count

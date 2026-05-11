@@ -6,6 +6,7 @@ export {
   getClcWin32MingwLibFlags,
   getClcWin32GccLinkSuffix,
   getClcWin32MsvcPragmaLibs,
+  getClcWin32MsvcLinkLibs,
   resolveClcWin32RtSourcePath,
   resolveClcWin32ToolsClcDir,
   resolvePreferredMingwGcc
@@ -23,15 +24,17 @@ export { WebRuntime } from './runtime/web';
 export { AgentRuntime, AgentConfig, Task } from './runtime/agent';
 export { GameRuntime, GameObject, GameScene, GameInput, GameAudio } from './runtime/game';
 export { MobileRuntime } from './runtime/mobile';
+export type { MobileRuntimeOptions, MobileDeviceProfile } from './runtime/mobile';
 export { EmbeddedRuntime } from './runtime/embedded';
+export type { EmbeddedRuntimeOptions } from './runtime/embedded';
 
 import { parse } from './core/parser';
 import { Interpreter } from './core/interpreter';
 import { WebRuntime } from './runtime/web';
 import { AgentRuntime, AgentConfig } from './runtime/agent';
 import { GameRuntime } from './runtime/game';
-import { MobileRuntime } from './runtime/mobile';
-import { EmbeddedRuntime } from './runtime/embedded';
+import { MobileRuntime, MobileRuntimeOptions } from './runtime/mobile';
+import { EmbeddedRuntime, EmbeddedRuntimeOptions } from './runtime/embedded';
 
 export function run(source: string, mode: 'general' | 'web' | 'agent' | 'game' | 'mobile' | 'embedded' = 'general'): any {
   switch (mode) {
@@ -79,12 +82,12 @@ export function createGameRuntime(): GameRuntime {
   return new GameRuntime();
 }
 
-export function createMobileRuntime(): MobileRuntime {
-  return new MobileRuntime();
+export function createMobileRuntime(options?: MobileRuntimeOptions): MobileRuntime {
+  return new MobileRuntime(options);
 }
 
-export function createEmbeddedRuntime(): EmbeddedRuntime {
-  return new EmbeddedRuntime();
+export function createEmbeddedRuntime(options?: EmbeddedRuntimeOptions): EmbeddedRuntime {
+  return new EmbeddedRuntime(options);
 }
 
 export default {

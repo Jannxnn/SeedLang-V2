@@ -12,7 +12,7 @@ function usage() {
   console.log("  node tools/seed-web-compile.js <input.seed> [outDir]");
   console.log("");
   console.log("Example:");
-  console.log("  node tools/seed-web-compile.js examples/website/website.seed dist/webapp");
+  console.log("  node tools/seed-web-compile.js path/to/page.seed dist/webapp");
 }
 
 function renderSeedToHtml(seedPath) {

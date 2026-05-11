@@ -774,9 +774,8 @@ export class Parser {
       items = [];
       while (!this.check(TokenType.RBRACE)) {
         items.push(this.expect(TokenType.TEXT, 'Expected import item').value);
-        if (!this.check(TokenType.RBRACE)) {
-          this.expect(TokenType.COMMA, "Expected ',' or '}'");
-        }
+        if (this.check(TokenType.RBRACE)) break;
+        this.match(TokenType.COMMA);
       }
       this.expect(TokenType.RBRACE, "Expected '}'");
     }
