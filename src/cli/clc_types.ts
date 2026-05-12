@@ -7,7 +7,7 @@ export const CLC_EXPR_UNSUPPORTED_HINTS: Readonly<Record<string, string>> = {
 };
 
 export const CLC_STMT_UNSUPPORTED_HINTS: Readonly<Record<string, string>> = {
-  Import: 'module system (import/export) is not supported in CLC — C uses #include instead',
+  Import: 'module system (import/export) is not supported in CLC; C uses #include instead',
   Export: 'module system (import/export) is not supported in CLC',
   AsyncFunctionDef: 'async functions are not supported in C backend (no native coroutines)',
   CoroutineDef: 'coroutines are not supported in C backend',

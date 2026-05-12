@@ -755,7 +755,7 @@ fn render() {
     drawPlayer()
     drawParticles()
     drawFlash()
-    win32.setWindowTitleStats(player.score frameCount player.hp player.ammo enemyCount)
+    win32.setWindowTitleFmt("雷电 | 分数=%lld 帧=%lld 生命=%lld 弹药=%lld 敌机=%lld" player.score frameCount player.hp player.ammo enemyCount)
     win32.present()
 }
 

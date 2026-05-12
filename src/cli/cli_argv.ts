@@ -103,6 +103,9 @@ export function parseCliArgs(argv: string[]): ParsedCli {
       case '--minify':
         options.minify = true;
         break;
+      case '--source-map':
+        options.sourceMap = true;
+        break;
       case '--no-memo':
         options.noMemo = true;
         break;

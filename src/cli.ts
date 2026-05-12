@@ -2,6 +2,7 @@
 
 import { spawnSync } from 'child_process';
 import * as fs from 'fs';
+import * as path from 'path';
 import { parse } from './core/parser';
 import { printUsage } from './cli/cli_usage';
 import { runFile, runEval, watchFile } from './cli/cli_run_modes';
@@ -14,6 +15,7 @@ import { collectLocalVars } from './cli/compiler_shared';
 import { CLC_EXPR_UNSUPPORTED_HINTS, CLC_STMT_UNSUPPORTED_HINTS, ClcCompileError, getClcUnsupportedBoundary } from './cli/clc_types';
 export { getClcUnsupportedBoundary };
 import { compileToJS, findMemoizableFunctions } from './cli/js_compiler';
+import { appendSourceMappingUrl, buildSeedCompileSourceMap } from './cli/seed_source_map';
 
 /** ACAE: pairwise `a==b && b==c` — never emit C's wrong `encoding==encoding==…`. */
 function acaeArraysShareEncodingExpr(uniqueArrs: string[]): string {
@@ -2383,20 +2385,17 @@ export function compileToC(source: string, options: any = {}): string {
 
   function cStrEscape(s: string): string {
     let r = '"';
-    for (let i = 0; i < s.length; i++) {
-      const ch = s.charCodeAt(i);
-      if (ch === 34) r += '\\"';
-      else if (ch === 92) r += '\\\\';
-      else if (ch === 10) r += '\\n';
-      else if (ch === 13) r += '\\r';
-      else if (ch === 9) r += '\\t';
-      else if (ch === 0) r += '\\0';
-      else if (ch < 32 || ch > 126) {
-        const hex = ch.toString(16).padStart(2, '0');
-        r += '\\x' + hex;
-      } else {
-        r += s[i];
-      }
+    const utf8 = new TextEncoder().encode(s);
+    for (let i = 0; i < utf8.length; i++) {
+      const b = utf8[i];
+      if (b === 34) r += '\\"';
+      else if (b === 92) r += '\\\\';
+      else if (b === 10) r += '\\n';
+      else if (b === 13) r += '\\r';
+      else if (b === 9) r += '\\t';
+      else if (b === 0) r += '\\0';
+      else if (b < 32 || b > 126) r += '\\x' + b.toString(16).padStart(2, '0');
+      else r += String.fromCharCode(b);
     }
     r += '"';
     return r;
@@ -2745,6 +2744,22 @@ export function compileToC(source: string, options: any = {}): string {
                 return '0';
               }
               return `(sl_win32_set_window_title_stats((long long)(${args[0]}), (long long)(${args[1]}), (long long)(${args[2]}), (long long)(${args[3]}), (long long)(${args[4]})), 0LL)`;
+            }
+            if (methodProp === 'setWindowTitle') {
+              if (args.length < 1) {
+                clcWarnings.push('win32.setWindowTitle(text) expects 1 argument (UTF-8 string literal)');
+                return '0';
+              }
+              return `(sl_win32_set_window_title_utf8(${args[0]}), 0LL)`;
+            }
+            if (methodProp === 'setWindowTitleFmt') {
+              if (args.length < 6) {
+                clcWarnings.push(
+                  'win32.setWindowTitleFmt(fmt, a, b, c, d, e) expects 6 arguments (UTF-8 format string with five %lld, then five integers)'
+                );
+                return '0';
+              }
+              return `(sl_win32_set_window_title_fmt(${args[0]}, (long long)(${args[1]}), (long long)(${args[2]}), (long long)(${args[3]}), (long long)(${args[4]}), (long long)(${args[5]})), 0LL)`;
             }
             if (methodProp === 'width') {
               return '(long long)sl_win32_fb_w';
@@ -3625,7 +3640,7 @@ export function compileToC(source: string, options: any = {}): string {
       default: {
         const line = expr.line || '?';
         const hint = CLC_EXPR_UNSUPPORTED_HINTS[expr.type] || 'this feature is not yet implemented in the C backend';
-        clcWarnings.push(`cExpr: unsupported expression type '${expr.type}' at line ${line} — ${hint}`);
+        clcWarnings.push(`cExpr: unsupported expression type '${expr.type}' at line ${line}: ${hint}`);
         return '0';
       }
     }
@@ -4873,12 +4888,12 @@ export function compileToC(source: string, options: any = {}): string {
         return '';
       }
       case 'ProcMacroDef':
-        clcWarnings.push(`ProcMacroDef '${stmt.name}' not supported in CLC — procedural macros require AST-level code execution`);
+        clcWarnings.push(`ProcMacroDef '${stmt.name}' not supported in CLC; procedural macros require AST-level code execution`);
         return '';
       default: {
         const line = stmt.line || '?';
         const hint = CLC_STMT_UNSUPPORTED_HINTS[stmt.type] || 'this feature is not yet implemented in the C backend';
-        clcWarnings.push(`cStmt: unsupported statement type '${stmt.type}' at line ${line} — ${hint}`);
+        clcWarnings.push(`cStmt: unsupported statement type '${stmt.type}' at line ${line}: ${hint}`);
         return '';
       }
     }
@@ -5139,7 +5154,7 @@ export function compileToC(source: string, options: any = {}): string {
     clcWarnings.length > 0 ? `/* CLC WARNINGS:\n${clcWarnings.map(w => ` *   ${w}`).join('\n')}\n */` : '',
     acaeDiag.length > 0 ? `/* ACAE diagnostics (compile-time):\n${acaeDiag.map(d => ` *   ${d}`).join('\n')}\n */` : '',
     clcWinGui
-      ? '/* CLC Win32 GUI: sl_win32_rt.c; win32.pollEvents/perfMillis/envInt/setWindowTitleStats/present/setPixel/width/height/clear/fillSpan/fillRect/fillCircle/drawText/drawInt/clusterBegin/clusterAddSpan/clusterAddRect/clusterAddCircle/clusterFlush/isKeyDown/mouseX/mouseY/isMouseDown/mouseWheel/VK_* */'
+      ? '/* CLC Win32 GUI: sl_win32_rt.c; win32.pollEvents/perfMillis/envInt/setWindowTitle/setWindowTitleFmt/setWindowTitleStats/present/setPixel/width/height/clear/fillSpan/fillRect/fillCircle/drawText/drawInt/clusterBegin/clusterAddSpan/clusterAddRect/clusterAddCircle/clusterFlush/isKeyDown/mouseX/mouseY/isMouseDown/mouseWheel/VK_* */'
       : '',
     '#include <stdio.h>',
     '#include <stdlib.h>',
@@ -5352,11 +5367,39 @@ async function main(): Promise<void> {
 
   if (options.compile) {
     const source = readSourceOrExit();
-    const jsCode = compileToJS(source, options);
+    const compileOpts: Record<string, unknown> = { ...options };
+    if (compileOpts.sourceMap && compileOpts.minify) {
+      console.warn(
+        '[seedlang] --source-map disables --minify so emitted JS lines align with the source map.'
+      );
+      compileOpts.minify = false;
+    }
+    const jsCode = compileToJS(source, compileOpts);
     const outputPath = outPath(seedPath.replace(/\.seed$/, '.js'));
-    fs.writeFileSync(outputPath, jsCode);
+    const outDir = path.dirname(outputPath);
+    if (outDir && outDir !== '.') {
+      fs.mkdirSync(outDir, { recursive: true });
+    }
+    const jsBasename = path.basename(outputPath);
+    const seedBasename = path.basename(seedPath);
+    let outJs = jsCode;
+    if (compileOpts.sourceMap) {
+      const mapBasename = `${jsBasename}.map`;
+      const mapJson = buildSeedCompileSourceMap({
+        generatedJs: jsCode,
+        seedSource: source,
+        seedFileBasename: seedBasename,
+        outJsBasename: jsBasename,
+      });
+      fs.writeFileSync(`${outputPath}.map`, mapJson, 'utf-8');
+      outJs = appendSourceMappingUrl(jsCode, mapBasename);
+    }
+    fs.writeFileSync(outputPath, outJs, 'utf-8');
     console.log(`\nCompiled: ${seedPath} -> ${outputPath}`);
-    console.log(`   Size: ${(jsCode.length / 1024).toFixed(1)}KB`);
+    console.log(`   Size: ${(outJs.length / 1024).toFixed(1)}KB`);
+    if (compileOpts.sourceMap) {
+      console.log(`   Source map: ${outputPath}.map`);
+    }
     return;
   }
 

@@ -1,9 +1,9 @@
-/** CLI help text — kept out of cli.ts to reduce file size. */
+/** CLI help text: kept out of cli.ts to reduce file size. */
 
 export function printUsage(): void {
   console.log(`
 +==============================================================+
-|     SeedLang — experimental / learning (not production)    |
+|     SeedLang - experimental / learning (not production)    |
 |              Version 2.0.0                                   |
 +==============================================================+
 
@@ -25,7 +25,7 @@ Run Options:
                  Toy native path: --compile-c + host C compiler; src/jit optimizes interpreter/IR paths, not a shipping engine.
                  SEED_INTERP_JIT_PROBE, SEED_INTERP_JIT_PROBE_ASSIGN  warmup iterations before tier compile (default 128)
                  SEED_HOST_JIT=0    force Node --jitless for CLI (disable V8 JIT tiers); unset/1 keeps V8 JIT
-                 SEED_ALLOW_JIT_OUTSIDE_VM=1 — legacy alias: allow host V8 JIT even when SEED_HOST_JIT=0
+                 SEED_ALLOW_JIT_OUTSIDE_VM=1; legacy alias: allow host V8 JIT even when SEED_HOST_JIT=0
   --web          Run in Web mode
   --agent        Run in Agent mode
   --game         Run in Game mode
@@ -43,7 +43,7 @@ Dev Tools:
   --watch, -w    Watch file changes and re-run
   --compile, -c  Compile to JavaScript
   --minify       Minify output
-  --source-map   Generate source map
+  --source-map   Write <out>.js.map (line-clamped .seed mapping; disables --minify when both are set)
   --no-memo      Disable auto-memoization optimization
   --compile-c    Compile to C (native via clang/gcc)
   --subsystem    With compile-c: windows | console (windows: win32.pollEvents / perfMillis / present / setPixel / width / height)
@@ -53,7 +53,7 @@ Dev Tools:
   --clc-require-native  With compile-c: exit 3 if no C toolchain produces a binary
   --acae-diagnostics  With compile-c: ACAE loop-tier notes in C header + stderr
   --acae-fuse    With compile-c: merge consecutive identical for-in range(...) (conservative)
-  (CLC env: SEED_CLC_STRICT=1, SEED_CLC_REQUIRE_NATIVE=1 — same as flags above)
+  (CLC env: SEED_CLC_STRICT=1, SEED_CLC_REQUIRE_NATIVE=1; same as flags above)
 
 Debug Options:
   --debug        Enable debug mode
@@ -75,7 +75,7 @@ Examples:
   seedlang --lint code.seed
   seedlang --format code.seed
 
-.seed surface syntax (teaser — full rules in repo docs):
+.seed surface syntax (teaser; full rules in repo docs):
   print("Hello World")
   x = 40 + 2
   fn add(a b) { return a + b }

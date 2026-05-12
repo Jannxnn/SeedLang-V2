@@ -1,6 +1,6 @@
 // Win32  sustained stress / stability harness（高负载持续运行）
 //
-// **状态显示**：默认与 particle_bench C++ 一致，用**窗口标题栏**（`win32.setWindowTitleStats` → SetWindowText）显示 N / FPS / 碰撞 / diag / 帧号。
+// **状态显示**：默认与 particle_bench C++ 一致，用**窗口标题栏**（`win32.setWindowTitleStats` → UTF-8 `snprintf` + `SetWindowTextW`）显示 粒子 / FPS / 碰撞 / 校验 / 帧号。
 // 需要录屏用的位图 HUD（大号数字、水印、心跳条）时，启动前设置环境变量 `SEED_WIN32_PIXEL_HUD=1`。
 //
 // 行为概要：

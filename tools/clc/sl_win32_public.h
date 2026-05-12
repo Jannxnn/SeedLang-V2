@@ -23,7 +23,11 @@ long long sl_win32_perf_millis(void);
 void *sl_win32_hwnd(void);
 /** Parse decimal int from process env `key`; on missing/invalid returns default_val. */
 long long sl_win32_env_int(const char *key, long long default_val);
-/** Updates the window caption (same idea as particle_bench.cpp SetWindowText). */
+/** Updates the window caption (UTF-8 -> SetWindowTextW). */
+void sl_win32_set_window_title_utf8(const char *utf8);
+/** snprintf(fmt, a..e) then set caption; fmt must contain exactly five "%lld" (or compatible) placeholders. */
+void sl_win32_set_window_title_fmt(const char *fmt, long long a, long long b, long long c, long long d, long long e);
+/** Default stress-harness caption (Chinese labels: particle / FPS / collisions / checksum / frame). */
 void sl_win32_set_window_title_stats(long long n, long long fps, long long coll, long long diag, long long fr);
 
 void sl_win32_clear(uint32_t color);
@@ -31,7 +35,7 @@ void sl_win32_fill_span(int x, int y, int w, uint32_t color);
 void sl_win32_fill_rect(int x, int y, int w, int h, uint32_t color);
 void sl_win32_fill_circle(int cx, int cy, int r, uint32_t color);
 
-/** GDI text onto the 32bpp framebuffer (ASCII / UTF-8 bytes via TextOutA). */
+/** GDI text onto the 32bpp framebuffer (UTF-8 -> TextOutW). */
 void sl_win32_draw_text(int x, int y, uint32_t color, const char *text);
 void sl_win32_draw_int(int x, int y, uint32_t color, long long value);
 

@@ -1,5 +1,6 @@
 @echo off
 setlocal EnableExtensions
+chcp 65001 >nul 2>&1
 rem Raiden CLC Win32: one-click Seed to C to EXE, then launch.
 rem Double-click to compile and launch (requires Node.js on PATH).
 

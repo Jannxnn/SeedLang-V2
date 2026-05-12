@@ -1255,6 +1255,8 @@ fn gWin32Call(prop cArgs) {
   if prop == "present" { return "sl_win32_present()" }
   if prop == "perfMillis" { return "sl_int(sl_win32_perf_millis())" }
   if prop == "setWindowTitleStats" { return "sl_win32_set_window_title_stats(" + intArgs[0] + ", " + intArgs[1] + ", " + intArgs[2] + ", " + intArgs[3] + ", " + intArgs[4] + ")" }
+  if prop == "setWindowTitle" { return "sl_win32_set_window_title_utf8(" + cArgs[0] + ".sval)" }
+  if prop == "setWindowTitleFmt" { return "sl_win32_set_window_title_fmt(" + cArgs[0] + ".sval, " + intArgs[1] + ", " + intArgs[2] + ", " + intArgs[3] + ", " + intArgs[4] + ", " + intArgs[5] + ")" }
   if prop == "width" { return "sl_int(sl_win32_fb_w)" }
   if prop == "height" { return "sl_int(sl_win32_fb_h)" }
   print("Unknown win32 call: " + prop)

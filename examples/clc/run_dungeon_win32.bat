@@ -1,5 +1,6 @@
 @echo off
 setlocal EnableExtensions
+chcp 65001 >nul 2>&1
 rem Double-click this to run the Win32 pixel dungeon (clears SEED_WIN32_AUTOCLOSE for this process).
 set "ROOT=%~dp0..\.."
 set "DIST=%ROOT%\dist"

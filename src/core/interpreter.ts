@@ -2740,7 +2740,7 @@ export class Interpreter {
               if (!res.ok) {
                 const snippet = text.length > 200 ? `${text.slice(0, 200)}…` : text;
                 throw new Error(
-                  `jsonRequest failed: HTTP ${res.status} ${res.statusText}${snippet ? ` — ${snippet}` : ''}`
+                  `jsonRequest failed: HTTP ${res.status} ${res.statusText}${snippet ? `: ${snippet}` : ''}`
                 );
               }
               try {

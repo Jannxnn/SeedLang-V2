@@ -20,9 +20,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
 
 #include <windows.h>
-#include <mmsystem.h>
+/* timeBeginPeriod / timeEndPeriod (winmm). Bundled TinyCC often lacks mmsystem.h;
+ * forward-declare instead of #include so TCC and MinGW both work. Link: -lwinmm. */
+UINT WINAPI timeBeginPeriod(UINT uPeriod);
+UINT WINAPI timeEndPeriod(UINT uPeriod);
+
+#ifndef CP_UTF8
+#define CP_UTF8 65001
+#endif
+/* Bundled TinyCC win32 headers omit string API declarations used for UTF-8 -> UTF-16 text. */
+int WINAPI MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCCH lpMultiByteStr, int cbMultiByte,
+                               LPWSTR lpWideCharStr, int cchWideChar);
 
 #ifdef __SSE2__
 #include <emmintrin.h>
@@ -69,9 +80,9 @@ static void sl_win32_ensure_text_font(void)
 {
   if (g_sl_win32_text_font)
     return;
-  g_sl_win32_text_font = CreateFontA(-13, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+  g_sl_win32_text_font = CreateFontW(-13, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
                                      OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY,
-                                     FIXED_PITCH | FF_MODERN, "Consolas");
+                                     FIXED_PITCH | FF_MODERN, L"Consolas");
   if (!g_sl_win32_text_font)
     g_sl_win32_text_font = (HFONT)GetStockObject(ANSI_FIXED_FONT);
 }
@@ -471,18 +482,42 @@ uint32_t *sl_win32_pixel_buffer(int *out_w, int *out_h)
 
 void *sl_win32_hwnd(void) { return (void *)g_hwnd; }
 
-void sl_win32_set_window_title_stats(long long n, long long fps, long long coll, long long diag, long long fr)
+void sl_win32_set_window_title_utf8(const char *utf8)
 {
   HWND h = g_hwnd;
-  if (!h)
+  wchar_t wbuf[512];
+  int nw;
+  if (!h || !utf8)
     return;
-  char buf[256];
-  snprintf(buf, sizeof(buf), "Seed stress | N=%lld fps=%lld coll=%lld diag=%lld fr=%lld", n, fps, coll, diag, fr);
-  SetWindowTextA(h, buf);
+  nw = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, wbuf, (int)(sizeof(wbuf) / sizeof(wbuf[0])));
+  if (nw > 0)
+    SetWindowTextW(h, wbuf);
+  else
+    SetWindowTextA(h, utf8);
+}
+
+void sl_win32_set_window_title_fmt(const char *fmt, long long a, long long b, long long c, long long d, long long e)
+{
+  char buf[512];
+  int n;
+  if (!fmt)
+    return;
+  n = snprintf(buf, sizeof(buf), fmt, a, b, c, d, e);
+  if (n < 0)
+    return;
+  buf[sizeof(buf) - 1] = '\0';
+  sl_win32_set_window_title_utf8(buf);
+}
+
+void sl_win32_set_window_title_stats(long long n, long long fps, long long coll, long long diag, long long fr)
+{
+  /* Matches win32_stress_sustained.seed: N, FPS, collisions, diag, frame. */
+  sl_win32_set_window_title_fmt("粒子=%lld | FPS=%lld | 碰撞=%lld | 校验=%lld | 帧=%lld", n, fps, coll, diag, fr);
 }
 
 void sl_win32_draw_text(int x, int y, uint32_t color, const char *s)
 {
+  wchar_t wbuf[384];
   char buf[384];
   size_t bi = 0;
   const char *p = s ? s : "";
@@ -509,7 +544,14 @@ void sl_win32_draw_text(int x, int y, uint32_t color, const char *s)
   }
   sl_win32_ensure_text_font();
   SelectObject(hdc_mem, g_sl_win32_text_font);
-  TextOutA(hdc_mem, x, y, buf, (int)strlen(buf));
+  /* Seed sources use UTF-8 string literals; TextOutA uses the ANSI code page -> mojibake for CJK. */
+  {
+    int nw = MultiByteToWideChar(CP_UTF8, 0, buf, -1, wbuf, (int)(sizeof(wbuf) / sizeof(wbuf[0])));
+    if (nw > 1)
+      TextOutW(hdc_mem, x, y, wbuf, nw - 1);
+    else
+      TextOutA(hdc_mem, x, y, buf, (int)strlen(buf));
+  }
   SelectObject(hdc_mem, old_bm);
   DeleteDC(hdc_mem);
   ReleaseDC(NULL, hdc_scr);
@@ -529,11 +571,12 @@ long long sl_win32_perf_millis(void)
   LARGE_INTEGER counter;
   if (!has_freq) {
     if (!QueryPerformanceFrequency(&freq) || freq.QuadPart == 0)
-      return (long long)GetTickCount64();
+      /* GetTickCount (not GetTickCount64): bundled tcc win32 libs omit the 64-bit import. */
+      return (long long)GetTickCount();
     has_freq = 1;
   }
   if (!QueryPerformanceCounter(&counter))
-    return (long long)GetTickCount64();
+    return (long long)GetTickCount();
   return (long long)(counter.QuadPart * 1000LL / freq.QuadPart);
 }
 
@@ -549,7 +592,12 @@ long long sl_win32_env_int(const char *key, long long default_val)
   if (*p == '\0')
     return default_val;
   char *end = NULL;
+#if defined(__TINYC__)
+  /* tcc + MSVCRT: strtoll is often missing; _strtoi64 is the usual Windows CRT entry. */
+  long long v = (long long)_strtoi64(p, &end, 10);
+#else
   long long v = strtoll(p, &end, 10);
+#endif
   if (end == p)
     return default_val;
   while (*end == ' ' || *end == '\t' || *end == '\r' || *end == '\n')

@@ -1374,14 +1374,18 @@ test('Win32 GUI: win32.perfMillis lowers to sl_win32_perf_millis', () => {
     if (!c.includes('sl_win32_perf_millis()')) return 'expected sl_win32_perf_millis in C output';
 });
 
-test('Win32 GUI: win32.setWindowTitleStats lowers to sl_win32_set_window_title_stats', () => {
+test('Win32 GUI: win32.setWindowTitle / setWindowTitleFmt lower to sl_win32_set_window_title_*', () => {
     const cli = getCli();
-    const c = cli.compileToC(
-        'win32.setWindowTitleStats(1 2 3 4 5)',
+    const c1 = cli.compileToC('win32.setWindowTitle("cap")', { clcSubsystem: 'windows' });
+    if (!c1.includes('sl_win32_set_window_title_utf8')) {
+        return 'expected sl_win32_set_window_title_utf8 in C output';
+    }
+    const c2 = cli.compileToC(
+        'win32.setWindowTitleFmt("a%lldb%lldc%lldd%llde%lldf" 1 2 3 4 5)',
         { clcSubsystem: 'windows' }
     );
-    if (!c.includes('sl_win32_set_window_title_stats')) {
-        return 'expected sl_win32_set_window_title_stats in C output';
+    if (!c2.includes('sl_win32_set_window_title_fmt')) {
+        return 'expected sl_win32_set_window_title_fmt in C output';
     }
 });
 
