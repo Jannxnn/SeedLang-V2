@@ -1,10 +1,12 @@
 import * as fs from 'fs';
 import { parse, ParseError } from '../core/parser';
 import { Interpreter } from '../core/interpreter';
+import type { SeedValue } from '../core/interpreter';
 import { WebRuntime } from '../runtime/web';
 import { AgentRuntime } from '../runtime/agent';
 import { GameRuntime } from '../runtime/game';
 import { GraphicsRuntime } from '../runtime/graphics';
+import { drainInterpretStatementResults } from './cli_async_drain';
 
 export async function runFile(
   filePath: string,
@@ -72,9 +74,10 @@ export async function runFile(
         break;
       default:
         console.log(`\n[General Mode] Running: ${filePath}\n`);
-        interpreter = new Interpreter();
+        interpreter = new Interpreter({ mirrorPrintToConsole: false });
         const program = parse(source);
-        result = interpreter.interpret(program);
+        result = interpreter.interpret(program) as SeedValue[];
+        await drainInterpretStatementResults(result);
 
         if (options.output) {
           fs.writeFileSync(options.output, JSON.stringify(result, null, 2));
@@ -86,7 +89,6 @@ export async function runFile(
     if (!options.output && mode === 'general' && interpreter) {
       const output = interpreter.getOutput() || [];
       if (output.length > 0) {
-        console.log('\n=== Output ===\n');
         output.forEach((line: string) => console.log(line));
       }
     }
@@ -105,7 +107,7 @@ export async function runFile(
   }
 }
 
-export function runEval(code: string, options: any = {}): void {
+export async function runEval(code: string, options: any = {}): Promise<void> {
   try {
     if (options.tokens) {
       const { Lexer } = require('../core/lexer');
@@ -125,9 +127,10 @@ export function runEval(code: string, options: any = {}): void {
       return;
     }
 
-    const evalInterpreter = new Interpreter();
+    const evalInterpreter = new Interpreter({ mirrorPrintToConsole: false });
     const program = parse(code);
-    evalInterpreter.interpret(program);
+    const results = evalInterpreter.interpret(program) as SeedValue[];
+    await drainInterpretStatementResults(results);
 
     const output = evalInterpreter.getOutput();
     if (output.length > 0) {

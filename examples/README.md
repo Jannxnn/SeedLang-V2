@@ -4,6 +4,7 @@
 
 ## 布局
 
+- **`hello/`**：最小 `print`、**文件读写式「输入」**（`io_read_file.seed` + `hello_input.txt`），README「Hello World」与 clone 后验证用
 - **`clc/`**：`.seed` 源（含 `win32_smoke`、`physics_demo_clc`、迷宫 Win32、`raiden_win32` 等）、`run_*_win32.bat`
 - **`particle_bench_win32/`**：`particle_bench.cpp` + Rust，与 `examples/clc/win32_stress_sustained.seed` 语义对齐（见 `npm run verify:particle-bench-consistency`）
 
@@ -11,6 +12,8 @@
 
 ```bash
 npm run build
+node dist/cli.js examples/hello/hello.seed
+node dist/cli.js examples/hello/io_read_file.seed
 node dist/cli.js examples/clc/test_clc.seed
 node dist/cli.js --compile-c examples/clc/physics_demo_clc.seed
 npm run verify:clc-win32

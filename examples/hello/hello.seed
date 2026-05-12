@@ -1,0 +1,2 @@
+// Minimal runnable sample (interpreter). See README.md §「Hello World」.
+print("Hello World")

@@ -3,18 +3,17 @@
 import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import { parse } from './core/parser';
-import { printUsage, printVersion } from './cli/cli_usage';
+import { printUsage } from './cli/cli_usage';
 import { runFile, runEval, watchFile } from './cli/cli_run_modes';
 import { runClcNativeCompile } from './cli/cli_clc_native';
-import { formatCode, lintCode, showStats, initProject } from './cli/cli_dev_tools';
+import { formatCode, lintCode, showStats } from './cli/cli_dev_tools';
+import { parseCliArgs } from './cli/cli_argv';
 import { startRepl } from './cli/cli_repl';
 import { SL_RUNTIME } from './cli/clc_runtime';
 import { collectLocalVars } from './cli/compiler_shared';
 import { CLC_EXPR_UNSUPPORTED_HINTS, CLC_STMT_UNSUPPORTED_HINTS, ClcCompileError, getClcUnsupportedBoundary } from './cli/clc_types';
 export { getClcUnsupportedBoundary };
 import { compileToJS, findMemoizableFunctions } from './cli/js_compiler';
-
-const args = process.argv.slice(2);
 
 /** ACAE: pairwise `a==b && b==c` — never emit C's wrong `encoding==encoding==…`. */
 function acaeArraysShareEncodingExpr(uniqueArrs: string[]): string {
@@ -5293,7 +5292,8 @@ export function compileToC(source: string, options: any = {}): string {
  *  Own interpreter JIT: SEED_INTERP_JIT (default on; SEED_INTERP_JIT=0 off).
  */
 function applyHostJitProfile(): void {
-  if (args.includes('--vm')) return;
+  const argv = process.argv.slice(2);
+  if (argv.includes('--vm')) return;
   if (process.execArgv.includes('--jitless')) return;
 
   const hostJitOff = process.env.SEED_HOST_JIT === '0';
@@ -5307,139 +5307,20 @@ function applyHostJitProfile(): void {
   process.exit(typeof r.status === 'number' ? r.status : 1);
 }
 
-function main(): void {
-  let mode: 'general' | 'vm' | 'web' | 'agent' | 'game' | 'graphics' = 'general';
-  let filePath: string | undefined;
-  let evalCode: string | undefined;
-  let options: any = {};
+async function main(): Promise<void> {
+  const parsed = parseCliArgs(process.argv.slice(2));
 
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-
-    switch (arg) {
-      case '--help':
-      case '-h':
-        printUsage();
-        process.exit(0);
-        break;
-      case '--version':
-      case '-v':
-        printVersion();
-        process.exit(0);
-        break;
-      case '--eval':
-      case '-e':
-        evalCode = args[++i];
-        break;
-      case '--repl':
-        startRepl();
-        return;
-      case '--debugger':
-        const { createDebugREPL } = require('./core/debugger');
-        createDebugREPL();
-        return;
-      case '--vm':
-        mode = 'vm';
-        break;
-      case '--web':
-        mode = 'web';
-        filePath = args[++i];
-        break;
-      case '--agent':
-        mode = 'agent';
-        filePath = args[++i];
-        break;
-      case '--game':
-        mode = 'game';
-        filePath = args[++i];
-        break;
-      case '--graphics':
-        mode = 'graphics';
-        filePath = args[++i];
-        break;
-      case '--output':
-      case '-o':
-        options.output = args[++i];
-        break;
-      case '--ast':
-        options.ast = true;
-        break;
-      case '--tokens':
-        options.tokens = true;
-        break;
-      case '--debug':
-        options.debug = true;
-        break;
-      case '--watch':
-      case '-w':
-        options.watch = true;
-        break;
-      case '--compile':
-      case '-c':
-        options.compile = true;
-        break;
-      case '--format':
-        options.format = true;
-        break;
-      case '--lint':
-        options.lint = true;
-        break;
-      case '--stats':
-        options.stats = true;
-        break;
-      case '--init':
-        initProject();
-        process.exit(0);
-        break;
-      case '--minify':
-        options.minify = true;
-        break;
-      case '--no-memo':
-        options.noMemo = true;
-        break;
-      case '--compile-c':
-        options.compileC = true;
-        break;
-      case '--subsystem': {
-        const sub = args[++i];
-        if (sub === 'windows' || sub === 'console') options.clcSubsystem = sub;
-        break;
-      }
-      case '--clc-strict':
-        options.clcStrict = true;
-        break;
-      case '--clc-require-native':
-        options.clcRequireNative = true;
-        break;
-      case '--parallel':
-        options.parallel = true;
-        break;
-      case '--acae-diagnostics':
-        options.acaeDiagnostics = true;
-        break;
-      case '--acae-fuse':
-        options.acaeFuseRangeLoops = true;
-        break;
-      case '--gpu':
-        options.gpu = true;
-        break;
-      case '--cuda':
-        options.cuda = true;
-        options.gpu = true;
-        break;
-      case '--verbose':
-        options.verbose = true;
-        break;
-      case '--time':
-        options.time = true;
-        break;
-      default:
-        if (!arg.startsWith('--') && !arg.startsWith('-')) {
-          filePath = arg;
-        }
-        break;
-    }
+  if (parsed.startRepl) {
+    void startRepl();
+    return;
   }
+  if (parsed.startDebugger) {
+    const { createDebugREPL } = require('./core/debugger');
+    createDebugREPL();
+    return;
+  }
+
+  const { mode, filePath, evalCode, options } = parsed;
 
   if (options.watch && filePath) {
     watchFile(filePath, mode, options);
@@ -5447,127 +5328,139 @@ function main(): void {
   }
 
   if (evalCode) {
-    runEval(evalCode, options);
-  } else if (filePath) {
-    const readSourceOrExit = (): string => {
-      if (!fs.existsSync(filePath!)) {
-        console.error(`Error: File not found: ${filePath}`);
-        process.exit(1);
-      }
-      return fs.readFileSync(filePath!, 'utf-8');
-    };
-
-    if (options.compile) {
-      const source = readSourceOrExit();
-      const jsCode = compileToJS(source, options);
-      const outputPath = options.output || filePath.replace(/\.seed$/, '.js');
-      fs.writeFileSync(outputPath, jsCode);
-      console.log(`\nCompiled: ${filePath} -> ${outputPath}`);
-      console.log(`   Size: ${(jsCode.length / 1024).toFixed(1)}KB`);
-      return;
-    }
-
-    if (options.compileC) {
-      const source = readSourceOrExit();
-      let cCode: string;
-      try {
-        cCode = compileToC(source, options);
-      } catch (e: any) {
-        const clcErr =
-          e instanceof ClcCompileError
-            ? e
-            : e && e.name === 'ClcCompileError' && typeof e.exitCode === 'number'
-              ? (e as ClcCompileError)
-              : null;
-        if (clcErr) {
-          console.error(String(clcErr.message || clcErr));
-          process.exit(clcErr.exitCode);
-        }
-        console.error(`CLC: ${e?.message || e}`);
-        process.exit(1);
-      }
-      const outputPath = options.output || filePath.replace(/\.seed$/, '.c');
-      fs.writeFileSync(outputPath, cCode);
-      console.log(`\nCompiled: ${filePath} -> ${outputPath}`);
-      console.log(`   Size: ${(cCode.length / 1024).toFixed(1)}KB`);
-      const warnMatch = cCode.match(/CLC WARNINGS:\n([\s\S]*?)\*\//);
-      if (warnMatch) {
-        const warnings = warnMatch[1].replace(/ \*   /g, '  ').trim().split('\n');
-        console.log(`   Warnings (${warnings.length}):`);
-        for (const w of warnings) console.log(`     ${w.trim()}`);
-      }
-      const acaeMatch = cCode.match(/ACAE diagnostics \(compile-time\):\n([\s\S]*?)\*\//);
-      if (acaeMatch) {
-        const lines = acaeMatch[1].replace(/ \*   /g, '  ').trim().split('\n');
-        console.log(`   ACAE (${lines.length}):`);
-        for (const ln of lines) console.log(`     ${ln.trim()}`);
-      }
-      const exePath = outputPath.replace(/\.c$/, '.exe');
-      runClcNativeCompile(outputPath, exePath, options);
-      return;
-    }
-
-    if (options.format) {
-      const source = readSourceOrExit();
-      const formatted = formatCode(source);
-      const outputPath = options.output || filePath;
-      fs.writeFileSync(outputPath, formatted);
-      console.log(`\nFormatted: ${outputPath}`);
-      return;
-    }
-
-    if (options.lint) {
-      const source = readSourceOrExit();
-      const result = lintCode(source);
-
-      console.log('\nLint Results\n');
-
-      if (result.errors.length > 0) {
-        console.log('  Errors:');
-        result.errors.forEach((e: any) => {
-          console.log(`     Line ${e.line}: ${e.message}`);
-        });
-      }
-
-      if (result.warnings.length > 0) {
-        console.log(`  Warnings (${result.warnings.length}):`);
-        result.warnings.forEach((w: any) => {
-          console.log(`     Line ${w.line}: ${w.message}`);
-        });
-      }
-
-      if (result.errors.length === 0 && result.warnings.length === 0) {
-        console.log('  No issues found!');
-      }
-
-      console.log(`\nStatistics:`);
-      console.log(`   Lines: ${result.stats.lines}`);
-      console.log(`   Statements: ${result.stats.statements}`);
-      console.log(`   Functions: ${result.stats.functions}`);
-      return;
-    }
-
-    if (options.stats) {
-      const source = readSourceOrExit();
-      showStats(source);
-      return;
-    }
-
-    if (options.time) {
-      const start = Date.now();
-      runFile(filePath, mode, options);
-      const elapsed = Date.now() - start;
-      console.log(`\nExecution time: ${elapsed}ms`);
-      return;
-    }
-
-    runFile(filePath, mode, options);
-  } else {
-    printUsage();
+    await runEval(evalCode, options);
+    return;
   }
+
+  if (!filePath) {
+    printUsage();
+    return;
+  }
+
+  const seedPath = filePath;
+
+  const readSourceOrExit = (): string => {
+    if (!fs.existsSync(seedPath)) {
+      console.error(`Error: File not found: ${seedPath}`);
+      process.exit(1);
+    }
+    return fs.readFileSync(seedPath, 'utf-8');
+  };
+
+  const outPath = (fallback: string): string =>
+    typeof options.output === 'string' && options.output.length > 0 ? options.output : fallback;
+
+  if (options.compile) {
+    const source = readSourceOrExit();
+    const jsCode = compileToJS(source, options);
+    const outputPath = outPath(seedPath.replace(/\.seed$/, '.js'));
+    fs.writeFileSync(outputPath, jsCode);
+    console.log(`\nCompiled: ${seedPath} -> ${outputPath}`);
+    console.log(`   Size: ${(jsCode.length / 1024).toFixed(1)}KB`);
+    return;
+  }
+
+  if (options.compileC) {
+    const source = readSourceOrExit();
+    let cCode: string;
+    try {
+      cCode = compileToC(source, options);
+    } catch (e: any) {
+      const clcErr =
+        e instanceof ClcCompileError
+          ? e
+          : e && e.name === 'ClcCompileError' && typeof e.exitCode === 'number'
+            ? (e as ClcCompileError)
+            : null;
+      if (clcErr) {
+        console.error(String(clcErr.message || clcErr));
+        process.exit(clcErr.exitCode);
+      }
+      console.error(`CLC: ${e?.message || e}`);
+      process.exit(1);
+    }
+    const outputPath = outPath(seedPath.replace(/\.seed$/, '.c'));
+    fs.writeFileSync(outputPath, cCode);
+    console.log(`\nCompiled: ${seedPath} -> ${outputPath}`);
+    console.log(`   Size: ${(cCode.length / 1024).toFixed(1)}KB`);
+    const warnMatch = cCode.match(/CLC WARNINGS:\n([\s\S]*?)\*\//);
+    if (warnMatch) {
+      const warnings = warnMatch[1].replace(/ \*   /g, '  ').trim().split('\n');
+      console.log(`   Warnings (${warnings.length}):`);
+      for (const w of warnings) console.log(`     ${w.trim()}`);
+    }
+    const acaeMatch = cCode.match(/ACAE diagnostics \(compile-time\):\n([\s\S]*?)\*\//);
+    if (acaeMatch) {
+      const lines = acaeMatch[1].replace(/ \*   /g, '  ').trim().split('\n');
+      console.log(`   ACAE (${lines.length}):`);
+      for (const ln of lines) console.log(`     ${ln.trim()}`);
+    }
+    const exePath = outputPath.replace(/\.c$/, '.exe');
+    runClcNativeCompile(outputPath, exePath, options);
+    return;
+  }
+
+  if (options.format) {
+    const source = readSourceOrExit();
+    const formatted = formatCode(source);
+    const outputPath = outPath(seedPath);
+    fs.writeFileSync(outputPath, formatted);
+    console.log(`\nFormatted: ${outputPath}`);
+    return;
+  }
+
+  if (options.lint) {
+    const source = readSourceOrExit();
+    const result = lintCode(source);
+
+    console.log('\nLint Results\n');
+
+    if (result.errors.length > 0) {
+      console.log('  Errors:');
+      result.errors.forEach((e: any) => {
+        console.log(`     Line ${e.line}: ${e.message}`);
+      });
+    }
+
+    if (result.warnings.length > 0) {
+      console.log(`  Warnings (${result.warnings.length}):`);
+      result.warnings.forEach((w: any) => {
+        console.log(`     Line ${w.line}: ${w.message}`);
+      });
+    }
+
+    if (result.errors.length === 0 && result.warnings.length === 0) {
+      console.log('  No issues found!');
+    }
+
+    console.log(`\nStatistics:`);
+    console.log(`   Lines: ${result.stats.lines}`);
+    console.log(`   Statements: ${result.stats.statements}`);
+    console.log(`   Functions: ${result.stats.functions}`);
+    return;
+  }
+
+  if (options.stats) {
+    const source = readSourceOrExit();
+    showStats(source);
+    return;
+  }
+
+  if (options.time) {
+    const start = Date.now();
+    await runFile(filePath, mode, options);
+    const elapsed = Date.now() - start;
+    console.log(`\nExecution time: ${elapsed}ms`);
+    return;
+  }
+
+  await runFile(filePath, mode, options);
 }
 
 if (require.main === module) {
   applyHostJitProfile();
-  main();
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
 }

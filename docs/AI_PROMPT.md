@@ -35,7 +35,7 @@ my-project/
 
 ### ⚠️ Key Difference: Prefer Space Separation
 
-**Main style difference from JavaScript: Prefer spaces between elements and parameters.**
+**Main style difference from JavaScript: Prefer spaces between elements and parameters.** The conforming language also accepts **optional commas** in the same positions (see `docs/LANGUAGE_SPEC_REFACTOR_DRAFT.md` §4.2); use one style consistently in generated code unless the user asks for JS-like commas.
 
 | Feature | JavaScript | SeedLang |
 |---------|---------------|-------------|
@@ -54,6 +54,12 @@ active = true
 items = [1 2 3]
 person = { name: "Bob" age: 25 }
 ```
+
+### Input / output (host)
+
+- **Stdout**: `print(msg)` (and string concatenation with `+` as needed).
+- **File IO (preferred for scripts)**: `readFile(path)`, `writeFile(path, text)`; example in-repo: `examples/hello/io_read_file.seed`.
+- **Stdin line (`input`)**: async host builtin. The CLI awaits **top-level** statement-result promises after each run; `async fn` bodies may still finish before inner `await` completes—prefer files or `readFile` for reliable scripted input.
 
 ### Function Definition
 

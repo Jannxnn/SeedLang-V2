@@ -1,5 +1,6 @@
 /**
- * Hygienic declarative macro expansion for the canonical FullParser Program AST.
+ * Declarative macro expansion for the canonical FullParser Program AST.
+ * Hygiene: bindings introduced in the macro body are renamed; formal parameters substitute caller sites and may alias caller variables (see docs/LANGUAGE_SPEC_REFACTOR_DRAFT.md §7.4).
  * Single source of truth (TypeScript). VM loads the compiled `dist/core/macro_expand.js` after `tsc`.
  * Procedural `proc_macro` call sites are left for the VM compiler / interpreter runtime.
  */

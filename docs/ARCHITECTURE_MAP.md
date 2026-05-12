@@ -10,7 +10,7 @@
 |------------|----------|
 | **CLC**：`--compile-c`、原生链接、Win32 子系统 | `src/cli/cli_clc_native.ts`、`src/cli/clc_runtime.ts`、`src/cli.ts` 内 `compileToC` |
 | **自举**：CLC 生成物、烟测 | `selfhost/`、`tests/bootstrap/`、`npm run run:clc-seed` |
-| 跑 `.seed`、编译 JS、通用命令行参数 | `dist/cli.js`（由 `src/cli.ts` 编译）；`src/cli/` 按功能拆文件 |
+| 跑 `.seed`、编译 JS、通用命令行参数 | `dist/cli.js`（`src/cli.ts` 入口 + `compileToC` 等大函数）；`src/cli/cli_argv.ts`（argv 解析）、`cli_run_modes.ts`、`cli_async_drain.ts`（顶层 Promise 收尾）、`cli_usage.ts` 等 |
 | 当 **npm 库** 用：`parse` / `run` / `create*Runtime` | `src/index.ts` → 产物 `dist/index.js` |
 | REPL、AOT、模块等「全家桶」聚合（含可选 VM） | `src/api.js`（体量大）；**`RuntimeFactory`** 从 `dist/runtime/*.js` 加载，**需先 `npm run build`** |
 | 语言规范与语法边界 | `docs/LANGUAGE_SPEC_REFACTOR_DRAFT.md` |

@@ -119,8 +119,13 @@ export class Interpreter {
   private jitBindingsCache: InterpreterJitBindings | null = null;
   /** Program-wide: no AST expr node can tier → skip tryExpr/assignment tier hooks for this interpret run. */
   private skipInterpJitTier = false;
+  /** When true (default), `print` mirrors lines to `console.log` as well as `getOutput()`. */
+  private mirrorPrintToConsole = true;
 
-  constructor() {
+  constructor(opts?: { mirrorPrintToConsole?: boolean }) {
+    if (opts && opts.mirrorPrintToConsole === false) {
+      this.mirrorPrintToConsole = false;
+    }
     this.globals = new Environment();
     this.environment = this.globals;
     this.setupBuiltins();
@@ -132,7 +137,9 @@ export class Interpreter {
       value: (...args: SeedValue[]) => {
         const output = args.map(arg => this.stringify(arg)).join(' ');
         this.output.push(output);
-        console.log(output);
+        if (this.mirrorPrintToConsole) {
+          console.log(output);
+        }
         return { type: 'null', value: null };
       }
     });

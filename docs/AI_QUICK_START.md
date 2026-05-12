@@ -6,7 +6,7 @@
 
 SeedLang is a symbolic programming language designed for AI. Key difference from JavaScript/Python:
 
-**NO COMMAS** between elements in arrays, objects, and function parameters.
+**Prefer spaces (no commas)** between elements in arrays, objects, and function parameters in *this guide* — the conforming parser also accepts **optional commas** as separators (see `docs/LANGUAGE_SPEC_REFACTOR_DRAFT.md` §4.2). Tutorials pick one style so examples stay easy to copy.
 
 ## Syntax Quick Reference
 
@@ -24,6 +24,19 @@ user = {name: "Bob" age: 30}  // Object (NO commas!)
 print("Hello World")
 print("Value: " + value)
 ```
+
+### 输入与输出（IO）
+
+- **输出（stdout）**：`print(...)`，见上。
+- **从文件读入 / 写出文件（推荐、脚本最稳）**：宿主提供 `readFile(path)`、`writeFile(path, text)`（以及 `exists`、`listDir` 等，见规范 §8）。示例（在仓库根执行）：
+
+```bash
+node dist/cli.js examples/hello/io_read_file.seed
+```
+
+对应源码：`examples/hello/io_read_file.seed` 读取 `examples/hello/hello_input.txt`。
+
+- **终端交互一行（stdin）**：Node 解释器里内置 **`input(可选提示字符串)`**，语义上为 **异步**（内部用 readline）。CLI 会在跑完脚本后 **尽量 `await` 顶层语句返回的 Promise**（例如顶层调用 `main()` 且 `main` 为 `async` 时）；**`async fn` 体内部的 `await input(...)`** 仍依赖解释器对异步体的完整收尾，复杂脚本请继续优先 **文件 + `readFile`**。交互 REPL 路径见 `npm run repl`（宿主与 CLI 直跑不同）。
 
 ### Functions
 ```seed

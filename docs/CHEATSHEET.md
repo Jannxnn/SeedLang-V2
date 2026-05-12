@@ -64,6 +64,17 @@ async fn name() { await expr }
 (x) => x * 2
 ```
 
+## Macros (compile-time)
+
+| Item | Syntax / rule |
+|------|----------------|
+| Definition | `macro name(params) { body }` |
+| Invocation | `name!(args)` — the `!` marks macro call |
+| Hygiene | **Body only**: names introduced inside the macro body are renamed so they do not clash with the caller’s scope |
+| Parameters | Formal parameters **substitute** caller arguments; passing a variable (e.g. `m!(x)`) can read or assign through that binding |
+
+Normative detail and terminology: [LANGUAGE_SPEC_REFACTOR_DRAFT.md §7.4](LANGUAGE_SPEC_REFACTOR_DRAFT.md#74-macro-system).
+
 ## Array Methods
 
 | Method | Description | Example |
@@ -231,6 +242,8 @@ flags = flags ^ 0b0001
 | Method | Description |
 |--------|-------------|
 | `print(msg)` | Log output |
+| `readFile(path)` | Read file as UTF-8 string |
+| `writeFile(path text)` | Write UTF-8 string to file |
 | `gui.table(data)` | Display table |
 | `gui.progress(pct)` | Display progress |
 | `gui.clear()` | Clear screen |

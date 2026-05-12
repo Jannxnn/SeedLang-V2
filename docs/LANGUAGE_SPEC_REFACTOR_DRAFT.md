@@ -82,6 +82,16 @@ obj = { name: "Alice" age: 20 }
 obj2 = { name: "Alice", age: 20 }
 ```
 
+### 4.2.1 Stylistic dual track (mental model)
+
+Collections and calls accept **two spellings** (space-heavy vs comma-friendly) with the **same semantics**. This is intentional compatibility for JavaScript-like readability, not two different sublanguages.
+
+Other sections introduce additional **surface** variation by design (for example logic operators may appear in symbolic or keyword form per §4.5; `for` supports more than one structured form per §4.4). Readers who expect exactly one “pretty” spelling may perceive inconsistency; implementers should treat these as alternative tokenizations under one grammar.
+
+**Non-normative guidance for new code**: prefer space-separated lists where readability allows; add commas when it helps your team. Pick one logic spelling per project (`&&` vs `and`) and one primary counting-loop idiom per module to reduce visual churn.
+
+Learner-facing narrative (Chinese): [SYNTAX_MENTAL_MODEL.md](SYNTAX_MENTAL_MODEL.md).
+
 ### 4.3 Functions
 
 Parameter lists accept spaces and/or commas (`fn add(a b)` and `fn add(a, b)` are equivalent).
@@ -239,7 +249,7 @@ Pattern types:
 
 ## 7.4 Macro System
 
-SeedLang provides **hygienic macros** that expand at compile time:
+SeedLang provides **compile-time declarative macros** with **partial hygiene** (see below). Expansion is deterministic and happens before execution.
 
 ```seedlang
 macro double(x) {
@@ -252,9 +262,11 @@ double!(result)
 
 - **Definition**: `macro name(params) { body }`
 - **Invocation**: `name!(args)` — the `!` operator followed by `()`
-- **Hygiene**: macro-introduced variables are automatically renamed to avoid conflicts with caller scope
-- **Parameters**: macro parameters reference caller variables directly, allowing modification
+- **Hygiene (macro body only)**: identifiers **introduced inside** the macro body (locals, inner `fn` names, loop variables, and so on) are renamed on expansion so they do not accidentally capture or collide with names in the **caller’s** surrounding scope. This matches the usual goal of “hygiene” for generated bindings.
+- **Parameters are not isolated from the caller**: formal parameters are **substitution sites**. When the caller passes a variable (as in `double!(result)`), the macro body can read and assign through that binding, so caller variables may change. That is intentional and **not** covered by the renaming above—only names originating in the macro body are freshened.
 - **Nesting**: macros can call other macros from within their body
+
+**Terminology note:** Some texts use “hygienic macro” to mean *all* names, including arguments, stay separate from the caller. SeedLang deliberately does **not** use that stricter definition; use “hygienic body bindings” or “partial hygiene” when comparing to other languages.
 
 ## 7.5 Async/Await (Experimental)
 
@@ -267,7 +279,7 @@ async fn fetchData(url) {
 }
 ```
 
-Note: Full async/await semantics in VM mode is experimental. The AST interpreter supports it fully.
+Note: Full async/await semantics in VM mode is experimental. The AST interpreter supports many common `async`/`await` patterns. The CLI **awaits top-level statement result promises** after `interpret()` (e.g. a trailing `main()` call that returns a Promise). Line-oriented stdin via `input(...)` still depends on async bodies completing correctly inside `async fn`; prefer `readFile` for deterministic script input when in doubt.
 
 ## 8. Standard Library (Language-Level)
 
@@ -288,6 +300,11 @@ Note: This section should contain only language-level built-ins. Host APIs such 
 
 - Language-level standard output function: `print(...)`.
 - Host/runtime logging APIs (for example `gui.*`, `agent.*`) are non-core APIs and are out of language-level conformance checks.
+
+### 8.2 Input and file IO
+
+- **File system**: `readFile`, `writeFile`, `exists`, `listDir`, `mkdir`, `remove` (see the IO/FS bullet list above).
+- **Interactive stdin (host, Node-oriented)**: an `input(...)` builtin may read one text line from standard input when provided by the host. It is inherently asynchronous. The Node CLI awaits **top-level** `interpret()` statement results that are promises; inner `async fn` scheduling is still interpreter-dependent. Prefer `readFile` (or host redirection into a file) for deterministic scripted input.
 
 ## 9. Conformance Notes
 

@@ -9,7 +9,7 @@ export function printUsage(): void {
 
 Usage:
   seedlang <file> [options]
-  seedlang --eval "<code>"
+  seedlang --eval "<SeedLang code>"
   seedlang --repl
   seedlang --vm <file>
   seedlang --web <file>
@@ -68,22 +68,21 @@ Other:
 
 Examples:
   seedlang hello.seed
-  seedlang -e "\"Hello World\""
+  seedlang -e "print('Hello World')"            # bash / zsh / fish / PowerShell / cmd.exe
   seedlang --repl
   seedlang --watch app.seed
   seedlang --compile app.seed -o app.js
   seedlang --lint code.seed
   seedlang --format code.seed
 
-Language Syntax:
-  #n7        Declaration: subject + action + object
-  ?#vA?>#n5->!o    Question: conditional judgment
-  !w#n3->!c#vA-#n1 Write: target -> content
-  #n1              Noun reference: variable reference
-  #t"text"         Text literal: string
-  #vA              Verb marker: operator
+.seed surface syntax (teaser — full rules in repo docs):
+  print("Hello World")
+  x = 40 + 2
+  fn add(a b) { return a + b }
+  add(1 2)
 
-More docs: https://github.com/seedlang/seedlang
+More docs: https://github.com/seedlang-team/seedlang
+Spec (in clone): docs/LANGUAGE_SPEC_REFACTOR_DRAFT.md
 `);
 }
 
@@ -111,4 +110,6 @@ export function printVersion(): void {
   console.log('  - Lint Checker (--lint)');
   console.log('  - Debugger (--debugger)');
   console.log('  - File Watcher (--watch/-w)');
+  console.log('');
+  console.log('Repository: https://github.com/seedlang-team/seedlang');
 }

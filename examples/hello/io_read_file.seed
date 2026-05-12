@@ -1,0 +1,5 @@
+// File-based "input": reads UTF-8 text from a path (Node host). Run from repo root:
+//   node dist/cli.js examples/hello/io_read_file.seed
+path = "examples/hello/hello_input.txt"
+text = readFile(path)
+print("Read from file: " + text)
